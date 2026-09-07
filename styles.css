@@ -1,0 +1,445 @@
+/* An Tou — desk view only */
+
+.workspace-leaf-content[data-type="an-tou-desk"] {
+  background: transparent;
+}
+
+.workspace-leaf-content[data-type="an-tou-desk"] .view-header {
+  background: transparent;
+  border-bottom: none;
+  opacity: 0.35;
+}
+.workspace-leaf-content[data-type="an-tou-desk"] .view-header:hover {
+  opacity: 1;
+}
+
+.an-tou-view {
+  --desk-ink: #1c2a26;
+  --desk-mute: #6b7a76;
+  --add-size: 44px;
+  --add-glyph: 18px;
+  --add-stroke: 2.4px;
+  --add-accent: #2bbbad;
+  height: 100%;
+  overflow: auto;
+  padding: 28px 48px 48px;
+  font-family: "PingFang SC", -apple-system, sans-serif;
+  color: var(--desk-ink);
+  background:
+    radial-gradient(900px 520px at 16% 8%, rgba(43, 187, 173, 0.14), transparent 58%),
+    radial-gradient(720px 480px at 90% 86%, rgba(210, 186, 150, 0.16), transparent 55%),
+    linear-gradient(180deg, #f4f8f6 0%, #e7eeeb 100%);
+}
+
+.theme-dark .an-tou-view {
+  --desk-ink: #e4eeea;
+  --desk-mute: #8a9a96;
+  background:
+    radial-gradient(900px 520px at 16% 8%, rgba(43, 187, 173, 0.16), transparent 58%),
+    radial-gradient(720px 480px at 90% 86%, rgba(210, 186, 150, 0.08), transparent 55%),
+    linear-gradient(180deg, #1a2220 0%, #121918 100%);
+}
+
+.an-tou-inner {
+  position: relative;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.an-tou-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  line-height: 18px;
+  color: var(--desk-mute);
+  margin-bottom: 10px;
+}
+
+.an-tou-crumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0 4px;
+  min-width: 0;
+}
+
+.an-tou-crumbs button {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  letter-spacing: 0.12em;
+}
+.an-tou-crumbs button:hover { color: var(--desk-ink); }
+
+.an-tou-view .an-tou-add {
+  position: absolute;
+  top: calc(4px + clamp(28px, 3.2vw, 42px) * 0.625);
+  right: 0;
+  z-index: 5;
+  margin: 0;
+  width: var(--add-size);
+  height: var(--add-size);
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.85) inset,
+    0 1px 2px rgba(28, 42, 38, 0.06),
+    0 10px 26px -12px rgba(28, 42, 38, 0.22);
+  color: rgba(28, 42, 38, 0.82);
+  font-size: 0;
+  line-height: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background 0.24s cubic-bezier(0.2, 0, 0, 1),
+    border-color 0.24s ease,
+    color 0.24s ease,
+    box-shadow 0.24s cubic-bezier(0.2, 0, 0, 1),
+    transform 0.16s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.theme-dark .an-tou-view .an-tou-add {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(228, 238, 234, 0.9);
+}
+
+.an-tou-view .an-tou-add::before,
+.an-tou-view .an-tou-add::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 999px;
+  background: currentColor;
+}
+.an-tou-view .an-tou-add::before {
+  width: var(--add-glyph);
+  height: var(--add-stroke);
+  transform: translate(-50%, -50%);
+}
+.an-tou-view .an-tou-add::after {
+  width: var(--add-stroke);
+  height: var(--add-glyph);
+  transform: translate(-50%, -50%);
+}
+
+.an-tou-view .an-tou-add:hover {
+  background: linear-gradient(180deg, #35c7b9 0%, var(--add-accent) 100%);
+  border-color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.35) inset,
+    0 2px 8px rgba(43, 187, 173, 0.28),
+    0 14px 30px -10px rgba(43, 187, 173, 0.45);
+}
+.an-tou-view .an-tou-add:active {
+  transform: scale(0.92);
+  transition-duration: 0.08s;
+}
+.an-tou-view .an-tou-add:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 4px rgba(43, 187, 173, 0.28),
+    0 1px 2px rgba(28, 42, 38, 0.06),
+    0 10px 26px -12px rgba(28, 42, 38, 0.22);
+}
+
+.an-tou-view h1 {
+  font-family: "Songti SC", "Iowan Old Style", Georgia, serif;
+  font-size: clamp(28px, 3.2vw, 42px);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  margin: 8px 0 6px;
+}
+
+.an-tou-date {
+  display: block;
+  font-family: "Songti SC", Georgia, serif;
+  font-style: italic;
+  font-size: 15px;
+  color: var(--desk-mute);
+  margin-bottom: 8px;
+}
+
+.an-tou-view h2 {
+  font-family: "Songti SC", "Iowan Old Style", Georgia, serif;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  margin: 36px 0 0;
+}
+
+.an-tou-lede {
+  color: var(--desk-mute);
+  font-size: 14px;
+  margin: 0 0 4px;
+}
+
+.an-tou-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 16px 18px;
+  margin: 22px 0 8px;
+}
+
+.an-tou-grid > * {
+  min-width: 0;
+  max-width: 100%;
+  align-self: stretch;
+}
+
+.an-tou-view .desk-card {
+  overflow: hidden;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: 8px;
+  min-height: 168px;
+  padding: 22px 44px 18px 22px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.42);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 18px 40px -24px rgba(28, 42, 38, 0.28);
+  backdrop-filter: blur(28px) saturate(1.35);
+  -webkit-backdrop-filter: blur(28px) saturate(1.35);
+  color: var(--desk-ink);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transform: perspective(900px) rotateX(1.6deg);
+  transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease, opacity 0.25s ease;
+}
+
+.theme-dark .an-tou-view .desk-card {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    0 18px 40px -24px rgba(0, 0, 0, 0.45);
+}
+
+.an-tou-view .desk-card:hover,
+.an-tou-view .desk-card:focus-visible {
+  background: rgba(255, 255, 255, 0.66);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 28px 50px -20px rgba(28, 42, 38, 0.32);
+  transform: perspective(900px) rotateX(0deg) translateY(-4px);
+  outline: none;
+}
+
+.theme-dark .an-tou-view .desk-card:hover,
+.theme-dark .an-tou-view .desk-card:focus-visible {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.an-tou-view .desk-card.is-quiet { opacity: 0.5; }
+.an-tou-view .desk-card.is-quiet:hover { opacity: 0.85; }
+.an-tou-view .desk-card.is-still { cursor: default; }
+.an-tou-view .desk-card.is-still:hover { transform: none; }
+
+.an-tou-view .desk-card.is-note {
+  min-height: 132px;
+  justify-content: flex-start;
+  padding-top: 20px;
+  transform: none;
+}
+.an-tou-view .desk-card.is-note:hover {
+  transform: translateY(-3px);
+}
+
+.an-tou-view .desk-kicker {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--desk-mute);
+  min-height: 1.2em;
+}
+
+.an-tou-view .desk-count {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  font-family: "Songti SC", Georgia, serif;
+  font-size: 22px;
+  font-weight: 500;
+  opacity: 0.4;
+}
+
+.an-tou-view .desk-card strong {
+  font-family: "Songti SC", "Iowan Old Style", Georgia, serif;
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+
+.an-tou-view .desk-card.is-note strong { font-size: 20px; }
+
+.an-tou-view .desk-line {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--desk-mute);
+  min-height: 2.6em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+
+.an-tou-view .desk-card.is-note .desk-line {
+  min-height: 0;
+}
+
+.an-tou-view .desk-card.span-2 { grid-column: span 2; }
+
+.an-tou-room-edit {
+  margin: 12px 0 18px;
+  padding-top: 8px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+@media (max-width: 880px) {
+  .an-tou-view { padding: 20px 20px 40px; }
+  .an-tou-grid { grid-template-columns: 1fr; }
+  .an-tou-view .desk-card.span-2 { grid-column: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .an-tou-view .an-tou-add,
+  .an-tou-view .desk-card {
+    transition: none;
+  }
+}
+
+/* 安静玻璃整库外观。装上插件就会换，不必再装主题。 */
+body.an-tou-look {
+  --font-text: "Songti SC", "Iowan Old Style", "New York", Georgia, serif;
+  --font-interface: "PingFang SC", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-text-size: 17px;
+  --line-height-normal: 1.7;
+  --file-line-width: 42rem;
+  --accent-h: 174;
+  --accent-s: 63%;
+  --accent-l: 45%;
+  --ribbon-width: 0px;
+  --desk-ink: #1c2a26;
+  --desk-mute: #6b7a76;
+}
+
+body.an-tou-look.theme-light {
+  --background-primary: #eef3f1;
+  --background-primary-alt: #e8efec;
+  --background-secondary: #e4ebe8;
+  --background-secondary-alt: #dce6e2;
+  --background-modifier-border: rgba(28, 42, 38, 0.08);
+  --text-normal: var(--desk-ink);
+  --text-muted: var(--desk-mute);
+  --text-faint: #93a29d;
+  --titlebar-background: var(--background-primary);
+  --titlebar-background-focused: var(--background-primary);
+  --tab-container-background: transparent;
+  --nav-item-background-hover: rgba(255, 255, 255, 0.45);
+  --nav-item-background-active: rgba(255, 255, 255, 0.7);
+}
+
+body.an-tou-look.theme-dark {
+  --desk-ink: #e4eeea;
+  --desk-mute: #8a9a96;
+  --background-primary: #1a2220;
+  --background-primary-alt: #151c1a;
+  --background-secondary: #121918;
+  --background-secondary-alt: #0e1413;
+  --background-modifier-border: rgba(228, 238, 234, 0.08);
+  --text-normal: var(--desk-ink);
+  --text-muted: var(--desk-mute);
+  --text-faint: #6d7c78;
+  --titlebar-background: var(--background-primary);
+  --titlebar-background-focused: var(--background-primary);
+  --tab-container-background: transparent;
+  --nav-item-background-hover: rgba(255, 255, 255, 0.06);
+  --nav-item-background-active: rgba(255, 255, 255, 0.1);
+}
+
+body.an-tou-look .workspace {
+  background:
+    radial-gradient(900px 520px at 16% 8%, rgba(43, 187, 173, 0.14), transparent 58%),
+    radial-gradient(720px 480px at 90% 86%, rgba(210, 186, 150, 0.16), transparent 55%),
+    linear-gradient(180deg, #f4f8f6 0%, #e7eeeb 100%);
+}
+
+body.an-tou-look.theme-dark .workspace {
+  background:
+    radial-gradient(900px 520px at 16% 8%, rgba(43, 187, 173, 0.16), transparent 58%),
+    radial-gradient(720px 480px at 90% 86%, rgba(210, 186, 150, 0.08), transparent 55%),
+    linear-gradient(180deg, #1a2220 0%, #121918 100%);
+}
+
+body.an-tou-look .workspace-ribbon,
+body.an-tou-look .workspace-ribbon.mod-left { display: none; }
+
+body.an-tou-look .status-bar {
+  background: transparent;
+  border-top: none;
+  opacity: 0.45;
+}
+body.an-tou-look .status-bar:hover { opacity: 1; }
+
+body.an-tou-look .workspace-tabs,
+body.an-tou-look .workspace-tab-header-container,
+body.an-tou-look .workspace-leaf,
+body.an-tou-look .view-header {
+  background: transparent;
+}
+body.an-tou-look .workspace-tab-header-container,
+body.an-tou-look .view-header { border-bottom: none; }
+
+body.an-tou-look .nav-header,
+body.an-tou-look .search-input-container { background: transparent; }
+
+body.an-tou-look .markdown-rendered h1,
+body.an-tou-look .markdown-preview-view h1,
+body.an-tou-look .inline-title {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+body.an-tou-look .markdown-preview-view,
+body.an-tou-look .markdown-source-view.mod-cm6 .cm-scroller {
+  font-family: var(--font-text);
+  line-height: 1.7;
+}
