@@ -63,10 +63,12 @@ function todayLabel() {
   const tag = lang.toLowerCase().startsWith("zh") ? "zh-CN" : lang;
   return new Date().toLocaleDateString(tag, { month: "long", day: "numeric" });
 }
+function twoDigits(n) {
+  return (n < 10 ? "0" : "") + String(n);
+}
 function inboxStamp() {
   const d = new Date();
-  const p = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}${p(d.getMinutes())}`;
+  return `${d.getFullYear()}-${twoDigits(d.getMonth() + 1)}-${twoDigits(d.getDate())} ${twoDigits(d.getHours())}${twoDigits(d.getMinutes())}`;
 }
 function safeName(name) {
   return name.replace(/[\\/:*?"<>|]/g, "").replace(/\s+/g, " ").trim() || "\u672A\u547D\u540D";
@@ -153,7 +155,9 @@ var DeskView = class extends import_obsidian.ItemView {
   safeRender() {
     if (this._tid)
       window.clearTimeout(this._tid);
-    this._tid = window.setTimeout(() => this.render(), 200);
+    this._tid = window.setTimeout(() => {
+      void this.render();
+    }, 200);
   }
   resetHome() {
     this.stack = [{ type: "home" }];
@@ -164,12 +168,12 @@ var DeskView = class extends import_obsidian.ItemView {
   }
   push(page) {
     this.stack.push(page);
-    this.render();
+    void this.render();
   }
   back() {
     if (this.stack.length > 1) {
       this.stack.pop();
-      this.render();
+      void this.render();
     }
   }
   mdIn(folder, extraSkip = []) {
@@ -251,6 +255,20 @@ var DeskView = class extends import_obsidian.ItemView {
   async openNote(file) {
     await this.app.workspace.getLeaf("tab").openFile(file);
   }
+  async createNamedNote(folder, raw) {
+    const base = safeName(raw || (isInboxFolder(folder) ? inboxStamp() : "\u672A\u547D\u540D"));
+    let filename = base;
+    let n = 2;
+    while (this.app.vault.getAbstractFileByPath(folder + "/" + filename + ".md")) {
+      filename = base + " " + n++;
+    }
+    try {
+      const file = await this.app.vault.create(folder + "/" + filename + ".md", "");
+      await this.openNote(file);
+    } catch (e) {
+      new import_obsidian.Notice("\u6CA1\u5199\u6210\u3002");
+    }
+  }
   async newNote(folder) {
     if (!folder)
       return;
@@ -259,19 +277,8 @@ var DeskView = class extends import_obsidian.ItemView {
       return;
     }
     const preset = isInboxFolder(folder) ? inboxStamp() : "";
-    new NameModal(this.app, preset, async (raw) => {
-      const base = safeName(raw || (isInboxFolder(folder) ? inboxStamp() : "\u672A\u547D\u540D"));
-      let filename = base;
-      let n = 2;
-      while (this.app.vault.getAbstractFileByPath(folder + "/" + filename + ".md")) {
-        filename = base + " " + n++;
-      }
-      try {
-        const file = await this.app.vault.create(folder + "/" + filename + ".md", "");
-        await this.openNote(file);
-      } catch (e) {
-        new import_obsidian.Notice("\u6CA1\u5199\u6210\u3002");
-      }
+    new NameModal(this.app, preset, (raw) => {
+      void this.createNamedNote(folder, raw);
     }).open();
   }
   card(parent, spec, onClick) {
@@ -314,7 +321,7 @@ var DeskView = class extends import_obsidian.ItemView {
       add.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        this.newNote(folder);
+        void this.newNote(folder);
       });
     }
   }
@@ -375,7 +382,9 @@ var DeskView = class extends import_obsidian.ItemView {
           line: titleText === line ? "" : line,
           note: true
         },
-        () => this.openNote(file)
+        () => {
+          void this.openNote(file);
+        }
       );
     }
   }
@@ -405,7 +414,7 @@ var DeskView = class extends import_obsidian.ItemView {
     const title = this.plugin.settings.title || "An Tou";
     const goHome = () => {
       this.stack = [{ type: "home" }];
-      this.render();
+      void this.render();
     };
     const crumbs = [{ label: "\u2190 " + page.parentLabel, go: () => this.back() }];
     if (page.parentLabel !== title)
@@ -423,7 +432,9 @@ var DeskView = class extends import_obsidian.ItemView {
       this.card(
         top,
         { kicker: page.kicker, title: "Backlog", line: backlog.basename, span2: true },
-        () => this.openNote(backlog)
+        () => {
+          void this.openNote(backlog);
+        }
       );
     }
     if (subs.length && !useBacklog) {
@@ -454,7 +465,9 @@ var DeskView = class extends import_obsidian.ItemView {
       this.card(
         grid,
         { kicker: page.kicker, title: titleOf(file) || line || file.basename, line, note: true },
-        () => this.openNote(file)
+        () => {
+          void this.openNote(file);
+        }
       );
     }
     if (rest > 0) {
@@ -478,7 +491,7 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: "An Tou" });
+    new import_obsidian.Setting(containerEl).setName("An Tou").setHeading();
     new import_obsidian.Setting(containerEl).setName("Desk title").setDesc("Shown on the home cards and the tab.").addText(
       (t) => t.setValue(this.plugin.settings.title).onChange(async (v) => {
         this.plugin.settings.title = v.trim() || "An Tou";
@@ -591,7 +604,8 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
     this.settings = DEFAULT_SETTINGS;
   }
   async onload() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const saved = await this.loadData();
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, saved != null ? saved : {});
     if (!Array.isArray(this.settings.rooms))
       this.settings.rooms = [];
     if (!Array.isArray(this.settings.skipPaths))
@@ -600,7 +614,9 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
     this.addCommand({
       id: "open-desk",
       name: "Open desk",
-      callback: () => this.activateView()
+      callback: () => {
+        void this.activateView();
+      }
     });
     this.addSettingTab(new AnTouSettingTab(this.app, this));
     this.applyLook();
@@ -610,7 +626,7 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
         await this.saveSettings();
       }
       if (this.settings.openOnStart)
-        this.activateView();
+        void this.activateView();
     });
   }
   onunload() {
@@ -658,7 +674,7 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
       leaf = workspace.getLeaf(false);
       await leaf.setViewState({ type: VIEW_TYPE, active: true });
     } else {
-      await workspace.revealLeaf(leaf);
+      workspace.setActiveLeaf(leaf, { focus: true });
     }
     if (this.settings.collapseExplorer && workspace.leftSplit) {
       workspace.leftSplit.collapse();

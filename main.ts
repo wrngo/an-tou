@@ -86,10 +86,13 @@ function todayLabel(): string {
 	return new Date().toLocaleDateString(tag, { month: "long", day: "numeric" });
 }
 
+function twoDigits(n: number): string {
+	return (n < 10 ? "0" : "") + String(n);
+}
+
 function inboxStamp(): string {
 	const d = new Date();
-	const p = (n: number) => String(n).padStart(2, "0");
-	return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}${p(d.getMinutes())}`;
+	return `${d.getFullYear()}-${twoDigits(d.getMonth() + 1)}-${twoDigits(d.getDate())} ${twoDigits(d.getHours())}${twoDigits(d.getMinutes())}`;
 }
 
 function safeName(name: string): string {
@@ -185,7 +188,9 @@ class DeskView extends ItemView {
 
 	safeRender() {
 		if (this._tid) window.clearTimeout(this._tid);
-		this._tid = window.setTimeout(() => this.render(), 200);
+		this._tid = window.setTimeout(() => {
+			void this.render();
+		}, 200);
 	}
 
 	resetHome() {
@@ -199,13 +204,13 @@ class DeskView extends ItemView {
 
 	push(page: Page) {
 		this.stack.push(page);
-		this.render();
+		void this.render();
 	}
 
 	back() {
 		if (this.stack.length > 1) {
 			this.stack.pop();
-			this.render();
+			void this.render();
 		}
 	}
 
@@ -285,6 +290,21 @@ class DeskView extends ItemView {
 		await this.app.workspace.getLeaf("tab").openFile(file);
 	}
 
+	async createNamedNote(folder: string, raw: string) {
+		const base = safeName(raw || (isInboxFolder(folder) ? inboxStamp() : "未命名"));
+		let filename = base;
+		let n = 2;
+		while (this.app.vault.getAbstractFileByPath(folder + "/" + filename + ".md")) {
+			filename = base + " " + n++;
+		}
+		try {
+			const file = await this.app.vault.create(folder + "/" + filename + ".md", "");
+			await this.openNote(file);
+		} catch {
+			new Notice("没写成。");
+		}
+	}
+
 	async newNote(folder: string) {
 		if (!folder) return;
 		if (!this.app.vault.getAbstractFileByPath(folder)) {
@@ -292,19 +312,8 @@ class DeskView extends ItemView {
 			return;
 		}
 		const preset = isInboxFolder(folder) ? inboxStamp() : "";
-		new NameModal(this.app, preset, async (raw) => {
-			const base = safeName(raw || (isInboxFolder(folder) ? inboxStamp() : "未命名"));
-			let filename = base;
-			let n = 2;
-			while (this.app.vault.getAbstractFileByPath(folder + "/" + filename + ".md")) {
-				filename = base + " " + n++;
-			}
-			try {
-				const file = await this.app.vault.create(folder + "/" + filename + ".md", "");
-				await this.openNote(file);
-			} catch {
-				new Notice("没写成。");
-			}
+		new NameModal(this.app, preset, (raw) => {
+			void this.createNamedNote(folder, raw);
 		}).open();
 	}
 
@@ -358,7 +367,7 @@ class DeskView extends ItemView {
 			add.addEventListener("click", (e) => {
 				e.preventDefault();
 				e.stopPropagation();
-				this.newNote(folder);
+				void this.newNote(folder);
 			});
 		}
 	}
@@ -427,7 +436,9 @@ class DeskView extends ItemView {
 					line: titleText === line ? "" : line,
 					note: true,
 				},
-				() => this.openNote(file)
+				() => {
+					void this.openNote(file);
+				}
 			);
 		}
 	}
@@ -461,7 +472,7 @@ class DeskView extends ItemView {
 		const title = this.plugin.settings.title || "An Tou";
 		const goHome = () => {
 			this.stack = [{ type: "home" }];
-			this.render();
+			void this.render();
 		};
 		const crumbs = [{ label: "← " + page.parentLabel, go: () => this.back() }];
 		if (page.parentLabel !== title) crumbs.push({ label: title, go: goHome });
@@ -480,7 +491,9 @@ class DeskView extends ItemView {
 			this.card(
 				top,
 				{ kicker: page.kicker, title: "Backlog", line: backlog.basename, span2: true },
-				() => this.openNote(backlog)
+				() => {
+					void this.openNote(backlog);
+				}
 			);
 		}
 
@@ -514,7 +527,9 @@ class DeskView extends ItemView {
 			this.card(
 				grid,
 				{ kicker: page.kicker, title: titleOf(file) || line || file.basename, line, note: true },
-				() => this.openNote(file)
+				() => {
+					void this.openNote(file);
+				}
 			);
 		}
 		if (rest > 0) {
@@ -542,7 +557,7 @@ class AnTouSettingTab extends PluginSettingTab {
 	display() {
 		const { containerEl } = this;
 		containerEl.empty();
-		containerEl.createEl("h2", { text: "An Tou" });
+		new Setting(containerEl).setName("An Tou").setHeading();
 
 		new Setting(containerEl)
 			.setName("Desk title")
@@ -694,7 +709,8 @@ export default class AnTouPlugin extends Plugin {
 	settings: AnTouSettings = DEFAULT_SETTINGS;
 
 	async onload() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		const saved = (await this.loadData()) as Partial<AnTouSettings> | null;
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, saved ?? {});
 		if (!Array.isArray(this.settings.rooms)) this.settings.rooms = [];
 		if (!Array.isArray(this.settings.skipPaths)) this.settings.skipPaths = [];
 
@@ -702,7 +718,9 @@ export default class AnTouPlugin extends Plugin {
 		this.addCommand({
 			id: "open-desk",
 			name: "Open desk",
-			callback: () => this.activateView(),
+			callback: () => {
+				void this.activateView();
+			},
 		});
 		this.addSettingTab(new AnTouSettingTab(this.app, this));
 		this.applyLook();
@@ -711,7 +729,7 @@ export default class AnTouPlugin extends Plugin {
 				this.settings.rooms = this.scanRooms();
 				await this.saveSettings();
 			}
-			if (this.settings.openOnStart) this.activateView();
+			if (this.settings.openOnStart) void this.activateView();
 		});
 	}
 
@@ -760,7 +778,7 @@ export default class AnTouPlugin extends Plugin {
 			leaf = workspace.getLeaf(false);
 			await leaf.setViewState({ type: VIEW_TYPE, active: true });
 		} else {
-			await workspace.revealLeaf(leaf);
+			workspace.setActiveLeaf(leaf, { focus: true });
 		}
 		if (this.settings.collapseExplorer && workspace.leftSplit) {
 			workspace.leftSplit.collapse();

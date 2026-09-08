@@ -40,8 +40,8 @@ npm run build
 Push a version tag that matches `manifest.json` (no `v` prefix). GitHub Actions builds the plugin, signs artifact attestations, and creates the release:
 
 ```
-git tag 0.2.1
-git push origin 0.2.1
+git tag 0.2.2
+git push origin 0.2.2
 ```
 
 Then submit or re-request review at [community.obsidian.md](https://community.obsidian.md).
