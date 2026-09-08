@@ -25,6 +25,8 @@ interface Room {
 	maxNotes?: number;
 }
 
+type UiLang = "zh" | "en";
+
 interface AnTouSettings {
 	title: string;
 	openOnStart: boolean;
@@ -32,6 +34,7 @@ interface AnTouSettings {
 	applyLook: boolean;
 	skipPaths: string[];
 	rooms: Room[];
+	uiLang: UiLang;
 }
 
 const DEFAULT_SETTINGS: AnTouSettings = {
@@ -41,7 +44,87 @@ const DEFAULT_SETTINGS: AnTouSettings = {
 	applyLook: true,
 	skipPaths: [],
 	rooms: [],
+	uiLang: "zh",
 };
+
+const COPY = {
+	zh: {
+		language: "界面语言",
+		languageDesc: "只改设置页的说明。书桌卡片上的中文标题还是你自己填的。",
+		chinese: "中文",
+		english: "English",
+		desk: "书桌",
+		title: "书桌标题",
+		titleDesc: "首页最大那行字，也显示在标签上。",
+		look: "换上这套外观",
+		lookDesc: "薄荷绿底和衬线字。关掉就只留卡片书桌，颜色仍用你现在的主题。",
+		openOnStart: "打开库时进入书桌",
+		openOnStartDesc: "启动时打开书桌，而不是上次那篇笔记。",
+		collapse: "收起文件列表",
+		collapseDesc: "打开书桌时把左边文件树收起来。",
+		skip: "跳过这些路径",
+		skipDesc: "用逗号分隔。这些文件夹不会出现在卡片和「最近」里。",
+		rooms: "房间",
+		roomsDesc:
+			"每张卡片是一个房间。填文件夹就进那个目录；不填文件夹，只填子房间的「父房间编号」，这一张就是分组。",
+		addRoom: "添加房间",
+		fromVault: "按库根目录生成",
+		fromVaultNotice: "已按顶层文件夹重建房间。",
+		roomId: "编号",
+		remove: "删除这个房间",
+		name: "名称",
+		nameDesc: "卡片中间的大标题。",
+		folder: "文件夹",
+		folderDesc: "库里的路径，比如 00-Inbox。留空则这张卡是分组。",
+		kicker: "角标",
+		kickerDesc: "卡片左上角那一小行，比如 Inbox。",
+		line: "说明",
+		lineDesc: "卡片底下那一行，写这格是干什么的。",
+		parent: "父房间编号",
+		parentDesc: "填上一级的编号，比如 cabinet。填了就不出现在首页。",
+		quiet: "安静",
+		quietDesc: "打开后卡片变淡，里面的笔记也不进「最近」。",
+		newRoom: "新房间",
+	},
+	en: {
+		language: "Language",
+		languageDesc: "Settings copy only. Card titles stay whatever you typed.",
+		chinese: "中文",
+		english: "English",
+		desk: "Desk",
+		title: "Desk title",
+		titleDesc: "The large heading on the home cards and the tab.",
+		look: "Apply this look",
+		lookDesc: "Mint paper and serif type. Off keeps the cards and your current theme.",
+		openOnStart: "Open on start",
+		openOnStartDesc: "Show the desk when the vault opens, instead of the last note.",
+		collapse: "Collapse file explorer",
+		collapseDesc: "Fold the left file tree when the desk opens.",
+		skip: "Skip these paths",
+		skipDesc: "Comma-separated folder prefixes hidden from cards and recents.",
+		rooms: "Rooms",
+		roomsDesc:
+			"Each card is a room. Point it at a folder, or leave the folder empty and nest child rooms under its id.",
+		addRoom: "Add room",
+		fromVault: "Build from top-level folders",
+		fromVaultNotice: "Rooms rebuilt from top-level folders.",
+		roomId: "Id",
+		remove: "Remove this room",
+		name: "Name",
+		nameDesc: "The large title in the middle of the card.",
+		folder: "Folder",
+		folderDesc: "A vault path such as 00-Inbox. Leave empty to make a group.",
+		kicker: "Kicker",
+		kickerDesc: "The small line at the top-left of the card, such as Inbox.",
+		line: "Line",
+		lineDesc: "The sentence under the title, what this room is for.",
+		parent: "Parent room id",
+		parentDesc: "The id of the parent room, such as cabinet. Then it leaves the home grid.",
+		quiet: "Quiet",
+		quietDesc: "Fades the card and keeps its notes out of recents.",
+		newRoom: "New room",
+	},
+} as const;
 
 type Page =
 	| { type: "home" }
@@ -554,153 +637,197 @@ class AnTouSettingTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
+	copy() {
+		return this.plugin.settings.uiLang === "en" ? COPY.en : COPY.zh;
+	}
+
 	display() {
 		const { containerEl } = this;
+		const t = this.copy();
+		const lang = this.plugin.settings.uiLang === "en" ? "en" : "zh";
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName("Desk title")
-			.setDesc("Shown on the home cards and the tab.")
-			.addText((t) =>
-				t.setValue(this.plugin.settings.title).onChange(async (v) => {
+			.setName(t.language)
+			.setDesc(t.languageDesc)
+			.addButton((b) => {
+				b.setButtonText(t.chinese).onClick(() => {
+					void this.setLang("zh");
+				});
+				if (lang === "zh") b.setCta();
+			})
+			.addButton((b) => {
+				b.setButtonText(t.english).onClick(() => {
+					void this.setLang("en");
+				});
+				if (lang === "en") b.setCta();
+			});
+
+		new Setting(containerEl).setName(t.desk).setHeading();
+
+		new Setting(containerEl)
+			.setName(t.title)
+			.setDesc(t.titleDesc)
+			.addText((box) =>
+				box.setValue(this.plugin.settings.title).onChange((v) => {
 					this.plugin.settings.title = v.trim() || "An Tou";
-					await this.plugin.saveSettings();
-					this.plugin.refreshDesks();
+					void this.saveAndRefresh();
 				})
 			);
 
 		new Setting(containerEl)
-			.setName("换上这套外观")
-			.setDesc("薄荷绿底和衬线字。关掉就只留卡片书桌，颜色仍用你现在的主题。")
-			.addToggle((t) =>
-				t.setValue(this.plugin.settings.applyLook !== false).onChange(async (v) => {
+			.setName(t.look)
+			.setDesc(t.lookDesc)
+			.addToggle((box) =>
+				box.setValue(this.plugin.settings.applyLook !== false).onChange((v) => {
 					this.plugin.settings.applyLook = v;
-					await this.plugin.saveSettings();
 					this.plugin.applyLook();
+					void this.plugin.saveSettings();
 				})
 			);
 
 		new Setting(containerEl)
-			.setName("Open on start")
-			.setDesc("Show the desk when the vault opens, instead of the last note.")
-			.addToggle((t) =>
-				t.setValue(this.plugin.settings.openOnStart).onChange(async (v) => {
+			.setName(t.openOnStart)
+			.setDesc(t.openOnStartDesc)
+			.addToggle((box) =>
+				box.setValue(this.plugin.settings.openOnStart).onChange((v) => {
 					this.plugin.settings.openOnStart = v;
-					await this.plugin.saveSettings();
+					void this.plugin.saveSettings();
 				})
 			);
 
 		new Setting(containerEl)
-			.setName("Collapse file explorer")
-			.addToggle((t) =>
-				t.setValue(this.plugin.settings.collapseExplorer).onChange(async (v) => {
+			.setName(t.collapse)
+			.setDesc(t.collapseDesc)
+			.addToggle((box) =>
+				box.setValue(this.plugin.settings.collapseExplorer).onChange((v) => {
 					this.plugin.settings.collapseExplorer = v;
-					await this.plugin.saveSettings();
+					void this.plugin.saveSettings();
 				})
 			);
 
 		new Setting(containerEl)
-			.setName("Skip paths")
-			.setDesc("Comma-separated folder prefixes to hide from cards and recents.")
-			.addText((t) =>
-				t.setValue(this.plugin.settings.skipPaths.join(", ")).onChange(async (v) => {
+			.setName(t.skip)
+			.setDesc(t.skipDesc)
+			.addText((box) =>
+				box.setValue(this.plugin.settings.skipPaths.join(", ")).onChange((v) => {
 					this.plugin.settings.skipPaths = v
 						.split(",")
 						.map((s) => s.trim())
 						.filter(Boolean);
-					await this.plugin.saveSettings();
-					this.plugin.refreshDesks();
+					void this.saveAndRefresh();
 				})
 			);
 
+		new Setting(containerEl).setName(t.rooms).setHeading();
+
 		new Setting(containerEl)
-			.setName("Rooms")
-			.setDesc("Each room is a card. Leave folder empty to make a group of child rooms. Set parent to a room id.")
+			.setDesc(t.roomsDesc)
 			.addButton((b) =>
-				b.setButtonText("Add room").onClick(async () => {
-					this.plugin.settings.rooms.push({
-						id: "room-" + Date.now().toString(36),
-						name: "New room",
-						kicker: "ROOM",
-					});
-					await this.plugin.saveSettings();
-					this.display();
-					this.plugin.refreshDesks();
+				b.setButtonText(t.addRoom).onClick(() => {
+					void this.addRoom();
 				})
 			)
 			.addButton((b) =>
-				b.setButtonText("From vault folders").onClick(async () => {
-					this.plugin.settings.rooms = this.plugin.scanRooms();
-					await this.plugin.saveSettings();
-					this.display();
-					this.plugin.refreshDesks();
-					new Notice("Rooms rebuilt from top-level folders.");
+				b.setButtonText(t.fromVault).onClick(() => {
+					void this.rebuildRooms();
 				})
 			);
 
 		for (const room of this.plugin.settings.rooms) {
-			this.drawRoom(containerEl, room);
+			this.drawRoom(containerEl, room, t);
 		}
 	}
 
-	drawRoom(containerEl: HTMLElement, room: Room) {
+	async setLang(uiLang: UiLang) {
+		this.plugin.settings.uiLang = uiLang;
+		await this.plugin.saveSettings();
+		this.display();
+	}
+
+	async saveAndRefresh() {
+		await this.plugin.saveSettings();
+		this.plugin.refreshDesks();
+	}
+
+	async addRoom() {
+		const t = this.copy();
+		this.plugin.settings.rooms.push({
+			id: "room-" + Date.now().toString(36),
+			name: t.newRoom,
+			kicker: "ROOM",
+		});
+		await this.saveAndRefresh();
+		this.display();
+	}
+
+	async rebuildRooms() {
+		this.plugin.settings.rooms = this.plugin.scanRooms();
+		await this.saveAndRefresh();
+		this.display();
+		new Notice(this.copy().fromVaultNotice);
+	}
+
+	drawRoom(containerEl: HTMLElement, room: Room, t: (typeof COPY)[UiLang]) {
 		const wrap = containerEl.createDiv({ cls: "an-tou-room-edit" });
 		new Setting(wrap)
-			.setName(room.name)
-			.setDesc(room.id)
-			.addText((t) =>
-				t.setPlaceholder("Name").setValue(room.name).onChange(async (v) => {
-					room.name = v;
-					await this.plugin.saveSettings();
-					this.plugin.refreshDesks();
-				})
-			)
-			.addText((t) =>
-				t.setPlaceholder("Folder").setValue(room.folder || "").onChange(async (v) => {
-					room.folder = v.trim() || undefined;
-					await this.plugin.saveSettings();
-					this.plugin.refreshDesks();
-				})
-			)
+			.setName(room.name || t.newRoom)
+			.setDesc(t.roomId + " · " + room.id)
 			.addExtraButton((b) =>
-				b.setIcon("trash").setTooltip("Remove").onClick(async () => {
-					this.plugin.settings.rooms = this.plugin.settings.rooms.filter((r) => r.id !== room.id);
-					await this.plugin.saveSettings();
-					this.display();
-					this.plugin.refreshDesks();
+				b.setIcon("trash").setTooltip(t.remove).onClick(() => {
+					void this.removeRoom(room.id);
 				})
 			);
 
-		new Setting(wrap)
-			.setName("Label")
-			.addText((t) =>
-				t.setPlaceholder("Kicker").setValue(room.kicker || "").onChange(async (v) => {
-					room.kicker = v;
-					await this.plugin.saveSettings();
-					this.plugin.refreshDesks();
-				})
-			)
-			.addText((t) =>
-				t.setPlaceholder("Line").setValue(room.line || "").onChange(async (v) => {
-					room.line = v;
-					await this.plugin.saveSettings();
-					this.plugin.refreshDesks();
-				})
-			)
-			.addText((t) =>
-				t.setPlaceholder("Parent id").setValue(room.parent || "").onChange(async (v) => {
-					room.parent = v.trim() || undefined;
-					await this.plugin.saveSettings();
-					this.plugin.refreshDesks();
-				})
-			)
-			.addToggle((t) =>
-				t.setValue(!!room.quiet).onChange(async (v) => {
+		const grid = wrap.createDiv({ cls: "an-tou-room-grid" });
+		this.textField(grid, t.name, t.nameDesc, room.name, (v) => {
+			room.name = v;
+		});
+		this.textField(grid, t.folder, t.folderDesc, room.folder || "", (v) => {
+			room.folder = v.trim() || undefined;
+		});
+		this.textField(grid, t.kicker, t.kickerDesc, room.kicker || "", (v) => {
+			room.kicker = v;
+		});
+		this.textField(grid, t.line, t.lineDesc, room.line || "", (v) => {
+			room.line = v;
+		});
+		this.textField(grid, t.parent, t.parentDesc, room.parent || "", (v) => {
+			room.parent = v.trim() || undefined;
+		});
+		new Setting(grid)
+			.setName(t.quiet)
+			.setDesc(t.quietDesc)
+			.addToggle((box) =>
+				box.setValue(!!room.quiet).onChange((v) => {
 					room.quiet = v;
-					await this.plugin.saveSettings();
-					this.plugin.refreshDesks();
+					void this.saveAndRefresh();
 				})
 			);
+	}
+
+	textField(
+		parent: HTMLElement,
+		name: string,
+		desc: string,
+		value: string,
+		assign: (v: string) => void
+	) {
+		new Setting(parent)
+			.setName(name)
+			.setDesc(desc)
+			.addText((box) =>
+				box.setValue(value).onChange((v) => {
+					assign(v);
+					void this.saveAndRefresh();
+				})
+			);
+	}
+
+	async removeRoom(id: string) {
+		this.plugin.settings.rooms = this.plugin.settings.rooms.filter((r) => r.id !== id);
+		await this.saveAndRefresh();
+		this.display();
 	}
 }
 
@@ -712,6 +839,7 @@ export default class AnTouPlugin extends Plugin {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, saved ?? {});
 		if (!Array.isArray(this.settings.rooms)) this.settings.rooms = [];
 		if (!Array.isArray(this.settings.skipPaths)) this.settings.skipPaths = [];
+		if (this.settings.uiLang !== "en") this.settings.uiLang = "zh";
 
 		this.registerView(VIEW_TYPE, (leaf) => new DeskView(leaf, this));
 		this.addCommand({

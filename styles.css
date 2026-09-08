@@ -327,9 +327,46 @@
 .an-tou-view .desk-card.span-2 { grid-column: span 2; }
 
 .an-tou-room-edit {
-  margin: 12px 0 18px;
-  padding-top: 8px;
-  border-top: 1px solid var(--background-modifier-border);
+  margin: 16px 0 20px;
+  padding: 4px 16px 10px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  background: var(--background-secondary);
+}
+
+.an-tou-room-edit > .setting-item {
+  border-top: none;
+  padding-top: 12px;
+}
+
+.an-tou-room-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 18px;
+}
+
+.an-tou-room-grid .setting-item {
+  border-top: none;
+  padding: 10px 0 12px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.an-tou-room-grid .setting-item-info {
+  margin-right: 0;
+}
+
+.an-tou-room-grid .setting-item-control {
+  justify-content: flex-start;
+}
+
+.an-tou-room-grid .setting-item-control input[type="text"] {
+  width: 100%;
+}
+
+@media (max-width: 720px) {
+  .an-tou-room-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 880px) {

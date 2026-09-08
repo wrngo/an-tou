@@ -1,6 +1,6 @@
 {
 	"name": "an-tou",
-	"version": "0.2.3",
+	"version": "0.2.4",
 	"description": "Open a glass card desk instead of the file tree.",
 	"main": "main.js",
 	"scripts": {

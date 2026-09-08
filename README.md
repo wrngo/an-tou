@@ -14,11 +14,17 @@ On first run, if you have not added rooms, it maps top-level folders.
 
 ## Settings
 
-- **换上这套外观** — mint paper and serif type. Off = cards only, keep your current theme
-- **Desk title** — tab and home heading
-- **Skip paths** — comma-separated prefixes to hide
-- **Rooms** — name, folder, kicker, line, parent id, quiet
-- **From vault folders** — rebuild rooms from the vault root
+Settings default to Chinese. Switch to English at the top of the page.
+
+- **Desk title** — home heading and tab
+- **Apply this look** — mint paper and serif type
+- **Rooms** — one card per room
+  - **Name** — large title on the card
+  - **Folder** — vault path; empty makes a group
+  - **Kicker** — small top-left line
+  - **Line** — sentence under the title
+  - **Parent room id** — nest under another room
+  - **Quiet** — fade the card, skip recents
 
 ## Install
 
@@ -40,8 +46,8 @@ npm run build
 Push a version tag that matches `manifest.json` (no `v` prefix). GitHub Actions builds the plugin, signs artifact attestations, and creates the release:
 
 ```
-git tag 0.2.3
-git push origin 0.2.3
+git tag 0.2.4
+git push origin 0.2.4
 ```
 
 Then submit or re-request review at [community.obsidian.md](https://community.obsidian.md).

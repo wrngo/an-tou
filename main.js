@@ -35,7 +35,84 @@ var DEFAULT_SETTINGS = {
   collapseExplorer: true,
   applyLook: true,
   skipPaths: [],
-  rooms: []
+  rooms: [],
+  uiLang: "zh"
+};
+var COPY = {
+  zh: {
+    language: "\u754C\u9762\u8BED\u8A00",
+    languageDesc: "\u53EA\u6539\u8BBE\u7F6E\u9875\u7684\u8BF4\u660E\u3002\u4E66\u684C\u5361\u7247\u4E0A\u7684\u4E2D\u6587\u6807\u9898\u8FD8\u662F\u4F60\u81EA\u5DF1\u586B\u7684\u3002",
+    chinese: "\u4E2D\u6587",
+    english: "English",
+    desk: "\u4E66\u684C",
+    title: "\u4E66\u684C\u6807\u9898",
+    titleDesc: "\u9996\u9875\u6700\u5927\u90A3\u884C\u5B57\uFF0C\u4E5F\u663E\u793A\u5728\u6807\u7B7E\u4E0A\u3002",
+    look: "\u6362\u4E0A\u8FD9\u5957\u5916\u89C2",
+    lookDesc: "\u8584\u8377\u7EFF\u5E95\u548C\u886C\u7EBF\u5B57\u3002\u5173\u6389\u5C31\u53EA\u7559\u5361\u7247\u4E66\u684C\uFF0C\u989C\u8272\u4ECD\u7528\u4F60\u73B0\u5728\u7684\u4E3B\u9898\u3002",
+    openOnStart: "\u6253\u5F00\u5E93\u65F6\u8FDB\u5165\u4E66\u684C",
+    openOnStartDesc: "\u542F\u52A8\u65F6\u6253\u5F00\u4E66\u684C\uFF0C\u800C\u4E0D\u662F\u4E0A\u6B21\u90A3\u7BC7\u7B14\u8BB0\u3002",
+    collapse: "\u6536\u8D77\u6587\u4EF6\u5217\u8868",
+    collapseDesc: "\u6253\u5F00\u4E66\u684C\u65F6\u628A\u5DE6\u8FB9\u6587\u4EF6\u6811\u6536\u8D77\u6765\u3002",
+    skip: "\u8DF3\u8FC7\u8FD9\u4E9B\u8DEF\u5F84",
+    skipDesc: "\u7528\u9017\u53F7\u5206\u9694\u3002\u8FD9\u4E9B\u6587\u4EF6\u5939\u4E0D\u4F1A\u51FA\u73B0\u5728\u5361\u7247\u548C\u300C\u6700\u8FD1\u300D\u91CC\u3002",
+    rooms: "\u623F\u95F4",
+    roomsDesc: "\u6BCF\u5F20\u5361\u7247\u662F\u4E00\u4E2A\u623F\u95F4\u3002\u586B\u6587\u4EF6\u5939\u5C31\u8FDB\u90A3\u4E2A\u76EE\u5F55\uFF1B\u4E0D\u586B\u6587\u4EF6\u5939\uFF0C\u53EA\u586B\u5B50\u623F\u95F4\u7684\u300C\u7236\u623F\u95F4\u7F16\u53F7\u300D\uFF0C\u8FD9\u4E00\u5F20\u5C31\u662F\u5206\u7EC4\u3002",
+    addRoom: "\u6DFB\u52A0\u623F\u95F4",
+    fromVault: "\u6309\u5E93\u6839\u76EE\u5F55\u751F\u6210",
+    fromVaultNotice: "\u5DF2\u6309\u9876\u5C42\u6587\u4EF6\u5939\u91CD\u5EFA\u623F\u95F4\u3002",
+    roomId: "\u7F16\u53F7",
+    remove: "\u5220\u9664\u8FD9\u4E2A\u623F\u95F4",
+    name: "\u540D\u79F0",
+    nameDesc: "\u5361\u7247\u4E2D\u95F4\u7684\u5927\u6807\u9898\u3002",
+    folder: "\u6587\u4EF6\u5939",
+    folderDesc: "\u5E93\u91CC\u7684\u8DEF\u5F84\uFF0C\u6BD4\u5982 00-Inbox\u3002\u7559\u7A7A\u5219\u8FD9\u5F20\u5361\u662F\u5206\u7EC4\u3002",
+    kicker: "\u89D2\u6807",
+    kickerDesc: "\u5361\u7247\u5DE6\u4E0A\u89D2\u90A3\u4E00\u5C0F\u884C\uFF0C\u6BD4\u5982 Inbox\u3002",
+    line: "\u8BF4\u660E",
+    lineDesc: "\u5361\u7247\u5E95\u4E0B\u90A3\u4E00\u884C\uFF0C\u5199\u8FD9\u683C\u662F\u5E72\u4EC0\u4E48\u7684\u3002",
+    parent: "\u7236\u623F\u95F4\u7F16\u53F7",
+    parentDesc: "\u586B\u4E0A\u4E00\u7EA7\u7684\u7F16\u53F7\uFF0C\u6BD4\u5982 cabinet\u3002\u586B\u4E86\u5C31\u4E0D\u51FA\u73B0\u5728\u9996\u9875\u3002",
+    quiet: "\u5B89\u9759",
+    quietDesc: "\u6253\u5F00\u540E\u5361\u7247\u53D8\u6DE1\uFF0C\u91CC\u9762\u7684\u7B14\u8BB0\u4E5F\u4E0D\u8FDB\u300C\u6700\u8FD1\u300D\u3002",
+    newRoom: "\u65B0\u623F\u95F4"
+  },
+  en: {
+    language: "Language",
+    languageDesc: "Settings copy only. Card titles stay whatever you typed.",
+    chinese: "\u4E2D\u6587",
+    english: "English",
+    desk: "Desk",
+    title: "Desk title",
+    titleDesc: "The large heading on the home cards and the tab.",
+    look: "Apply this look",
+    lookDesc: "Mint paper and serif type. Off keeps the cards and your current theme.",
+    openOnStart: "Open on start",
+    openOnStartDesc: "Show the desk when the vault opens, instead of the last note.",
+    collapse: "Collapse file explorer",
+    collapseDesc: "Fold the left file tree when the desk opens.",
+    skip: "Skip these paths",
+    skipDesc: "Comma-separated folder prefixes hidden from cards and recents.",
+    rooms: "Rooms",
+    roomsDesc: "Each card is a room. Point it at a folder, or leave the folder empty and nest child rooms under its id.",
+    addRoom: "Add room",
+    fromVault: "Build from top-level folders",
+    fromVaultNotice: "Rooms rebuilt from top-level folders.",
+    roomId: "Id",
+    remove: "Remove this room",
+    name: "Name",
+    nameDesc: "The large title in the middle of the card.",
+    folder: "Folder",
+    folderDesc: "A vault path such as 00-Inbox. Leave empty to make a group.",
+    kicker: "Kicker",
+    kickerDesc: "The small line at the top-left of the card, such as Inbox.",
+    line: "Line",
+    lineDesc: "The sentence under the title, what this room is for.",
+    parent: "Parent room id",
+    parentDesc: "The id of the parent room, such as cabinet. Then it leaves the home grid.",
+    quiet: "Quiet",
+    quietDesc: "Fades the card and keeps its notes out of recents.",
+    newRoom: "New room"
+  }
 };
 function slug(name) {
   const s = name.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]+/g, "-").replace(/^-|-$/g, "");
@@ -488,113 +565,140 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
     super(app, plugin);
     this.plugin = plugin;
   }
+  copy() {
+    return this.plugin.settings.uiLang === "en" ? COPY.en : COPY.zh;
+  }
   display() {
     const { containerEl } = this;
+    const t = this.copy();
+    const lang = this.plugin.settings.uiLang === "en" ? "en" : "zh";
     containerEl.empty();
-    new import_obsidian.Setting(containerEl).setName("Desk title").setDesc("Shown on the home cards and the tab.").addText(
-      (t) => t.setValue(this.plugin.settings.title).onChange(async (v) => {
+    new import_obsidian.Setting(containerEl).setName(t.language).setDesc(t.languageDesc).addButton((b) => {
+      b.setButtonText(t.chinese).onClick(() => {
+        void this.setLang("zh");
+      });
+      if (lang === "zh")
+        b.setCta();
+    }).addButton((b) => {
+      b.setButtonText(t.english).onClick(() => {
+        void this.setLang("en");
+      });
+      if (lang === "en")
+        b.setCta();
+    });
+    new import_obsidian.Setting(containerEl).setName(t.desk).setHeading();
+    new import_obsidian.Setting(containerEl).setName(t.title).setDesc(t.titleDesc).addText(
+      (box) => box.setValue(this.plugin.settings.title).onChange((v) => {
         this.plugin.settings.title = v.trim() || "An Tou";
-        await this.plugin.saveSettings();
-        this.plugin.refreshDesks();
+        void this.saveAndRefresh();
       })
     );
-    new import_obsidian.Setting(containerEl).setName("\u6362\u4E0A\u8FD9\u5957\u5916\u89C2").setDesc("\u8584\u8377\u7EFF\u5E95\u548C\u886C\u7EBF\u5B57\u3002\u5173\u6389\u5C31\u53EA\u7559\u5361\u7247\u4E66\u684C\uFF0C\u989C\u8272\u4ECD\u7528\u4F60\u73B0\u5728\u7684\u4E3B\u9898\u3002").addToggle(
-      (t) => t.setValue(this.plugin.settings.applyLook !== false).onChange(async (v) => {
+    new import_obsidian.Setting(containerEl).setName(t.look).setDesc(t.lookDesc).addToggle(
+      (box) => box.setValue(this.plugin.settings.applyLook !== false).onChange((v) => {
         this.plugin.settings.applyLook = v;
-        await this.plugin.saveSettings();
         this.plugin.applyLook();
+        void this.plugin.saveSettings();
       })
     );
-    new import_obsidian.Setting(containerEl).setName("Open on start").setDesc("Show the desk when the vault opens, instead of the last note.").addToggle(
-      (t) => t.setValue(this.plugin.settings.openOnStart).onChange(async (v) => {
+    new import_obsidian.Setting(containerEl).setName(t.openOnStart).setDesc(t.openOnStartDesc).addToggle(
+      (box) => box.setValue(this.plugin.settings.openOnStart).onChange((v) => {
         this.plugin.settings.openOnStart = v;
-        await this.plugin.saveSettings();
+        void this.plugin.saveSettings();
       })
     );
-    new import_obsidian.Setting(containerEl).setName("Collapse file explorer").addToggle(
-      (t) => t.setValue(this.plugin.settings.collapseExplorer).onChange(async (v) => {
+    new import_obsidian.Setting(containerEl).setName(t.collapse).setDesc(t.collapseDesc).addToggle(
+      (box) => box.setValue(this.plugin.settings.collapseExplorer).onChange((v) => {
         this.plugin.settings.collapseExplorer = v;
-        await this.plugin.saveSettings();
+        void this.plugin.saveSettings();
       })
     );
-    new import_obsidian.Setting(containerEl).setName("Skip paths").setDesc("Comma-separated folder prefixes to hide from cards and recents.").addText(
-      (t) => t.setValue(this.plugin.settings.skipPaths.join(", ")).onChange(async (v) => {
+    new import_obsidian.Setting(containerEl).setName(t.skip).setDesc(t.skipDesc).addText(
+      (box) => box.setValue(this.plugin.settings.skipPaths.join(", ")).onChange((v) => {
         this.plugin.settings.skipPaths = v.split(",").map((s) => s.trim()).filter(Boolean);
-        await this.plugin.saveSettings();
-        this.plugin.refreshDesks();
+        void this.saveAndRefresh();
       })
     );
-    new import_obsidian.Setting(containerEl).setName("Rooms").setDesc("Each room is a card. Leave folder empty to make a group of child rooms. Set parent to a room id.").addButton(
-      (b) => b.setButtonText("Add room").onClick(async () => {
-        this.plugin.settings.rooms.push({
-          id: "room-" + Date.now().toString(36),
-          name: "New room",
-          kicker: "ROOM"
-        });
-        await this.plugin.saveSettings();
-        this.display();
-        this.plugin.refreshDesks();
+    new import_obsidian.Setting(containerEl).setName(t.rooms).setHeading();
+    new import_obsidian.Setting(containerEl).setDesc(t.roomsDesc).addButton(
+      (b) => b.setButtonText(t.addRoom).onClick(() => {
+        void this.addRoom();
       })
     ).addButton(
-      (b) => b.setButtonText("From vault folders").onClick(async () => {
-        this.plugin.settings.rooms = this.plugin.scanRooms();
-        await this.plugin.saveSettings();
-        this.display();
-        this.plugin.refreshDesks();
-        new import_obsidian.Notice("Rooms rebuilt from top-level folders.");
+      (b) => b.setButtonText(t.fromVault).onClick(() => {
+        void this.rebuildRooms();
       })
     );
     for (const room of this.plugin.settings.rooms) {
-      this.drawRoom(containerEl, room);
+      this.drawRoom(containerEl, room, t);
     }
   }
-  drawRoom(containerEl, room) {
+  async setLang(uiLang) {
+    this.plugin.settings.uiLang = uiLang;
+    await this.plugin.saveSettings();
+    this.display();
+  }
+  async saveAndRefresh() {
+    await this.plugin.saveSettings();
+    this.plugin.refreshDesks();
+  }
+  async addRoom() {
+    const t = this.copy();
+    this.plugin.settings.rooms.push({
+      id: "room-" + Date.now().toString(36),
+      name: t.newRoom,
+      kicker: "ROOM"
+    });
+    await this.saveAndRefresh();
+    this.display();
+  }
+  async rebuildRooms() {
+    this.plugin.settings.rooms = this.plugin.scanRooms();
+    await this.saveAndRefresh();
+    this.display();
+    new import_obsidian.Notice(this.copy().fromVaultNotice);
+  }
+  drawRoom(containerEl, room, t) {
     const wrap = containerEl.createDiv({ cls: "an-tou-room-edit" });
-    new import_obsidian.Setting(wrap).setName(room.name).setDesc(room.id).addText(
-      (t) => t.setPlaceholder("Name").setValue(room.name).onChange(async (v) => {
-        room.name = v;
-        await this.plugin.saveSettings();
-        this.plugin.refreshDesks();
-      })
-    ).addText(
-      (t) => t.setPlaceholder("Folder").setValue(room.folder || "").onChange(async (v) => {
-        room.folder = v.trim() || void 0;
-        await this.plugin.saveSettings();
-        this.plugin.refreshDesks();
-      })
-    ).addExtraButton(
-      (b) => b.setIcon("trash").setTooltip("Remove").onClick(async () => {
-        this.plugin.settings.rooms = this.plugin.settings.rooms.filter((r) => r.id !== room.id);
-        await this.plugin.saveSettings();
-        this.display();
-        this.plugin.refreshDesks();
+    new import_obsidian.Setting(wrap).setName(room.name || t.newRoom).setDesc(t.roomId + " \xB7 " + room.id).addExtraButton(
+      (b) => b.setIcon("trash").setTooltip(t.remove).onClick(() => {
+        void this.removeRoom(room.id);
       })
     );
-    new import_obsidian.Setting(wrap).setName("Label").addText(
-      (t) => t.setPlaceholder("Kicker").setValue(room.kicker || "").onChange(async (v) => {
-        room.kicker = v;
-        await this.plugin.saveSettings();
-        this.plugin.refreshDesks();
-      })
-    ).addText(
-      (t) => t.setPlaceholder("Line").setValue(room.line || "").onChange(async (v) => {
-        room.line = v;
-        await this.plugin.saveSettings();
-        this.plugin.refreshDesks();
-      })
-    ).addText(
-      (t) => t.setPlaceholder("Parent id").setValue(room.parent || "").onChange(async (v) => {
-        room.parent = v.trim() || void 0;
-        await this.plugin.saveSettings();
-        this.plugin.refreshDesks();
-      })
-    ).addToggle(
-      (t) => t.setValue(!!room.quiet).onChange(async (v) => {
+    const grid = wrap.createDiv({ cls: "an-tou-room-grid" });
+    this.textField(grid, t.name, t.nameDesc, room.name, (v) => {
+      room.name = v;
+    });
+    this.textField(grid, t.folder, t.folderDesc, room.folder || "", (v) => {
+      room.folder = v.trim() || void 0;
+    });
+    this.textField(grid, t.kicker, t.kickerDesc, room.kicker || "", (v) => {
+      room.kicker = v;
+    });
+    this.textField(grid, t.line, t.lineDesc, room.line || "", (v) => {
+      room.line = v;
+    });
+    this.textField(grid, t.parent, t.parentDesc, room.parent || "", (v) => {
+      room.parent = v.trim() || void 0;
+    });
+    new import_obsidian.Setting(grid).setName(t.quiet).setDesc(t.quietDesc).addToggle(
+      (box) => box.setValue(!!room.quiet).onChange((v) => {
         room.quiet = v;
-        await this.plugin.saveSettings();
-        this.plugin.refreshDesks();
+        void this.saveAndRefresh();
       })
     );
+  }
+  textField(parent, name, desc, value, assign) {
+    new import_obsidian.Setting(parent).setName(name).setDesc(desc).addText(
+      (box) => box.setValue(value).onChange((v) => {
+        assign(v);
+        void this.saveAndRefresh();
+      })
+    );
+  }
+  async removeRoom(id) {
+    this.plugin.settings.rooms = this.plugin.settings.rooms.filter((r) => r.id !== id);
+    await this.saveAndRefresh();
+    this.display();
   }
 };
 var AnTouPlugin = class extends import_obsidian.Plugin {
@@ -609,6 +713,8 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
       this.settings.rooms = [];
     if (!Array.isArray(this.settings.skipPaths))
       this.settings.skipPaths = [];
+    if (this.settings.uiLang !== "en")
+      this.settings.uiLang = "zh";
     this.registerView(VIEW_TYPE, (leaf) => new DeskView(leaf, this));
     this.addCommand({
       id: "open-desk",
