@@ -491,7 +491,6 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    new import_obsidian.Setting(containerEl).setName("An Tou").setHeading();
     new import_obsidian.Setting(containerEl).setName("Desk title").setDesc("Shown on the home cards and the tab.").addText(
       (t) => t.setValue(this.plugin.settings.title).onChange(async (v) => {
         this.plugin.settings.title = v.trim() || "An Tou";

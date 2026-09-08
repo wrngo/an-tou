@@ -557,7 +557,6 @@ class AnTouSettingTab extends PluginSettingTab {
 	display() {
 		const { containerEl } = this;
 		containerEl.empty();
-		new Setting(containerEl).setName("An Tou").setHeading();
 
 		new Setting(containerEl)
 			.setName("Desk title")
