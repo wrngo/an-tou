@@ -37,10 +37,14 @@ npm run build
 
 ## Publish
 
-1. Put this repo on GitHub
-2. `npm run build`
-3. GitHub release tagged `0.2.0` with `main.js`, `manifest.json`, `styles.css`
-4. Submit at [community.obsidian.md](https://community.obsidian.md)
+Push a version tag that matches `manifest.json` (no `v` prefix). GitHub Actions builds the plugin, signs artifact attestations, and creates the release:
+
+```
+git tag 0.2.1
+git push origin 0.2.1
+```
+
+Then submit or re-request review at [community.obsidian.md](https://community.obsidian.md).
 
 Plugin id: `an-tou`. The store name has to stay English / Basic Latin.
 
