@@ -29,6 +29,7 @@ interface Room {
 	pinBacklog?: boolean;
 	maxNotes?: number;
 	draft?: boolean;
+	stale?: boolean;
 }
 
 type UiLang = "zh" | "en";
@@ -44,6 +45,7 @@ interface AnTouSettings {
 	skipSeeded: boolean;
 	rooms: Room[];
 	uiLang: UiLang;
+	welcomed: boolean;
 }
 
 const DEFAULT_SETTINGS: AnTouSettings = {
@@ -57,6 +59,7 @@ const DEFAULT_SETTINGS: AnTouSettings = {
 	skipSeeded: false,
 	rooms: [],
 	uiLang: "zh",
+	welcomed: false,
 };
 
 const COPY = {
@@ -114,7 +117,7 @@ const COPY = {
 		saveRoom: "保存",
 		draftHint: "未保存。填好后点保存，这张卡会移到最下面。",
 		deleteTitle: "删掉「{name}」？",
-		deleteHolds: "里面还收着 {n} 个房间。删掉之后它们会回到首页，不会跟着消失。",
+		deleteHolds: "里面还收着 {n} 个房间。删掉之后它们会回到首页，它们自己的子房间跟着一起走。",
 		deleteNotesSafe: "你的笔记和文件夹一个都不会动。",
 		deleteConfirm: "删掉",
 		deleteCancel: "算了",
@@ -129,12 +132,45 @@ const COPY = {
 		helpFolderCap: "文件夹",
 		helpFolderNote: "填 00-Inbox 这类路径。留空的话，点进去看到的是子房间，不是笔记。",
 		helpParentCap: "放进哪个房间",
-		helpParentNote: "个人思考要藏进收纳柜，就在它的「放进哪个房间」里选收纳柜，首页就只剩收纳柜。",
+		helpParentNote: "在「放进哪个房间」里选「收纳柜」，这张卡就从首页收进柜子里。",
 		helpQuietCap: "卡片变淡",
 		helpQuietNote: "打开后这张卡变淡，里面的笔记也不出现在「最近」。",
 		helpCountCap: "数量，不用填",
 		helpHome: "首页",
 		helpInside: "点进收纳柜之后",
+		sampleName: "入口",
+		sampleLine: "今天这一张",
+		sampleCabinet: "收纳柜",
+		sampleThinking: "个人思考",
+		staleFolder: "文件夹已不存在",
+		roleGroupHidden: "（文件夹 {folder} 里的笔记不会显示）",
+		roleNoFolder: "还没配文件夹，点了没反应",
+		maxNotesBad: "只能填大于 0 的整数，留空就自动决定。",
+		nameRequired: "先给这个房间起个名字。",
+		recent: "最近",
+		emptyRooms: "还没有房间。打开设置添加文件夹，或从库根目录生成。",
+		backlogLede: "正本在 Backlog。",
+		mainFile: "正本",
+		recentSlips: "最近的纸条",
+		noMoreNotes: "没有更多笔记。",
+		emptyFolder: "这一格还没有笔记。",
+		newNote: "新笔记",
+		newNotePlaceholder: "这篇叫什么",
+		createFailed: "没写成。",
+		folderGone: "文件夹不在。",
+		untitled: "未命名",
+		addHere: "在这里新建笔记",
+		more: (n: number) => "其余 " + n + " 条",
+		noteCount: (n: number) => n + " 篇笔记",
+		welcomeTitle: "书桌准备好了",
+		welcomeSub: "在动你的库之前，先说清楚我做了什么。",
+		welcomePoint1: "换上了薄荷绿配色和衬线字，随时可以在设置里关掉",
+		welcomePoint2: "把左边的文件树收起来了，点一下就能拉回来",
+		welcomePoint3: "没有隐藏左边那排图标，想更清爽可以自己去开",
+		welcomePoint4: "你的笔记和文件夹一个都没动过",
+		welcomePick: (n: number) => "你的库里有 " + n + " 个文件夹。挑几个放首页：",
+		welcomeAddAll: "全都放上去",
+		welcomeStart: "就用选中的这几个，开始",
 	},
 	en: {
 		language: "Language",
@@ -190,7 +226,7 @@ const COPY = {
 		saveRoom: "Save",
 		draftHint: "Unsaved. Fill it in, then save, and it moves to the bottom.",
 		deleteTitle: "Delete \"{name}\"?",
-		deleteHolds: "It holds {n} rooms. They move back to home instead of disappearing.",
+		deleteHolds: "It holds {n} rooms. They move back to home, and their own children come with them.",
 		deleteNotesSafe: "Your notes and folders are untouched.",
 		deleteConfirm: "Delete",
 		deleteCancel: "Cancel",
@@ -205,12 +241,45 @@ const COPY = {
 		helpFolderCap: "Folder",
 		helpFolderNote: "A path like 00-Inbox. Leave empty and this card is only a group.",
 		helpParentCap: "Put inside this room",
-		helpParentNote: "To hide Thinking inside Cabinet, pick Cabinet in its Put inside this room, and it leaves the home grid.",
+		helpParentNote: "Pick \"Cabinet\" under \"Put inside this room\" and the card leaves the home grid.",
 		helpQuietCap: "Fade the card",
 		helpQuietNote: "The card fades, and its notes stay out of recents.",
 		helpCountCap: "Count, automatic",
 		helpHome: "Home",
 		helpInside: "After you open Cabinet",
+		sampleName: "Inbox",
+		sampleLine: "Today's one",
+		sampleCabinet: "Cabinet",
+		sampleThinking: "Thinking",
+		staleFolder: "Folder is gone",
+		roleGroupHidden: " (notes in {folder} stay hidden)",
+		roleNoFolder: "No folder yet — this card does nothing",
+		maxNotesBad: "Whole number above zero, or leave it empty.",
+		nameRequired: "Give the room a name first.",
+		recent: "Recent",
+		emptyRooms: "No rooms yet. Add folders in settings, or build them from your vault.",
+		backlogLede: "The main file is Backlog.",
+		mainFile: "Main file",
+		recentSlips: "Recent slips",
+		noMoreNotes: "No more notes.",
+		emptyFolder: "No notes in this room yet.",
+		newNote: "New note",
+		newNotePlaceholder: "What is it called",
+		createFailed: "Could not create the note.",
+		folderGone: "That folder is gone.",
+		untitled: "Untitled",
+		addHere: "New note here",
+		more: (n: number) => n + " more",
+		noteCount: (n: number) => n + " notes",
+		welcomeTitle: "Your desk is ready",
+		welcomeSub: "Before touching your vault, here is what changed.",
+		welcomePoint1: "Mint palette and serif type — switch them off in settings anytime",
+		welcomePoint2: "The file tree is folded — one click brings it back",
+		welcomePoint3: "The ribbon is untouched — hide it yourself if you want",
+		welcomePoint4: "Your notes and folders were not touched",
+		welcomePick: (n: number) => "Your vault has " + n + " folders. Pick a few for the home grid:",
+		welcomeAddAll: "Add all",
+		welcomeStart: "Start with these",
 	},
 } as const;
 
@@ -227,6 +296,7 @@ type FolderPage = {
 
 type Page =
 	| { type: "home" }
+	| { type: "welcome" }
 	| { type: "group"; room: Room }
 	| ({ type: "folder" } & FolderPage)
 	| ({ type: "more" } & FolderPage & { skip: number });
@@ -275,9 +345,9 @@ function kickerOf(folderName: string): string {
 	return s.slice(0, 4);
 }
 
-function noteCountLine(n: number, zh: boolean): string | undefined {
+function noteCountLine(n: number, copy: Copy): string | undefined {
 	if (n <= 0) return undefined;
-	return zh ? n + " 篇笔记" : n + " notes";
+	return copy.noteCount(n);
 }
 
 function isAutoLine(line?: string): boolean {
@@ -381,9 +451,8 @@ async function noteCardCopy(app: App, file: TFile): Promise<{ title: string; lin
 	return { title, line };
 }
 
-function todayLabel(): string {
-	const lang = document.documentElement.lang || navigator.language || "zh-CN";
-	const tag = lang.toLowerCase().startsWith("zh") ? "zh-CN" : lang;
+function todayLabel(uiLang: UiLang): string {
+	const tag = uiLang === "en" ? "en-US" : "zh-CN";
 	return new Date().toLocaleDateString(tag, { month: "long", day: "numeric" });
 }
 
@@ -396,8 +465,8 @@ function inboxStamp(): string {
 	return `${d.getFullYear()}-${twoDigits(d.getMonth() + 1)}-${twoDigits(d.getDate())} ${twoDigits(d.getHours())}${twoDigits(d.getMinutes())}`;
 }
 
-function safeName(name: string): string {
-	return name.replace(/[\\/:*?"<>|]/g, "").replace(/\s+/g, " ").trim() || "未命名";
+function safeName(name: string, copy: Copy): string {
+	return name.replace(/[\\/:*?"<>|]/g, "").replace(/\s+/g, " ").trim() || copy.untitled;
 }
 
 function isInboxFolder(folder: string): boolean {
@@ -431,19 +500,21 @@ function closestFolder(query: string, folders: string[]): string {
 
 class NameModal extends Modal {
 	preset: string;
+	t: Copy;
 	onSubmit: (value: string) => void;
 
-	constructor(app: App, preset: string, onSubmit: (value: string) => void) {
+	constructor(app: App, preset: string, t: Copy, onSubmit: (value: string) => void) {
 		super(app);
 		this.preset = preset || "";
+		this.t = t;
 		this.onSubmit = onSubmit;
 	}
 
 	onOpen() {
-		this.titleEl.setText("新笔记");
+		this.titleEl.setText(this.t.newNote);
 		const input = this.contentEl.createEl("input", { type: "text", cls: "prompt-input" });
 		input.value = this.preset;
-		input.placeholder = "这篇叫什么";
+		input.placeholder = this.t.newNotePlaceholder;
 		input.addEventListener("keydown", (e) => {
 			if (e.key !== "Enter") return;
 			e.preventDefault();
@@ -556,6 +627,10 @@ class DeskView extends ItemView {
 		return "layout-grid";
 	}
 
+	copy(): Copy {
+		return this.plugin.settings.uiLang === "en" ? COPY.en : COPY.zh;
+	}
+
 	async onOpen() {
 		this.contentEl.addClass("an-tou-view");
 		this.registerEvent(this.app.vault.on("create", () => this.safeRender()));
@@ -601,6 +676,7 @@ class DeskView extends ItemView {
 	}
 
 	safeRender() {
+		if (this.current().type === "welcome") return;
 		if (!this.isShownNow()) {
 			this.dirty = true;
 			if (this._tid) {
@@ -734,7 +810,8 @@ class DeskView extends ItemView {
 	}
 
 	async createNamedNote(folder: string, raw: string) {
-		const base = safeName(raw || (isInboxFolder(folder) ? inboxStamp() : "未命名"));
+		const t = this.copy();
+		const base = safeName(raw || (isInboxFolder(folder) ? inboxStamp() : t.untitled), t);
 		let filename = base;
 		let n = 2;
 		while (this.app.vault.getAbstractFileByPath(folder + "/" + filename + ".md")) {
@@ -744,18 +821,27 @@ class DeskView extends ItemView {
 			const file = await this.app.vault.create(folder + "/" + filename + ".md", "");
 			await this.openNote(file);
 		} catch {
-			new Notice("没写成。");
+			new Notice(t.createFailed);
 		}
+	}
+
+	async quickNote(folder: string) {
+		if (!folder) return;
+		if (!this.app.vault.getAbstractFileByPath(folder)) {
+			new Notice(this.copy().folderGone);
+			return;
+		}
+		await this.createNamedNote(folder, inboxStamp());
 	}
 
 	async newNote(folder: string) {
 		if (!folder) return;
 		if (!this.app.vault.getAbstractFileByPath(folder)) {
-			new Notice("文件夹不在。");
+			new Notice(this.copy().folderGone);
 			return;
 		}
 		const preset = isInboxFolder(folder) ? inboxStamp() : "";
-		new NameModal(this.app, preset, (raw) => {
+		new NameModal(this.app, preset, this.copy(), (raw: string) => {
 			void this.createNamedNote(folder, raw);
 		}).open();
 	}
@@ -770,15 +856,17 @@ class DeskView extends ItemView {
 			quiet?: boolean;
 			note?: boolean;
 			span2?: boolean;
+			onAdd?: () => void;
 		},
 		onClick?: () => void
 	) {
-		const el = parent.createEl("button", {
+		const el = parent.createEl("div", {
 			cls:
 				"desk-card" +
 				(spec.quiet ? " is-quiet" : "") +
 				(spec.note ? " is-note" : "") +
 				(spec.span2 ? " span-2" : ""),
+			attr: onClick ? { role: "button", tabindex: "0" } : {},
 		});
 		if (spec.kicker) el.createEl("span", { cls: "desk-kicker", text: spec.kicker });
 		else if (!spec.note) el.createEl("span", { cls: "desk-kicker", text: "\u00a0" });
@@ -788,8 +876,28 @@ class DeskView extends ItemView {
 		el.createEl("strong", { text: spec.title });
 		if (spec.line) el.createEl("span", { cls: "desk-line", text: spec.line });
 		else if (!spec.note) el.createEl("span", { cls: "desk-line", text: "\u00a0" });
-		if (onClick) el.addEventListener("click", onClick);
-		else el.addClass("is-still");
+		if (spec.onAdd) {
+			const add = el.createEl("button", {
+				cls: "desk-add",
+				text: "+",
+				attr: { type: "button", "aria-label": this.copy().addHere },
+			});
+			add.addEventListener("click", (e) => {
+				e.preventDefault();
+				e.stopPropagation();
+				spec.onAdd?.();
+			});
+		}
+		if (onClick) {
+			el.addEventListener("click", onClick);
+			el.addEventListener("keydown", (e: KeyboardEvent) => {
+				if (e.key !== "Enter" && e.key !== " ") return;
+				e.preventDefault();
+				onClick();
+			});
+		} else {
+			el.addClass("is-still");
+		}
 		return el;
 	}
 
@@ -805,7 +913,7 @@ class DeskView extends ItemView {
 			const add = bar.createEl("button", {
 				cls: "an-tou-add",
 				text: "+",
-				attr: { type: "button", "aria-label": "新笔记" },
+				attr: { type: "button", "aria-label": this.copy().newNote },
 			});
 			add.addEventListener("click", (e) => {
 				e.preventDefault();
@@ -823,7 +931,8 @@ class DeskView extends ItemView {
 			root.empty();
 			const inner = root.createDiv({ cls: "an-tou-inner" });
 			const page = this.current();
-			if (page.type === "home") await this.renderHome(inner, seq);
+			if (page.type === "welcome") this.renderWelcome(inner);
+			else if (page.type === "home") await this.renderHome(inner, seq);
 			else if (page.type === "group") this.renderGroup(inner, page.room);
 			else if (page.type === "more") await this.renderMore(inner, page, seq);
 			else await this.renderFolder(inner, page, seq);
@@ -832,16 +941,77 @@ class DeskView extends ItemView {
 		}
 	}
 
+	topFolders(): TFolder[] {
+		const skip = this.plugin.settings.skipPaths;
+		return this.app.vault.getRoot().children.filter(
+			(c): c is TFolder =>
+				c instanceof TFolder && !c.name.startsWith(".") && !skipped(c.path, skip)
+		);
+	}
+
+	renderWelcome(inner: HTMLElement) {
+		const t = this.copy();
+		inner.createEl("h1", { text: t.welcomeTitle });
+		inner.createEl("p", { cls: "an-tou-lede", text: t.welcomeSub });
+
+		const list = inner.createEl("ul", { cls: "an-tou-welcome-list" });
+		for (const line of [t.welcomePoint1, t.welcomePoint2, t.welcomePoint3, t.welcomePoint4]) {
+			list.createEl("li", { text: line });
+		}
+
+		const folders = this.topFolders();
+		inner.createEl("p", { cls: "an-tou-lede", text: t.welcomePick(folders.length) });
+
+		const picked = new Set(folders.slice(0, 6).map((f) => f.path));
+		const chips = inner.createDiv({ cls: "an-tou-chips" });
+		for (const folder of folders) {
+			const chip = chips.createEl("button", {
+				cls: "an-tou-chip" + (picked.has(folder.path) ? " is-on" : ""),
+				text: folder.name,
+				attr: { type: "button", "aria-pressed": picked.has(folder.path) ? "true" : "false" },
+			});
+			chip.addEventListener("click", () => {
+				const on = picked.has(folder.path);
+				if (on) picked.delete(folder.path);
+				else picked.add(folder.path);
+				chip.toggleClass("is-on", !on);
+				chip.setAttribute("aria-pressed", on ? "false" : "true");
+			});
+		}
+
+		const row = inner.createDiv({ cls: "an-tou-welcome-btns" });
+		const all = row.createEl("button", { text: t.welcomeAddAll, attr: { type: "button" } });
+		all.addEventListener("click", () => {
+			void this.finishWelcome(null);
+		});
+		const go = row.createEl("button", {
+			cls: "mod-cta",
+			text: t.welcomeStart,
+			attr: { type: "button" },
+		});
+		go.addEventListener("click", () => {
+			void this.finishWelcome([...picked]);
+		});
+	}
+
+	async finishWelcome(only: string[] | null) {
+		const plugin = this.plugin;
+		plugin.settings.rooms = only === null ? plugin.scanRooms() : plugin.scanRooms(only, false);
+		plugin.settings.welcomed = true;
+		await plugin.saveSettings();
+		await this.resetHome();
+	}
+
 	async renderHome(inner: HTMLElement, seq: number) {
 		const title = this.plugin.settings.title || DEFAULT_TITLE;
 		inner.createEl("h1", { text: title });
-		inner.createEl("span", { cls: "an-tou-date", text: todayLabel() });
+		inner.createEl("span", { cls: "an-tou-date", text: todayLabel(this.plugin.settings.uiLang) });
 
 		const rooms = this.homeRooms();
 		if (rooms.length === 0) {
 			inner.createEl("p", {
 				cls: "an-tou-lede",
-				text: "还没有房间。打开设置添加文件夹，或从库根目录生成。",
+				text: this.copy().emptyRooms,
 			});
 			return;
 		}
@@ -857,18 +1027,21 @@ class DeskView extends ItemView {
 					title: room.name,
 					line: room.line,
 					quiet: room.quiet,
+					onAdd: room.folder ? () => void this.quickNote(room.folder as string) : undefined,
 				},
 				() => this.openRoom(room, title)
 			);
 		}
 
-		inner.createEl("h2", { text: "最近" });
+		inner.createEl("h2", { text: this.copy().recent });
 		const recentGrid = inner.createDiv({ cls: "an-tou-grid" });
 		const recent = this.recentNotes();
-		for (const entry of recent) {
+		const recentCopies = await Promise.all(recent.map((e) => noteCardCopy(this.app, e.file)));
+		if (seq !== this.renderSeq) return;
+		for (let i = 0; i < recent.length; i++) {
+			const entry = recent[i];
 			const file = entry.file;
-			const copy = await noteCardCopy(this.app, file);
-			if (seq !== this.renderSeq) return;
+			const copy = recentCopies[i];
 			this.card(
 				recentGrid,
 				{
@@ -943,6 +1116,7 @@ class DeskView extends ItemView {
 					title: child.name,
 					line: child.line || (n === 1 && files[0] ? titleOf(files[0]) : ""),
 					quiet: this.isQuietLine(child),
+					onAdd: child.folder ? () => void this.quickNote(child.folder as string) : undefined,
 				},
 				() => this.openRoom(child, room.name)
 			);
@@ -954,6 +1128,7 @@ class DeskView extends ItemView {
 		page: Extract<Page, { type: "folder" }>,
 		seq: number
 	) {
+		const t = this.copy();
 		const title = this.plugin.settings.title || DEFAULT_TITLE;
 		const goHome = () => {
 			this.stack = [{ type: "home" }];
@@ -970,8 +1145,8 @@ class DeskView extends ItemView {
 		const subs = this.subfolders(page.folder);
 
 		if (useBacklog && backlog) {
-			inner.createEl("p", { cls: "an-tou-lede", text: "正本在 Backlog。" });
-			inner.createEl("h2", { text: "正本" });
+			inner.createEl("p", { cls: "an-tou-lede", text: t.backlogLede });
+			inner.createEl("h2", { text: t.mainFile });
 			const top = inner.createDiv({ cls: "an-tou-grid" });
 			this.card(
 				top,
@@ -1005,11 +1180,13 @@ class DeskView extends ItemView {
 		const rest = Math.max(0, notes.length - cap);
 		if (rest) notes = notes.slice(0, cap);
 
-		if (useBacklog) inner.createEl("h2", { text: "最近的纸条" });
+		if (useBacklog) inner.createEl("h2", { text: t.recentSlips });
 		const grid = inner.createDiv({ cls: "an-tou-grid" });
-		for (const file of notes) {
-			const copy = await noteCardCopy(this.app, file);
-			if (seq !== this.renderSeq) return;
+		const copies = await Promise.all(notes.map((f) => noteCardCopy(this.app, f)));
+		if (seq !== this.renderSeq) return;
+		for (let i = 0; i < notes.length; i++) {
+			const file = notes[i];
+			const copy = copies[i];
 			this.card(
 				grid,
 				{ kicker: page.kicker, title: copy.title, line: copy.line, note: true },
@@ -1022,7 +1199,7 @@ class DeskView extends ItemView {
 			this.card(
 				grid,
 				{
-					title: "其余 " + rest + " 条",
+					title: t.more(rest),
 					note: true,
 					quiet: true,
 				},
@@ -1041,11 +1218,12 @@ class DeskView extends ItemView {
 			);
 		}
 		if (!notes.length && !subs.length && !backlog) {
-			inner.createEl("p", { cls: "an-tou-lede", text: "这一格还没有笔记。" });
+			inner.createEl("p", { cls: "an-tou-lede", text: t.emptyFolder });
 		}
 	}
 
 	async renderMore(inner: HTMLElement, page: Extract<Page, { type: "more" }>, seq: number) {
+		const t = this.copy();
 		this.nav(
 			inner,
 			[{ label: "← " + page.title, go: () => this.back() }],
@@ -1058,12 +1236,14 @@ class DeskView extends ItemView {
 			.slice(page.skip);
 		inner.createEl("p", {
 			cls: "an-tou-lede",
-			text: notes.length ? "其余 " + notes.length + " 条" : "没有更多笔记。",
+			text: notes.length ? t.more(notes.length) : t.noMoreNotes,
 		});
 		const grid = inner.createDiv({ cls: "an-tou-grid" });
-		for (const file of notes) {
-			const copy = await noteCardCopy(this.app, file);
-			if (seq !== this.renderSeq) return;
+		const copies = await Promise.all(notes.map((f) => noteCardCopy(this.app, f)));
+		if (seq !== this.renderSeq) return;
+		for (let i = 0; i < notes.length; i++) {
+			const file = notes[i];
+			const copy = copies[i];
 			this.card(
 				grid,
 				{ kicker: page.kicker, title: copy.title, line: copy.line, note: true },
@@ -1262,6 +1442,12 @@ class AnTouSettingTab extends PluginSettingTab {
 		const rooms = this.plugin.settings.rooms;
 		const i = rooms.findIndex((r) => r.id === id);
 		if (i < 0) return;
+		const t = this.copy();
+		const name = (rooms[i].name || "").trim();
+		if (!name || name === t.newRoom) {
+			new Notice(t.nameRequired);
+			return;
+		}
 		const [room] = rooms.splice(i, 1);
 		delete room.draft;
 		rooms.push(room);
@@ -1339,17 +1525,20 @@ class AnTouSettingTab extends PluginSettingTab {
 			room.line = v;
 		});
 		this.parentField(grid, room, t);
-		this.textField(
-			grid,
-			t.maxNotes,
-			t.maxNotesDesc,
-			room.maxNotes ? String(room.maxNotes) : "",
-			(v) => {
-				const s = v.trim();
-				const n = Number(s);
-				room.maxNotes = s !== "" && Number.isInteger(n) && n > 0 ? n : undefined;
-			}
-		);
+		{
+			const setting = new Setting(grid).setName(t.maxNotes).setDesc(t.maxNotesDesc);
+			setting.addText((box) => {
+				const apply = (v: string) => {
+					const raw = v.trim();
+					const num = Number(raw);
+					const ok = raw === "" || (Number.isInteger(num) && num > 0);
+					room.maxNotes = ok && raw !== "" ? num : undefined;
+					this.showFieldError(setting, box.inputEl, ok ? "" : t.maxNotesBad);
+					this.debouncedSave();
+				};
+				box.setValue(room.maxNotes ? String(room.maxNotes) : "").onChange(apply);
+			});
+		}
 		new Setting(grid)
 			.setName(t.quiet)
 			.setDesc(t.quietDesc)
@@ -1382,14 +1571,21 @@ class AnTouSettingTab extends PluginSettingTab {
 
 	roomRole(room: Room, t: Copy): { text: string; bad: boolean } {
 		if (room.draft) return { text: t.draftHint, bad: false };
+		if (room.stale) return { text: t.staleFolder, bad: true };
 		if (room.parent) {
 			const parent = this.plugin.settings.rooms.find((r) => r.id === room.parent);
 			if (!parent) return { text: t.roleParentMissing, bad: true };
 			return { text: t.roleNested.replace("{name}", parent.name || parent.id), bad: false };
 		}
-		if (room.folder) return { text: t.roleHome.replace("{folder}", room.folder), bad: false };
+		// 点进房间时子房间优先，摘要要跟这个顺序一致，否则说的和看到的对不上
 		const kids = this.childrenIds(room.id).length;
-		return { text: t.roleGroup.replace("{n}", String(kids)), bad: false };
+		if (kids) {
+			let text = t.roleGroup.replace("{n}", String(kids));
+			if (room.folder) text += t.roleGroupHidden.replace("{folder}", room.folder);
+			return { text, bad: false };
+		}
+		if (room.folder) return { text: t.roleHome.replace("{folder}", room.folder), bad: false };
+		return { text: t.roleNoFolder, bad: true };
 	}
 
 	childrenIds(id: string): string[] {
@@ -1464,6 +1660,17 @@ class AnTouSettingTab extends PluginSettingTab {
 		});
 	}
 
+	showFieldError(setting: Setting, inputEl: HTMLInputElement, message: string) {
+		const prev = setting.settingEl.querySelector(".an-tou-field-error");
+		if (prev) prev.remove();
+		if (!message) {
+			inputEl.removeClass("is-invalid");
+			return;
+		}
+		inputEl.addClass("is-invalid");
+		setting.settingEl.createDiv({ cls: "an-tou-field-error", text: message });
+	}
+
 	showFolderError(setting: Setting, inputEl: HTMLInputElement, raw: string) {
 		const path = raw.trim();
 		const prev = setting.settingEl.querySelector(".an-tou-field-error");
@@ -1528,8 +1735,8 @@ class AnTouSettingTab extends PluginSettingTab {
 		const card = demo.createDiv({ cls: "an-tou-help-card" });
 		card.createSpan({ cls: "an-tou-help-kicker", text: "Inbox" });
 		card.createSpan({ cls: "an-tou-help-count", text: "3" });
-		card.createEl("strong", { text: "入口" });
-		card.createSpan({ cls: "an-tou-help-line", text: "今天这一张" });
+		card.createEl("strong", { text: t.sampleName });
+		card.createSpan({ cls: "an-tou-help-line", text: t.sampleLine });
 
 		const keys = demo.createDiv({ cls: "an-tou-help-keys" });
 		const addKey = (cls: string, cap: string, sample: string) => {
@@ -1538,8 +1745,8 @@ class AnTouSettingTab extends PluginSettingTab {
 			row.createSpan({ text: cap + " · " + sample });
 		};
 		addKey("is-kicker", t.helpKickerCap, "Inbox");
-		addKey("is-name", t.helpNameCap, "入口");
-		addKey("is-line", t.helpLineCap, "今天这一张");
+		addKey("is-name", t.helpNameCap, t.sampleName);
+		addKey("is-line", t.helpLineCap, t.sampleLine);
 		addKey("is-folder", t.helpFolderCap, "00-Inbox");
 		addKey("is-count", t.helpCountCap, "3");
 
@@ -1551,13 +1758,13 @@ class AnTouSettingTab extends PluginSettingTab {
 		home.createSpan({ cls: "an-tou-help-chip", text: t.helpHome });
 		const cab = home.createDiv({ cls: "an-tou-help-mini" });
 		cab.createSpan({ cls: "an-tou-help-kicker", text: "Cabinet" });
-		cab.createEl("strong", { text: "收纳柜" });
+		cab.createEl("strong", { text: t.sampleCabinet });
 		cab.createSpan({ cls: "an-tou-help-id", text: "cabinet" });
 		home.createSpan({ cls: "an-tou-help-arrow", text: "↓" });
 		home.createSpan({ cls: "an-tou-help-chip", text: t.helpInside });
 		const child = home.createDiv({ cls: "an-tou-help-mini" });
 		child.createSpan({ cls: "an-tou-help-kicker", text: "Thinking" });
-		child.createEl("strong", { text: "个人思考" });
+		child.createEl("strong", { text: t.sampleThinking });
 		child.createSpan({ cls: "an-tou-help-id", text: "cabinet" });
 		nest.createDiv({ cls: "an-tou-help-note", text: t.helpParentNote });
 
@@ -1575,11 +1782,16 @@ class AnTouSettingTab extends PluginSettingTab {
 }
 
 export default class AnTouPlugin extends Plugin {
-	settings: AnTouSettings = DEFAULT_SETTINGS;
+	settings: AnTouSettings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
 
 	async onload() {
 		const saved = (await this.loadData()) as Partial<AnTouSettings> | null;
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, saved ?? {});
+		// Object.assign 是浅拷贝，这两个数组会跟默认配置共用同一份，必须切断
+		this.settings.rooms = Array.isArray(this.settings.rooms) ? this.settings.rooms.slice() : [];
+		this.settings.skipPaths = Array.isArray(this.settings.skipPaths)
+			? this.settings.skipPaths.slice()
+			: [];
 		if (!Array.isArray(this.settings.rooms)) this.settings.rooms = [];
 		if (!Array.isArray(this.settings.skipPaths)) this.settings.skipPaths = [];
 		if (this.settings.uiLang !== "en") this.settings.uiLang = "zh";
@@ -1615,6 +1827,16 @@ export default class AnTouPlugin extends Plugin {
 		this.addSettingTab(new AnTouSettingTab(this.app, this));
 		this.applyLook();
 		this.app.workspace.onLayoutReady(async () => {
+			const fresh = this.settings.rooms.length === 0 && this.settings.welcomed !== true;
+			if (!fresh && this.settings.welcomed !== true) {
+				// 已经在用的老用户：标记一下，别拿欢迎页打扰他
+				this.settings.welcomed = true;
+				await this.saveSettings();
+			}
+			if (fresh) {
+				await this.activateView("welcome");
+				return;
+			}
 			if (this.settings.rooms.length === 0) {
 				this.settings.rooms = this.scanRooms();
 				await this.saveSettings();
@@ -1634,17 +1856,18 @@ export default class AnTouPlugin extends Plugin {
 		body.toggleClass("an-tou-hide-ribbon", this.settings.hideRibbon === true);
 	}
 
-	scanRooms(): Room[] {
+	scanRooms(only?: string[] | null, withSubs = true): Room[] {
 		const rooms: Room[] = [];
 		const used = new Set<string>();
 		const skip = this.settings.skipPaths;
-		const zh = this.settings.uiLang !== "en";
+		const copy = this.settings.uiLang === "en" ? COPY.en : COPY.zh;
 		const files = this.app.vault.getMarkdownFiles();
 		const root = this.app.vault.getRoot();
 		for (const child of root.children) {
 			if (!(child instanceof TFolder)) continue;
 			if (child.name.startsWith(".")) continue;
 			if (skipped(child.path, skip)) continue;
+			if (only && !only.includes(child.path)) continue;
 			const id = uniqueId(slug(child.name), used);
 			const n = this.mdCount(child.path, files);
 			const room: Room = {
@@ -1653,9 +1876,10 @@ export default class AnTouPlugin extends Plugin {
 				folder: child.path,
 				kicker: kickerOf(child.name),
 			};
-			const line = noteCountLine(n, zh);
+			const line = noteCountLine(n, copy);
 			if (line) room.line = line;
 			rooms.push(room);
+			if (!withSubs) continue;
 			for (const sub of child.children) {
 				if (!(sub instanceof TFolder)) continue;
 				if (sub.name.startsWith(".")) continue;
@@ -1669,7 +1893,7 @@ export default class AnTouPlugin extends Plugin {
 					kicker: kickerOf(sub.name),
 					parent: id,
 				};
-				const childLine = noteCountLine(sn, zh);
+				const childLine = noteCountLine(sn, copy);
 				if (childLine) childRoom.line = childLine;
 				rooms.push(childRoom);
 			}
@@ -1744,6 +1968,17 @@ export default class AnTouPlugin extends Plugin {
 			all.push(room);
 			if (room.folder) byFolder.set(room.folder, room);
 		}
+		// 文件夹已经不在了的房间：只做标记，不替用户删——他可能只是暂时挪走了
+		const hasKids = new Set(all.map((r) => r.parent).filter(Boolean) as string[]);
+		for (const room of all) {
+			if (!room.folder || hasKids.has(room.id)) {
+				delete room.stale;
+				continue;
+			}
+			const here = this.app.vault.getAbstractFileByPath(room.folder);
+			if (here instanceof TFolder) delete room.stale;
+			else room.stale = true;
+		}
 		return all;
 	}
 
@@ -1753,17 +1988,27 @@ export default class AnTouPlugin extends Plugin {
 
 	refreshDesks() {
 		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE)) {
-			const view = leaf.view as DeskView;
-			if (view?.render) void view.render();
+			const view = leaf.view;
+			if (!(view instanceof DeskView)) continue;
+			// 看得见的立刻重画；看不见的只标记，等它露面时再画
+			if (view.isShownNow()) void view.render();
+			else view.dirty = true;
 		}
 	}
 
-	async activateView() {
+	async activateView(start?: "welcome") {
 		const { workspace } = this.app;
 		let leaf = workspace.getLeavesOfType(VIEW_TYPE)[0];
 		if (!leaf) {
 			leaf = workspace.getLeaf("tab");
 			await leaf.setViewState({ type: VIEW_TYPE, active: true });
+		}
+		if (start === "welcome") {
+			const view = leaf.view;
+			if (view instanceof DeskView) {
+				view.stack = [{ type: "welcome" }];
+				void view.render();
+			}
 		}
 		await workspace.revealLeaf(leaf);
 		if (this.settings.collapseExplorer && workspace.leftSplit) {

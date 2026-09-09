@@ -41,7 +41,8 @@ var DEFAULT_SETTINGS = {
   skipPaths: ["attachments"],
   skipSeeded: false,
   rooms: [],
-  uiLang: "zh"
+  uiLang: "zh",
+  welcomed: false
 };
 var COPY = {
   zh: {
@@ -98,7 +99,7 @@ var COPY = {
     saveRoom: "\u4FDD\u5B58",
     draftHint: "\u672A\u4FDD\u5B58\u3002\u586B\u597D\u540E\u70B9\u4FDD\u5B58\uFF0C\u8FD9\u5F20\u5361\u4F1A\u79FB\u5230\u6700\u4E0B\u9762\u3002",
     deleteTitle: "\u5220\u6389\u300C{name}\u300D\uFF1F",
-    deleteHolds: "\u91CC\u9762\u8FD8\u6536\u7740 {n} \u4E2A\u623F\u95F4\u3002\u5220\u6389\u4E4B\u540E\u5B83\u4EEC\u4F1A\u56DE\u5230\u9996\u9875\uFF0C\u4E0D\u4F1A\u8DDF\u7740\u6D88\u5931\u3002",
+    deleteHolds: "\u91CC\u9762\u8FD8\u6536\u7740 {n} \u4E2A\u623F\u95F4\u3002\u5220\u6389\u4E4B\u540E\u5B83\u4EEC\u4F1A\u56DE\u5230\u9996\u9875\uFF0C\u5B83\u4EEC\u81EA\u5DF1\u7684\u5B50\u623F\u95F4\u8DDF\u7740\u4E00\u8D77\u8D70\u3002",
     deleteNotesSafe: "\u4F60\u7684\u7B14\u8BB0\u548C\u6587\u4EF6\u5939\u4E00\u4E2A\u90FD\u4E0D\u4F1A\u52A8\u3002",
     deleteConfirm: "\u5220\u6389",
     deleteCancel: "\u7B97\u4E86",
@@ -113,12 +114,45 @@ var COPY = {
     helpFolderCap: "\u6587\u4EF6\u5939",
     helpFolderNote: "\u586B 00-Inbox \u8FD9\u7C7B\u8DEF\u5F84\u3002\u7559\u7A7A\u7684\u8BDD\uFF0C\u70B9\u8FDB\u53BB\u770B\u5230\u7684\u662F\u5B50\u623F\u95F4\uFF0C\u4E0D\u662F\u7B14\u8BB0\u3002",
     helpParentCap: "\u653E\u8FDB\u54EA\u4E2A\u623F\u95F4",
-    helpParentNote: "\u4E2A\u4EBA\u601D\u8003\u8981\u85CF\u8FDB\u6536\u7EB3\u67DC\uFF0C\u5C31\u5728\u5B83\u7684\u300C\u653E\u8FDB\u54EA\u4E2A\u623F\u95F4\u300D\u91CC\u9009\u6536\u7EB3\u67DC\uFF0C\u9996\u9875\u5C31\u53EA\u5269\u6536\u7EB3\u67DC\u3002",
+    helpParentNote: "\u5728\u300C\u653E\u8FDB\u54EA\u4E2A\u623F\u95F4\u300D\u91CC\u9009\u300C\u6536\u7EB3\u67DC\u300D\uFF0C\u8FD9\u5F20\u5361\u5C31\u4ECE\u9996\u9875\u6536\u8FDB\u67DC\u5B50\u91CC\u3002",
     helpQuietCap: "\u5361\u7247\u53D8\u6DE1",
     helpQuietNote: "\u6253\u5F00\u540E\u8FD9\u5F20\u5361\u53D8\u6DE1\uFF0C\u91CC\u9762\u7684\u7B14\u8BB0\u4E5F\u4E0D\u51FA\u73B0\u5728\u300C\u6700\u8FD1\u300D\u3002",
     helpCountCap: "\u6570\u91CF\uFF0C\u4E0D\u7528\u586B",
     helpHome: "\u9996\u9875",
-    helpInside: "\u70B9\u8FDB\u6536\u7EB3\u67DC\u4E4B\u540E"
+    helpInside: "\u70B9\u8FDB\u6536\u7EB3\u67DC\u4E4B\u540E",
+    sampleName: "\u5165\u53E3",
+    sampleLine: "\u4ECA\u5929\u8FD9\u4E00\u5F20",
+    sampleCabinet: "\u6536\u7EB3\u67DC",
+    sampleThinking: "\u4E2A\u4EBA\u601D\u8003",
+    staleFolder: "\u6587\u4EF6\u5939\u5DF2\u4E0D\u5B58\u5728",
+    roleGroupHidden: "\uFF08\u6587\u4EF6\u5939 {folder} \u91CC\u7684\u7B14\u8BB0\u4E0D\u4F1A\u663E\u793A\uFF09",
+    roleNoFolder: "\u8FD8\u6CA1\u914D\u6587\u4EF6\u5939\uFF0C\u70B9\u4E86\u6CA1\u53CD\u5E94",
+    maxNotesBad: "\u53EA\u80FD\u586B\u5927\u4E8E 0 \u7684\u6574\u6570\uFF0C\u7559\u7A7A\u5C31\u81EA\u52A8\u51B3\u5B9A\u3002",
+    nameRequired: "\u5148\u7ED9\u8FD9\u4E2A\u623F\u95F4\u8D77\u4E2A\u540D\u5B57\u3002",
+    recent: "\u6700\u8FD1",
+    emptyRooms: "\u8FD8\u6CA1\u6709\u623F\u95F4\u3002\u6253\u5F00\u8BBE\u7F6E\u6DFB\u52A0\u6587\u4EF6\u5939\uFF0C\u6216\u4ECE\u5E93\u6839\u76EE\u5F55\u751F\u6210\u3002",
+    backlogLede: "\u6B63\u672C\u5728 Backlog\u3002",
+    mainFile: "\u6B63\u672C",
+    recentSlips: "\u6700\u8FD1\u7684\u7EB8\u6761",
+    noMoreNotes: "\u6CA1\u6709\u66F4\u591A\u7B14\u8BB0\u3002",
+    emptyFolder: "\u8FD9\u4E00\u683C\u8FD8\u6CA1\u6709\u7B14\u8BB0\u3002",
+    newNote: "\u65B0\u7B14\u8BB0",
+    newNotePlaceholder: "\u8FD9\u7BC7\u53EB\u4EC0\u4E48",
+    createFailed: "\u6CA1\u5199\u6210\u3002",
+    folderGone: "\u6587\u4EF6\u5939\u4E0D\u5728\u3002",
+    untitled: "\u672A\u547D\u540D",
+    addHere: "\u5728\u8FD9\u91CC\u65B0\u5EFA\u7B14\u8BB0",
+    more: (n) => "\u5176\u4F59 " + n + " \u6761",
+    noteCount: (n) => n + " \u7BC7\u7B14\u8BB0",
+    welcomeTitle: "\u4E66\u684C\u51C6\u5907\u597D\u4E86",
+    welcomeSub: "\u5728\u52A8\u4F60\u7684\u5E93\u4E4B\u524D\uFF0C\u5148\u8BF4\u6E05\u695A\u6211\u505A\u4E86\u4EC0\u4E48\u3002",
+    welcomePoint1: "\u6362\u4E0A\u4E86\u8584\u8377\u7EFF\u914D\u8272\u548C\u886C\u7EBF\u5B57\uFF0C\u968F\u65F6\u53EF\u4EE5\u5728\u8BBE\u7F6E\u91CC\u5173\u6389",
+    welcomePoint2: "\u628A\u5DE6\u8FB9\u7684\u6587\u4EF6\u6811\u6536\u8D77\u6765\u4E86\uFF0C\u70B9\u4E00\u4E0B\u5C31\u80FD\u62C9\u56DE\u6765",
+    welcomePoint3: "\u6CA1\u6709\u9690\u85CF\u5DE6\u8FB9\u90A3\u6392\u56FE\u6807\uFF0C\u60F3\u66F4\u6E05\u723D\u53EF\u4EE5\u81EA\u5DF1\u53BB\u5F00",
+    welcomePoint4: "\u4F60\u7684\u7B14\u8BB0\u548C\u6587\u4EF6\u5939\u4E00\u4E2A\u90FD\u6CA1\u52A8\u8FC7",
+    welcomePick: (n) => "\u4F60\u7684\u5E93\u91CC\u6709 " + n + " \u4E2A\u6587\u4EF6\u5939\u3002\u6311\u51E0\u4E2A\u653E\u9996\u9875\uFF1A",
+    welcomeAddAll: "\u5168\u90FD\u653E\u4E0A\u53BB",
+    welcomeStart: "\u5C31\u7528\u9009\u4E2D\u7684\u8FD9\u51E0\u4E2A\uFF0C\u5F00\u59CB"
   },
   en: {
     language: "Language",
@@ -174,7 +208,7 @@ var COPY = {
     saveRoom: "Save",
     draftHint: "Unsaved. Fill it in, then save, and it moves to the bottom.",
     deleteTitle: 'Delete "{name}"?',
-    deleteHolds: "It holds {n} rooms. They move back to home instead of disappearing.",
+    deleteHolds: "It holds {n} rooms. They move back to home, and their own children come with them.",
     deleteNotesSafe: "Your notes and folders are untouched.",
     deleteConfirm: "Delete",
     deleteCancel: "Cancel",
@@ -189,12 +223,45 @@ var COPY = {
     helpFolderCap: "Folder",
     helpFolderNote: "A path like 00-Inbox. Leave empty and this card is only a group.",
     helpParentCap: "Put inside this room",
-    helpParentNote: "To hide Thinking inside Cabinet, pick Cabinet in its Put inside this room, and it leaves the home grid.",
+    helpParentNote: 'Pick "Cabinet" under "Put inside this room" and the card leaves the home grid.',
     helpQuietCap: "Fade the card",
     helpQuietNote: "The card fades, and its notes stay out of recents.",
     helpCountCap: "Count, automatic",
     helpHome: "Home",
-    helpInside: "After you open Cabinet"
+    helpInside: "After you open Cabinet",
+    sampleName: "Inbox",
+    sampleLine: "Today's one",
+    sampleCabinet: "Cabinet",
+    sampleThinking: "Thinking",
+    staleFolder: "Folder is gone",
+    roleGroupHidden: " (notes in {folder} stay hidden)",
+    roleNoFolder: "No folder yet \u2014 this card does nothing",
+    maxNotesBad: "Whole number above zero, or leave it empty.",
+    nameRequired: "Give the room a name first.",
+    recent: "Recent",
+    emptyRooms: "No rooms yet. Add folders in settings, or build them from your vault.",
+    backlogLede: "The main file is Backlog.",
+    mainFile: "Main file",
+    recentSlips: "Recent slips",
+    noMoreNotes: "No more notes.",
+    emptyFolder: "No notes in this room yet.",
+    newNote: "New note",
+    newNotePlaceholder: "What is it called",
+    createFailed: "Could not create the note.",
+    folderGone: "That folder is gone.",
+    untitled: "Untitled",
+    addHere: "New note here",
+    more: (n) => n + " more",
+    noteCount: (n) => n + " notes",
+    welcomeTitle: "Your desk is ready",
+    welcomeSub: "Before touching your vault, here is what changed.",
+    welcomePoint1: "Mint palette and serif type \u2014 switch them off in settings anytime",
+    welcomePoint2: "The file tree is folded \u2014 one click brings it back",
+    welcomePoint3: "The ribbon is untouched \u2014 hide it yourself if you want",
+    welcomePoint4: "Your notes and folders were not touched",
+    welcomePick: (n) => "Your vault has " + n + " folders. Pick a few for the home grid:",
+    welcomeAddAll: "Add all",
+    welcomeStart: "Start with these"
   }
 };
 function slug(name) {
@@ -236,10 +303,10 @@ function kickerOf(folderName) {
   }
   return s.slice(0, 4);
 }
-function noteCountLine(n, zh) {
+function noteCountLine(n, copy) {
   if (n <= 0)
     return void 0;
-  return zh ? n + " \u7BC7\u7B14\u8BB0" : n + " notes";
+  return copy.noteCount(n);
 }
 function isAutoLine(line) {
   if (!line)
@@ -343,9 +410,8 @@ async function noteCardCopy(app, file) {
   const line = sentence && sentence !== title ? sentence : "";
   return { title, line };
 }
-function todayLabel() {
-  const lang = document.documentElement.lang || navigator.language || "zh-CN";
-  const tag = lang.toLowerCase().startsWith("zh") ? "zh-CN" : lang;
+function todayLabel(uiLang) {
+  const tag = uiLang === "en" ? "en-US" : "zh-CN";
   return new Date().toLocaleDateString(tag, { month: "long", day: "numeric" });
 }
 function twoDigits(n) {
@@ -355,8 +421,8 @@ function inboxStamp() {
   const d = new Date();
   return `${d.getFullYear()}-${twoDigits(d.getMonth() + 1)}-${twoDigits(d.getDate())} ${twoDigits(d.getHours())}${twoDigits(d.getMinutes())}`;
 }
-function safeName(name) {
-  return name.replace(/[\\/:*?"<>|]/g, "").replace(/\s+/g, " ").trim() || "\u672A\u547D\u540D";
+function safeName(name, copy) {
+  return name.replace(/[\\/:*?"<>|]/g, "").replace(/\s+/g, " ").trim() || copy.untitled;
 }
 function isInboxFolder(folder) {
   return /inbox/i.test(folder);
@@ -390,16 +456,17 @@ function closestFolder(query, folders) {
   return "";
 }
 var NameModal = class extends import_obsidian.Modal {
-  constructor(app, preset, onSubmit) {
+  constructor(app, preset, t, onSubmit) {
     super(app);
     this.preset = preset || "";
+    this.t = t;
     this.onSubmit = onSubmit;
   }
   onOpen() {
-    this.titleEl.setText("\u65B0\u7B14\u8BB0");
+    this.titleEl.setText(this.t.newNote);
     const input = this.contentEl.createEl("input", { type: "text", cls: "prompt-input" });
     input.value = this.preset;
-    input.placeholder = "\u8FD9\u7BC7\u53EB\u4EC0\u4E48";
+    input.placeholder = this.t.newNotePlaceholder;
     input.addEventListener("keydown", (e) => {
       if (e.key !== "Enter")
         return;
@@ -486,6 +553,9 @@ var DeskView = class extends import_obsidian.ItemView {
   getIcon() {
     return "layout-grid";
   }
+  copy() {
+    return this.plugin.settings.uiLang === "en" ? COPY.en : COPY.zh;
+  }
   async onOpen() {
     this.contentEl.addClass("an-tou-view");
     this.registerEvent(this.app.vault.on("create", () => this.safeRender()));
@@ -531,6 +601,8 @@ var DeskView = class extends import_obsidian.ItemView {
     return true;
   }
   safeRender() {
+    if (this.current().type === "welcome")
+      return;
     if (!this.isShownNow()) {
       this.dirty = true;
       if (this._tid) {
@@ -667,7 +739,8 @@ var DeskView = class extends import_obsidian.ItemView {
     await this.app.workspace.getLeaf("tab").openFile(file);
   }
   async createNamedNote(folder, raw) {
-    const base = safeName(raw || (isInboxFolder(folder) ? inboxStamp() : "\u672A\u547D\u540D"));
+    const t = this.copy();
+    const base = safeName(raw || (isInboxFolder(folder) ? inboxStamp() : t.untitled), t);
     let filename = base;
     let n = 2;
     while (this.app.vault.getAbstractFileByPath(folder + "/" + filename + ".md")) {
@@ -677,24 +750,34 @@ var DeskView = class extends import_obsidian.ItemView {
       const file = await this.app.vault.create(folder + "/" + filename + ".md", "");
       await this.openNote(file);
     } catch (e) {
-      new import_obsidian.Notice("\u6CA1\u5199\u6210\u3002");
+      new import_obsidian.Notice(t.createFailed);
     }
+  }
+  async quickNote(folder) {
+    if (!folder)
+      return;
+    if (!this.app.vault.getAbstractFileByPath(folder)) {
+      new import_obsidian.Notice(this.copy().folderGone);
+      return;
+    }
+    await this.createNamedNote(folder, inboxStamp());
   }
   async newNote(folder) {
     if (!folder)
       return;
     if (!this.app.vault.getAbstractFileByPath(folder)) {
-      new import_obsidian.Notice("\u6587\u4EF6\u5939\u4E0D\u5728\u3002");
+      new import_obsidian.Notice(this.copy().folderGone);
       return;
     }
     const preset = isInboxFolder(folder) ? inboxStamp() : "";
-    new NameModal(this.app, preset, (raw) => {
+    new NameModal(this.app, preset, this.copy(), (raw) => {
       void this.createNamedNote(folder, raw);
     }).open();
   }
   card(parent, spec, onClick) {
-    const el = parent.createEl("button", {
-      cls: "desk-card" + (spec.quiet ? " is-quiet" : "") + (spec.note ? " is-note" : "") + (spec.span2 ? " span-2" : "")
+    const el = parent.createEl("div", {
+      cls: "desk-card" + (spec.quiet ? " is-quiet" : "") + (spec.note ? " is-note" : "") + (spec.span2 ? " span-2" : ""),
+      attr: onClick ? { role: "button", tabindex: "0" } : {}
     });
     if (spec.kicker)
       el.createEl("span", { cls: "desk-kicker", text: spec.kicker });
@@ -708,10 +791,30 @@ var DeskView = class extends import_obsidian.ItemView {
       el.createEl("span", { cls: "desk-line", text: spec.line });
     else if (!spec.note)
       el.createEl("span", { cls: "desk-line", text: "\xA0" });
-    if (onClick)
+    if (spec.onAdd) {
+      const add = el.createEl("button", {
+        cls: "desk-add",
+        text: "+",
+        attr: { type: "button", "aria-label": this.copy().addHere }
+      });
+      add.addEventListener("click", (e) => {
+        var _a;
+        e.preventDefault();
+        e.stopPropagation();
+        (_a = spec.onAdd) == null ? void 0 : _a.call(spec);
+      });
+    }
+    if (onClick) {
       el.addEventListener("click", onClick);
-    else
+      el.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" && e.key !== " ")
+          return;
+        e.preventDefault();
+        onClick();
+      });
+    } else {
       el.addClass("is-still");
+    }
     return el;
   }
   nav(root, crumbs, folder) {
@@ -727,7 +830,7 @@ var DeskView = class extends import_obsidian.ItemView {
       const add = bar.createEl("button", {
         cls: "an-tou-add",
         text: "+",
-        attr: { type: "button", "aria-label": "\u65B0\u7B14\u8BB0" }
+        attr: { type: "button", "aria-label": this.copy().newNote }
       });
       add.addEventListener("click", (e) => {
         e.preventDefault();
@@ -744,7 +847,9 @@ var DeskView = class extends import_obsidian.ItemView {
       root.empty();
       const inner = root.createDiv({ cls: "an-tou-inner" });
       const page = this.current();
-      if (page.type === "home")
+      if (page.type === "welcome")
+        this.renderWelcome(inner);
+      else if (page.type === "home")
         await this.renderHome(inner, seq);
       else if (page.type === "group")
         this.renderGroup(inner, page.room);
@@ -757,15 +862,70 @@ var DeskView = class extends import_obsidian.ItemView {
         this.renderFiles = null;
     }
   }
+  topFolders() {
+    const skip = this.plugin.settings.skipPaths;
+    return this.app.vault.getRoot().children.filter(
+      (c) => c instanceof import_obsidian.TFolder && !c.name.startsWith(".") && !skipped(c.path, skip)
+    );
+  }
+  renderWelcome(inner) {
+    const t = this.copy();
+    inner.createEl("h1", { text: t.welcomeTitle });
+    inner.createEl("p", { cls: "an-tou-lede", text: t.welcomeSub });
+    const list = inner.createEl("ul", { cls: "an-tou-welcome-list" });
+    for (const line of [t.welcomePoint1, t.welcomePoint2, t.welcomePoint3, t.welcomePoint4]) {
+      list.createEl("li", { text: line });
+    }
+    const folders = this.topFolders();
+    inner.createEl("p", { cls: "an-tou-lede", text: t.welcomePick(folders.length) });
+    const picked = new Set(folders.slice(0, 6).map((f) => f.path));
+    const chips = inner.createDiv({ cls: "an-tou-chips" });
+    for (const folder of folders) {
+      const chip = chips.createEl("button", {
+        cls: "an-tou-chip" + (picked.has(folder.path) ? " is-on" : ""),
+        text: folder.name,
+        attr: { type: "button", "aria-pressed": picked.has(folder.path) ? "true" : "false" }
+      });
+      chip.addEventListener("click", () => {
+        const on = picked.has(folder.path);
+        if (on)
+          picked.delete(folder.path);
+        else
+          picked.add(folder.path);
+        chip.toggleClass("is-on", !on);
+        chip.setAttribute("aria-pressed", on ? "false" : "true");
+      });
+    }
+    const row = inner.createDiv({ cls: "an-tou-welcome-btns" });
+    const all = row.createEl("button", { text: t.welcomeAddAll, attr: { type: "button" } });
+    all.addEventListener("click", () => {
+      void this.finishWelcome(null);
+    });
+    const go = row.createEl("button", {
+      cls: "mod-cta",
+      text: t.welcomeStart,
+      attr: { type: "button" }
+    });
+    go.addEventListener("click", () => {
+      void this.finishWelcome([...picked]);
+    });
+  }
+  async finishWelcome(only) {
+    const plugin = this.plugin;
+    plugin.settings.rooms = only === null ? plugin.scanRooms() : plugin.scanRooms(only, false);
+    plugin.settings.welcomed = true;
+    await plugin.saveSettings();
+    await this.resetHome();
+  }
   async renderHome(inner, seq) {
     const title = this.plugin.settings.title || DEFAULT_TITLE;
     inner.createEl("h1", { text: title });
-    inner.createEl("span", { cls: "an-tou-date", text: todayLabel() });
+    inner.createEl("span", { cls: "an-tou-date", text: todayLabel(this.plugin.settings.uiLang) });
     const rooms = this.homeRooms();
     if (rooms.length === 0) {
       inner.createEl("p", {
         cls: "an-tou-lede",
-        text: "\u8FD8\u6CA1\u6709\u623F\u95F4\u3002\u6253\u5F00\u8BBE\u7F6E\u6DFB\u52A0\u6587\u4EF6\u5939\uFF0C\u6216\u4ECE\u5E93\u6839\u76EE\u5F55\u751F\u6210\u3002"
+        text: this.copy().emptyRooms
       });
       return;
     }
@@ -779,19 +939,22 @@ var DeskView = class extends import_obsidian.ItemView {
           count: room.quiet ? void 0 : n,
           title: room.name,
           line: room.line,
-          quiet: room.quiet
+          quiet: room.quiet,
+          onAdd: room.folder ? () => void this.quickNote(room.folder) : void 0
         },
         () => this.openRoom(room, title)
       );
     }
-    inner.createEl("h2", { text: "\u6700\u8FD1" });
+    inner.createEl("h2", { text: this.copy().recent });
     const recentGrid = inner.createDiv({ cls: "an-tou-grid" });
     const recent = this.recentNotes();
-    for (const entry of recent) {
+    const recentCopies = await Promise.all(recent.map((e) => noteCardCopy(this.app, e.file)));
+    if (seq !== this.renderSeq)
+      return;
+    for (let i = 0; i < recent.length; i++) {
+      const entry = recent[i];
       const file = entry.file;
-      const copy = await noteCardCopy(this.app, file);
-      if (seq !== this.renderSeq)
-        return;
+      const copy = recentCopies[i];
       this.card(
         recentGrid,
         {
@@ -866,13 +1029,15 @@ var DeskView = class extends import_obsidian.ItemView {
           count: n,
           title: child.name,
           line: child.line || (n === 1 && files[0] ? titleOf(files[0]) : ""),
-          quiet: this.isQuietLine(child)
+          quiet: this.isQuietLine(child),
+          onAdd: child.folder ? () => void this.quickNote(child.folder) : void 0
         },
         () => this.openRoom(child, room.name)
       );
     }
   }
   async renderFolder(inner, page, seq) {
+    const t = this.copy();
     const title = this.plugin.settings.title || DEFAULT_TITLE;
     const goHome = () => {
       this.stack = [{ type: "home" }];
@@ -888,8 +1053,8 @@ var DeskView = class extends import_obsidian.ItemView {
     const useBacklog = page.pinBacklog || !!backlog;
     const subs = this.subfolders(page.folder);
     if (useBacklog && backlog) {
-      inner.createEl("p", { cls: "an-tou-lede", text: "\u6B63\u672C\u5728 Backlog\u3002" });
-      inner.createEl("h2", { text: "\u6B63\u672C" });
+      inner.createEl("p", { cls: "an-tou-lede", text: t.backlogLede });
+      inner.createEl("h2", { text: t.mainFile });
       const top = inner.createDiv({ cls: "an-tou-grid" });
       this.card(
         top,
@@ -920,12 +1085,14 @@ var DeskView = class extends import_obsidian.ItemView {
     if (rest)
       notes = notes.slice(0, cap);
     if (useBacklog)
-      inner.createEl("h2", { text: "\u6700\u8FD1\u7684\u7EB8\u6761" });
+      inner.createEl("h2", { text: t.recentSlips });
     const grid = inner.createDiv({ cls: "an-tou-grid" });
-    for (const file of notes) {
-      const copy = await noteCardCopy(this.app, file);
-      if (seq !== this.renderSeq)
-        return;
+    const copies = await Promise.all(notes.map((f) => noteCardCopy(this.app, f)));
+    if (seq !== this.renderSeq)
+      return;
+    for (let i = 0; i < notes.length; i++) {
+      const file = notes[i];
+      const copy = copies[i];
       this.card(
         grid,
         { kicker: page.kicker, title: copy.title, line: copy.line, note: true },
@@ -938,7 +1105,7 @@ var DeskView = class extends import_obsidian.ItemView {
       this.card(
         grid,
         {
-          title: "\u5176\u4F59 " + rest + " \u6761",
+          title: t.more(rest),
           note: true,
           quiet: true
         },
@@ -957,10 +1124,11 @@ var DeskView = class extends import_obsidian.ItemView {
       );
     }
     if (!notes.length && !subs.length && !backlog) {
-      inner.createEl("p", { cls: "an-tou-lede", text: "\u8FD9\u4E00\u683C\u8FD8\u6CA1\u6709\u7B14\u8BB0\u3002" });
+      inner.createEl("p", { cls: "an-tou-lede", text: t.emptyFolder });
     }
   }
   async renderMore(inner, page, seq) {
+    const t = this.copy();
     this.nav(
       inner,
       [{ label: "\u2190 " + page.title, go: () => this.back() }],
@@ -970,13 +1138,15 @@ var DeskView = class extends import_obsidian.ItemView {
     const notes = this.mdIn(page.folder).filter((f) => f.basename !== "BACKLOG" && f.basename !== "BACKLOG-archive").sort((a, b) => b.stat.mtime - a.stat.mtime).slice(page.skip);
     inner.createEl("p", {
       cls: "an-tou-lede",
-      text: notes.length ? "\u5176\u4F59 " + notes.length + " \u6761" : "\u6CA1\u6709\u66F4\u591A\u7B14\u8BB0\u3002"
+      text: notes.length ? t.more(notes.length) : t.noMoreNotes
     });
     const grid = inner.createDiv({ cls: "an-tou-grid" });
-    for (const file of notes) {
-      const copy = await noteCardCopy(this.app, file);
-      if (seq !== this.renderSeq)
-        return;
+    const copies = await Promise.all(notes.map((f) => noteCardCopy(this.app, f)));
+    if (seq !== this.renderSeq)
+      return;
+    for (let i = 0; i < notes.length; i++) {
+      const file = notes[i];
+      const copy = copies[i];
       this.card(
         grid,
         { kicker: page.kicker, title: copy.title, line: copy.line, note: true },
@@ -1125,6 +1295,12 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
     const i = rooms.findIndex((r) => r.id === id);
     if (i < 0)
       return;
+    const t = this.copy();
+    const name = (rooms[i].name || "").trim();
+    if (!name || name === t.newRoom) {
+      new import_obsidian.Notice(t.nameRequired);
+      return;
+    }
     const [room] = rooms.splice(i, 1);
     delete room.draft;
     rooms.push(room);
@@ -1197,17 +1373,20 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
       room.line = v;
     });
     this.parentField(grid, room, t);
-    this.textField(
-      grid,
-      t.maxNotes,
-      t.maxNotesDesc,
-      room.maxNotes ? String(room.maxNotes) : "",
-      (v) => {
-        const s = v.trim();
-        const n = Number(s);
-        room.maxNotes = s !== "" && Number.isInteger(n) && n > 0 ? n : void 0;
-      }
-    );
+    {
+      const setting = new import_obsidian.Setting(grid).setName(t.maxNotes).setDesc(t.maxNotesDesc);
+      setting.addText((box) => {
+        const apply = (v) => {
+          const raw = v.trim();
+          const num = Number(raw);
+          const ok = raw === "" || Number.isInteger(num) && num > 0;
+          room.maxNotes = ok && raw !== "" ? num : void 0;
+          this.showFieldError(setting, box.inputEl, ok ? "" : t.maxNotesBad);
+          this.debouncedSave();
+        };
+        box.setValue(room.maxNotes ? String(room.maxNotes) : "").onChange(apply);
+      });
+    }
     new import_obsidian.Setting(grid).setName(t.quiet).setDesc(t.quietDesc).addToggle(
       (box) => box.setValue(!!room.quiet).onChange((v) => {
         room.quiet = v;
@@ -1234,16 +1413,24 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
   roomRole(room, t) {
     if (room.draft)
       return { text: t.draftHint, bad: false };
+    if (room.stale)
+      return { text: t.staleFolder, bad: true };
     if (room.parent) {
       const parent = this.plugin.settings.rooms.find((r) => r.id === room.parent);
       if (!parent)
         return { text: t.roleParentMissing, bad: true };
       return { text: t.roleNested.replace("{name}", parent.name || parent.id), bad: false };
     }
+    const kids = this.childrenIds(room.id).length;
+    if (kids) {
+      let text = t.roleGroup.replace("{n}", String(kids));
+      if (room.folder)
+        text += t.roleGroupHidden.replace("{folder}", room.folder);
+      return { text, bad: false };
+    }
     if (room.folder)
       return { text: t.roleHome.replace("{folder}", room.folder), bad: false };
-    const kids = this.childrenIds(room.id).length;
-    return { text: t.roleGroup.replace("{n}", String(kids)), bad: false };
+    return { text: t.roleNoFolder, bad: true };
   }
   childrenIds(id) {
     return this.plugin.settings.rooms.filter((r) => r.parent === id && r.id !== id && !r.draft).map((r) => r.id);
@@ -1309,6 +1496,17 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
       this.showFolderError(setting, box.inputEl, room.folder || "");
     });
   }
+  showFieldError(setting, inputEl, message) {
+    const prev = setting.settingEl.querySelector(".an-tou-field-error");
+    if (prev)
+      prev.remove();
+    if (!message) {
+      inputEl.removeClass("is-invalid");
+      return;
+    }
+    inputEl.addClass("is-invalid");
+    setting.settingEl.createDiv({ cls: "an-tou-field-error", text: message });
+  }
   showFolderError(setting, inputEl, raw) {
     const path = raw.trim();
     const prev = setting.settingEl.querySelector(".an-tou-field-error");
@@ -1363,8 +1561,8 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
     const card = demo.createDiv({ cls: "an-tou-help-card" });
     card.createSpan({ cls: "an-tou-help-kicker", text: "Inbox" });
     card.createSpan({ cls: "an-tou-help-count", text: "3" });
-    card.createEl("strong", { text: "\u5165\u53E3" });
-    card.createSpan({ cls: "an-tou-help-line", text: "\u4ECA\u5929\u8FD9\u4E00\u5F20" });
+    card.createEl("strong", { text: t.sampleName });
+    card.createSpan({ cls: "an-tou-help-line", text: t.sampleLine });
     const keys = demo.createDiv({ cls: "an-tou-help-keys" });
     const addKey = (cls, cap, sample) => {
       const row = keys.createDiv({ cls: "an-tou-help-key" });
@@ -1372,8 +1570,8 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
       row.createSpan({ text: cap + " \xB7 " + sample });
     };
     addKey("is-kicker", t.helpKickerCap, "Inbox");
-    addKey("is-name", t.helpNameCap, "\u5165\u53E3");
-    addKey("is-line", t.helpLineCap, "\u4ECA\u5929\u8FD9\u4E00\u5F20");
+    addKey("is-name", t.helpNameCap, t.sampleName);
+    addKey("is-line", t.helpLineCap, t.sampleLine);
     addKey("is-folder", t.helpFolderCap, "00-Inbox");
     addKey("is-count", t.helpCountCap, "3");
     pop.createDiv({ cls: "an-tou-help-note", text: t.helpFolderNote });
@@ -1383,13 +1581,13 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
     home.createSpan({ cls: "an-tou-help-chip", text: t.helpHome });
     const cab = home.createDiv({ cls: "an-tou-help-mini" });
     cab.createSpan({ cls: "an-tou-help-kicker", text: "Cabinet" });
-    cab.createEl("strong", { text: "\u6536\u7EB3\u67DC" });
+    cab.createEl("strong", { text: t.sampleCabinet });
     cab.createSpan({ cls: "an-tou-help-id", text: "cabinet" });
     home.createSpan({ cls: "an-tou-help-arrow", text: "\u2193" });
     home.createSpan({ cls: "an-tou-help-chip", text: t.helpInside });
     const child = home.createDiv({ cls: "an-tou-help-mini" });
     child.createSpan({ cls: "an-tou-help-kicker", text: "Thinking" });
-    child.createEl("strong", { text: "\u4E2A\u4EBA\u601D\u8003" });
+    child.createEl("strong", { text: t.sampleThinking });
     child.createSpan({ cls: "an-tou-help-id", text: "cabinet" });
     nest.createDiv({ cls: "an-tou-help-note", text: t.helpParentNote });
     pop.createDiv({ cls: "an-tou-help-note", text: t.helpQuietNote });
@@ -1407,11 +1605,13 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
 var AnTouPlugin = class extends import_obsidian.Plugin {
   constructor() {
     super(...arguments);
-    this.settings = DEFAULT_SETTINGS;
+    this.settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
   }
   async onload() {
     const saved = await this.loadData();
     this.settings = Object.assign({}, DEFAULT_SETTINGS, saved != null ? saved : {});
+    this.settings.rooms = Array.isArray(this.settings.rooms) ? this.settings.rooms.slice() : [];
+    this.settings.skipPaths = Array.isArray(this.settings.skipPaths) ? this.settings.skipPaths.slice() : [];
     if (!Array.isArray(this.settings.rooms))
       this.settings.rooms = [];
     if (!Array.isArray(this.settings.skipPaths))
@@ -1450,6 +1650,15 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
     this.addSettingTab(new AnTouSettingTab(this.app, this));
     this.applyLook();
     this.app.workspace.onLayoutReady(async () => {
+      const fresh = this.settings.rooms.length === 0 && this.settings.welcomed !== true;
+      if (!fresh && this.settings.welcomed !== true) {
+        this.settings.welcomed = true;
+        await this.saveSettings();
+      }
+      if (fresh) {
+        await this.activateView("welcome");
+        return;
+      }
       if (this.settings.rooms.length === 0) {
         this.settings.rooms = this.scanRooms();
         await this.saveSettings();
@@ -1467,11 +1676,11 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
     body.toggleClass("an-tou-serif", this.settings.applySerif !== false);
     body.toggleClass("an-tou-hide-ribbon", this.settings.hideRibbon === true);
   }
-  scanRooms() {
+  scanRooms(only, withSubs = true) {
     const rooms = [];
     const used = /* @__PURE__ */ new Set();
     const skip = this.settings.skipPaths;
-    const zh = this.settings.uiLang !== "en";
+    const copy = this.settings.uiLang === "en" ? COPY.en : COPY.zh;
     const files = this.app.vault.getMarkdownFiles();
     const root = this.app.vault.getRoot();
     for (const child of root.children) {
@@ -1481,6 +1690,8 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
         continue;
       if (skipped(child.path, skip))
         continue;
+      if (only && !only.includes(child.path))
+        continue;
       const id = uniqueId(slug(child.name), used);
       const n = this.mdCount(child.path, files);
       const room = {
@@ -1489,10 +1700,12 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
         folder: child.path,
         kicker: kickerOf(child.name)
       };
-      const line = noteCountLine(n, zh);
+      const line = noteCountLine(n, copy);
       if (line)
         room.line = line;
       rooms.push(room);
+      if (!withSubs)
+        continue;
       for (const sub of child.children) {
         if (!(sub instanceof import_obsidian.TFolder))
           continue;
@@ -1509,7 +1722,7 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
           kicker: kickerOf(sub.name),
           parent: id
         };
-        const childLine = noteCountLine(sn, zh);
+        const childLine = noteCountLine(sn, copy);
         if (childLine)
           childRoom.line = childLine;
         rooms.push(childRoom);
@@ -1601,6 +1814,18 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
       if (room.folder)
         byFolder.set(room.folder, room);
     }
+    const hasKids = new Set(all.map((r) => r.parent).filter(Boolean));
+    for (const room of all) {
+      if (!room.folder || hasKids.has(room.id)) {
+        delete room.stale;
+        continue;
+      }
+      const here = this.app.vault.getAbstractFileByPath(room.folder);
+      if (here instanceof import_obsidian.TFolder)
+        delete room.stale;
+      else
+        room.stale = true;
+    }
     return all;
   }
   async saveSettings() {
@@ -1609,16 +1834,27 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
   refreshDesks() {
     for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE)) {
       const view = leaf.view;
-      if (view == null ? void 0 : view.render)
+      if (!(view instanceof DeskView))
+        continue;
+      if (view.isShownNow())
         void view.render();
+      else
+        view.dirty = true;
     }
   }
-  async activateView() {
+  async activateView(start) {
     const { workspace } = this.app;
     let leaf = workspace.getLeavesOfType(VIEW_TYPE)[0];
     if (!leaf) {
       leaf = workspace.getLeaf("tab");
       await leaf.setViewState({ type: VIEW_TYPE, active: true });
+    }
+    if (start === "welcome") {
+      const view = leaf.view;
+      if (view instanceof DeskView) {
+        view.stack = [{ type: "welcome" }];
+        void view.render();
+      }
     }
     await workspace.revealLeaf(leaf);
     if (this.settings.collapseExplorer && workspace.leftSplit) {
