@@ -80,6 +80,8 @@ var COPY = {
     pinBacklogDesc: "\u6CA1\u6709 BACKLOG.md \u65F6\u4E5F\u53EF\u4EE5\u5F3A\u5236\uFF1A\u5176\u5B83\u7B14\u8BB0\u53EA\u7559\u51E0\u5F20\u6700\u8FD1\u7684\u3002",
     backlogNote: "\u8FD9\u4E2A\u623F\u95F4\u6709 BACKLOG.md",
     backlogNoteDesc: "\u8FDB\u623F\u95F4\u4F1A\u5148\u770B\u5230\u5B83\uFF0C\u5176\u5B83\u7B14\u8BB0\u53D8\u6210\u4E0B\u9762\u51E0\u5F20\u6700\u8FD1\u7684\u3002\u653E\u8FDB BACKLOG.md \u5C31\u4F1A\u8FD9\u6837\uFF0C\u4E0D\u7528\u53E6\u5F00\u5F00\u5173\u3002",
+    maxNotes: "\u6700\u591A\u663E\u793A\u51E0\u5F20",
+    maxNotesDesc: "\u8FD9\u4E2A\u623F\u95F4\u91CC\u6700\u591A\u663E\u793A\u591A\u5C11\u5F20\u7B14\u8BB0\u5361\u7247\u3002\u7559\u7A7A\u5C31\u81EA\u52A8\u51B3\u5B9A\u3002",
     newRoom: "\u65B0\u623F\u95F4",
     saveRoom: "\u4FDD\u5B58",
     draftHint: "\u672A\u4FDD\u5B58\u3002\u586B\u597D\u540E\u70B9\u4FDD\u5B58\uFF0C\u8FD9\u5F20\u5361\u4F1A\u79FB\u5230\u6700\u4E0B\u9762\u3002",
@@ -139,6 +141,8 @@ var COPY = {
     pinBacklogDesc: "Force the same layout without a BACKLOG.md: other notes stay as a few recent slips.",
     backlogNote: "This room has BACKLOG.md",
     backlogNoteDesc: "Opening the room shows it first; other notes become a few recent slips. Automatic when that file exists.",
+    maxNotes: "Max notes shown",
+    maxNotesDesc: "How many note cards this room shows at most. Empty means automatic.",
     newRoom: "New room",
     saveRoom: "Save",
     draftHint: "Unsaved. Fill it in, then save, and it moves to the bottom.",
@@ -334,11 +338,9 @@ var NameModal = class extends import_obsidian.Modal {
       this.close();
       this.onSubmit(v);
     });
-    window.setTimeout(() => {
-      input.focus();
-      if (this.preset)
-        input.select();
-    }, 20);
+    input.focus();
+    if (this.preset)
+      input.select();
   }
 };
 var DeskView = class extends import_obsidian.ItemView {
@@ -346,6 +348,7 @@ var DeskView = class extends import_obsidian.ItemView {
     super(leaf);
     this.stack = [{ type: "home" }];
     this._tid = 0;
+    this.renderSeq = 0;
     this.plugin = plugin;
   }
   getViewType() {
@@ -366,6 +369,9 @@ var DeskView = class extends import_obsidian.ItemView {
     await this.render();
   }
   async onClose() {
+    if (this._tid)
+      window.clearTimeout(this._tid);
+    this.renderSeq++;
     this.contentEl.empty();
   }
   safeRender() {
@@ -421,15 +427,21 @@ var DeskView = class extends import_obsidian.ItemView {
     return this.plugin.settings.rooms.filter((r) => !r.parent && !r.draft);
   }
   childrenOf(id) {
-    return this.plugin.settings.rooms.filter((r) => r.parent === id && !r.draft);
+    return this.plugin.settings.rooms.filter(
+      (r) => r.parent === id && r.id !== id && !r.draft
+    );
   }
-  isQuietLine(room) {
+  isQuietLine(room, seen) {
     if (room.quiet)
       return true;
     if (!room.parent)
       return false;
+    const visited = seen != null ? seen : /* @__PURE__ */ new Set();
+    visited.add(room.id);
+    if (visited.has(room.parent))
+      return false;
     const parent = this.plugin.settings.rooms.find((r) => r.id === room.parent);
-    return parent ? this.isQuietLine(parent) : false;
+    return parent ? this.isQuietLine(parent, visited) : false;
   }
   liveFolders() {
     const out = [];
@@ -558,20 +570,21 @@ var DeskView = class extends import_obsidian.ItemView {
     }
   }
   async render() {
+    const seq = ++this.renderSeq;
     const root = this.contentEl;
     root.empty();
     const inner = root.createDiv({ cls: "an-tou-inner" });
     const page = this.current();
     if (page.type === "home")
-      await this.renderHome(inner);
+      await this.renderHome(inner, seq);
     else if (page.type === "group")
       this.renderGroup(inner, page.room);
     else if (page.type === "more")
-      await this.renderMore(inner, page);
+      await this.renderMore(inner, page, seq);
     else
-      await this.renderFolder(inner, page);
+      await this.renderFolder(inner, page, seq);
   }
-  async renderHome(inner) {
+  async renderHome(inner, seq) {
     const title = this.plugin.settings.title || DEFAULT_TITLE;
     inner.createEl("h1", { text: title });
     inner.createEl("span", { cls: "an-tou-date", text: todayLabel() });
@@ -604,6 +617,8 @@ var DeskView = class extends import_obsidian.ItemView {
     const recent = this.recentNotes();
     for (const file of recent) {
       const copy = await noteCardCopy(this.app, file);
+      if (seq !== this.renderSeq)
+        return;
       const hit = this.ownerOf(file, live);
       this.card(
         recentGrid,
@@ -684,7 +699,7 @@ var DeskView = class extends import_obsidian.ItemView {
       );
     }
   }
-  async renderFolder(inner, page) {
+  async renderFolder(inner, page, seq) {
     const title = this.plugin.settings.title || DEFAULT_TITLE;
     const goHome = () => {
       this.stack = [{ type: "home" }];
@@ -736,6 +751,8 @@ var DeskView = class extends import_obsidian.ItemView {
     const grid = inner.createDiv({ cls: "an-tou-grid" });
     for (const file of notes) {
       const copy = await noteCardCopy(this.app, file);
+      if (seq !== this.renderSeq)
+        return;
       this.card(
         grid,
         { kicker: page.kicker, title: copy.title, line: copy.line, note: true },
@@ -770,7 +787,7 @@ var DeskView = class extends import_obsidian.ItemView {
       inner.createEl("p", { cls: "an-tou-lede", text: "\u8FD9\u4E00\u683C\u8FD8\u6CA1\u6709\u7B14\u8BB0\u3002" });
     }
   }
-  async renderMore(inner, page) {
+  async renderMore(inner, page, seq) {
     this.nav(
       inner,
       [{ label: "\u2190 " + page.title, go: () => this.back() }],
@@ -785,6 +802,8 @@ var DeskView = class extends import_obsidian.ItemView {
     const grid = inner.createDiv({ cls: "an-tou-grid" });
     for (const file of notes) {
       const copy = await noteCardCopy(this.app, file);
+      if (seq !== this.renderSeq)
+        return;
       this.card(
         grid,
         { kicker: page.kicker, title: copy.title, line: copy.line, note: true },
@@ -939,6 +958,17 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
     this.textField(grid, t.parent, t.parentDesc, room.parent || "", (v) => {
       room.parent = v.trim() || void 0;
     });
+    this.textField(
+      grid,
+      t.maxNotes,
+      t.maxNotesDesc,
+      room.maxNotes ? String(room.maxNotes) : "",
+      (v) => {
+        const s = v.trim();
+        const n = Number(s);
+        room.maxNotes = s !== "" && Number.isInteger(n) && n > 0 ? n : void 0;
+      }
+    );
     new import_obsidian.Setting(grid).setName(t.quiet).setDesc(t.quietDesc).addToggle(
       (box) => box.setValue(!!room.quiet).onChange((v) => {
         room.quiet = v;
@@ -947,9 +977,9 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
     );
     if (this.hasBacklogFile(room)) {
       new import_obsidian.Setting(grid).setName(t.backlogNote).setDesc(t.backlogNoteDesc);
-    } else if (room.pinBacklog) {
+    } else {
       new import_obsidian.Setting(grid).setName(t.pinBacklog).setDesc(t.pinBacklogDesc).addToggle(
-        (box) => box.setValue(true).onChange((v) => {
+        (box) => box.setValue(!!room.pinBacklog).onChange((v) => {
           room.pinBacklog = v;
           void this.saveAndRefresh();
         })
@@ -1018,6 +1048,10 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
   }
   async removeRoom(id) {
     this.plugin.settings.rooms = this.plugin.settings.rooms.filter((r) => r.id !== id);
+    for (const room of this.plugin.settings.rooms) {
+      if (room.parent === id)
+        delete room.parent;
+    }
     await this.saveAndRefresh();
     this.display();
   }
@@ -1042,7 +1076,7 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
     this.registerView(VIEW_TYPE, (leaf) => new DeskView(leaf, this));
     this.addCommand({
       id: "open-desk",
-      name: "Open Quiet Desk",
+      name: "Open desk",
       callback: () => {
         void this.activateView();
       }
@@ -1210,16 +1244,12 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
   }
   async activateView() {
     const { workspace } = this.app;
-    const leaves = workspace.getLeavesOfType(VIEW_TYPE);
-    for (const extra of leaves.slice(1))
-      extra.detach();
     let leaf = workspace.getLeavesOfType(VIEW_TYPE)[0];
     if (!leaf) {
-      leaf = workspace.getLeaf(false);
+      leaf = workspace.getLeaf("tab");
       await leaf.setViewState({ type: VIEW_TYPE, active: true });
-    } else {
-      workspace.setActiveLeaf(leaf, { focus: true });
     }
+    await workspace.revealLeaf(leaf);
     if (this.settings.collapseExplorer && workspace.leftSplit) {
       workspace.leftSplit.collapse();
     }

@@ -90,6 +90,8 @@ const COPY = {
 		pinBacklogDesc: "没有 BACKLOG.md 时也可以强制：其它笔记只留几张最近的。",
 		backlogNote: "这个房间有 BACKLOG.md",
 		backlogNoteDesc: "进房间会先看到它，其它笔记变成下面几张最近的。放进 BACKLOG.md 就会这样，不用另开开关。",
+		maxNotes: "最多显示几张",
+		maxNotesDesc: "这个房间里最多显示多少张笔记卡片。留空就自动决定。",
 		newRoom: "新房间",
 		saveRoom: "保存",
 		draftHint: "未保存。填好后点保存，这张卡会移到最下面。",
@@ -149,6 +151,8 @@ const COPY = {
 		pinBacklogDesc: "Force the same layout without a BACKLOG.md: other notes stay as a few recent slips.",
 		backlogNote: "This room has BACKLOG.md",
 		backlogNoteDesc: "Opening the room shows it first; other notes become a few recent slips. Automatic when that file exists.",
+		maxNotes: "Max notes shown",
+		maxNotesDesc: "How many note cards this room shows at most. Empty means automatic.",
 		newRoom: "New room",
 		saveRoom: "Save",
 		draftHint: "Unsaved. Fill it in, then save, and it moves to the bottom.",
@@ -372,10 +376,8 @@ class NameModal extends Modal {
 			this.close();
 			this.onSubmit(v);
 		});
-		window.setTimeout(() => {
-			input.focus();
-			if (this.preset) input.select();
-		}, 20);
+		input.focus();
+		if (this.preset) input.select();
 	}
 }
 
@@ -383,6 +385,7 @@ class DeskView extends ItemView {
 	plugin: AnTouPlugin;
 	stack: Page[] = [{ type: "home" }];
 	_tid = 0;
+	renderSeq = 0;
 
 	constructor(leaf: WorkspaceLeaf, plugin: AnTouPlugin) {
 		super(leaf);
@@ -409,6 +412,8 @@ class DeskView extends ItemView {
 	}
 
 	async onClose() {
+		if (this._tid) window.clearTimeout(this._tid);
+		this.renderSeq++;
 		this.contentEl.empty();
 	}
 
@@ -466,14 +471,19 @@ class DeskView extends ItemView {
 	}
 
 	childrenOf(id: string): Room[] {
-		return this.plugin.settings.rooms.filter((r) => r.parent === id && !r.draft);
+		return this.plugin.settings.rooms.filter(
+			(r) => r.parent === id && r.id !== id && !r.draft
+		);
 	}
 
-	isQuietLine(room: Room): boolean {
+	isQuietLine(room: Room, seen?: Set<string>): boolean {
 		if (room.quiet) return true;
 		if (!room.parent) return false;
+		const visited = seen ?? new Set<string>();
+		visited.add(room.id);
+		if (visited.has(room.parent)) return false;
 		const parent = this.plugin.settings.rooms.find((r) => r.id === room.parent);
-		return parent ? this.isQuietLine(parent) : false;
+		return parent ? this.isQuietLine(parent, visited) : false;
 	}
 
 	liveFolders(): { id: string; folder: string; kicker: string }[] {
@@ -616,17 +626,18 @@ class DeskView extends ItemView {
 	}
 
 	async render() {
+		const seq = ++this.renderSeq;
 		const root = this.contentEl;
 		root.empty();
 		const inner = root.createDiv({ cls: "an-tou-inner" });
 		const page = this.current();
-		if (page.type === "home") await this.renderHome(inner);
+		if (page.type === "home") await this.renderHome(inner, seq);
 		else if (page.type === "group") this.renderGroup(inner, page.room);
-		else if (page.type === "more") await this.renderMore(inner, page);
-		else await this.renderFolder(inner, page);
+		else if (page.type === "more") await this.renderMore(inner, page, seq);
+		else await this.renderFolder(inner, page, seq);
 	}
 
-	async renderHome(inner: HTMLElement) {
+	async renderHome(inner: HTMLElement, seq: number) {
 		const title = this.plugin.settings.title || DEFAULT_TITLE;
 		inner.createEl("h1", { text: title });
 		inner.createEl("span", { cls: "an-tou-date", text: todayLabel() });
@@ -662,6 +673,7 @@ class DeskView extends ItemView {
 		const recent = this.recentNotes();
 		for (const file of recent) {
 			const copy = await noteCardCopy(this.app, file);
+			if (seq !== this.renderSeq) return;
 			const hit = this.ownerOf(file, live);
 			this.card(
 				recentGrid,
@@ -744,7 +756,8 @@ class DeskView extends ItemView {
 
 	async renderFolder(
 		inner: HTMLElement,
-		page: Extract<Page, { type: "folder" }>
+		page: Extract<Page, { type: "folder" }>,
+		seq: number
 	) {
 		const title = this.plugin.settings.title || DEFAULT_TITLE;
 		const goHome = () => {
@@ -801,6 +814,7 @@ class DeskView extends ItemView {
 		const grid = inner.createDiv({ cls: "an-tou-grid" });
 		for (const file of notes) {
 			const copy = await noteCardCopy(this.app, file);
+			if (seq !== this.renderSeq) return;
 			this.card(
 				grid,
 				{ kicker: page.kicker, title: copy.title, line: copy.line, note: true },
@@ -836,7 +850,7 @@ class DeskView extends ItemView {
 		}
 	}
 
-	async renderMore(inner: HTMLElement, page: Extract<Page, { type: "more" }>) {
+	async renderMore(inner: HTMLElement, page: Extract<Page, { type: "more" }>, seq: number) {
 		this.nav(
 			inner,
 			[{ label: "← " + page.title, go: () => this.back() }],
@@ -854,6 +868,7 @@ class DeskView extends ItemView {
 		const grid = inner.createDiv({ cls: "an-tou-grid" });
 		for (const file of notes) {
 			const copy = await noteCardCopy(this.app, file);
+			if (seq !== this.renderSeq) return;
 			this.card(
 				grid,
 				{ kicker: page.kicker, title: copy.title, line: copy.line, note: true },
@@ -1057,6 +1072,17 @@ class AnTouSettingTab extends PluginSettingTab {
 		this.textField(grid, t.parent, t.parentDesc, room.parent || "", (v) => {
 			room.parent = v.trim() || undefined;
 		});
+		this.textField(
+			grid,
+			t.maxNotes,
+			t.maxNotesDesc,
+			room.maxNotes ? String(room.maxNotes) : "",
+			(v) => {
+				const s = v.trim();
+				const n = Number(s);
+				room.maxNotes = s !== "" && Number.isInteger(n) && n > 0 ? n : undefined;
+			}
+		);
 		new Setting(grid)
 			.setName(t.quiet)
 			.setDesc(t.quietDesc)
@@ -1068,12 +1094,12 @@ class AnTouSettingTab extends PluginSettingTab {
 			);
 		if (this.hasBacklogFile(room)) {
 			new Setting(grid).setName(t.backlogNote).setDesc(t.backlogNoteDesc);
-		} else if (room.pinBacklog) {
+		} else {
 			new Setting(grid)
 				.setName(t.pinBacklog)
 				.setDesc(t.pinBacklogDesc)
 				.addToggle((box) =>
-					box.setValue(true).onChange((v) => {
+					box.setValue(!!room.pinBacklog).onChange((v) => {
 						room.pinBacklog = v;
 						void this.saveAndRefresh();
 					})
@@ -1157,6 +1183,9 @@ class AnTouSettingTab extends PluginSettingTab {
 
 	async removeRoom(id: string) {
 		this.plugin.settings.rooms = this.plugin.settings.rooms.filter((r) => r.id !== id);
+		for (const room of this.plugin.settings.rooms) {
+			if (room.parent === id) delete room.parent;
+		}
 		await this.saveAndRefresh();
 		this.display();
 	}
@@ -1178,7 +1207,7 @@ export default class AnTouPlugin extends Plugin {
 		this.registerView(VIEW_TYPE, (leaf) => new DeskView(leaf, this));
 		this.addCommand({
 			id: "open-desk",
-			name: "Open Quiet Desk",
+			name: "Open desk",
 			callback: () => {
 				void this.activateView();
 			},
@@ -1326,15 +1355,12 @@ export default class AnTouPlugin extends Plugin {
 
 	async activateView() {
 		const { workspace } = this.app;
-		const leaves = workspace.getLeavesOfType(VIEW_TYPE);
-		for (const extra of leaves.slice(1)) extra.detach();
 		let leaf = workspace.getLeavesOfType(VIEW_TYPE)[0];
 		if (!leaf) {
-			leaf = workspace.getLeaf(false);
+			leaf = workspace.getLeaf("tab");
 			await leaf.setViewState({ type: VIEW_TYPE, active: true });
-		} else {
-			workspace.setActiveLeaf(leaf, { focus: true });
 		}
+		await workspace.revealLeaf(leaf);
 		if (this.settings.collapseExplorer && workspace.leftSplit) {
 			workspace.leftSplit.collapse();
 		}
