@@ -6,6 +6,7 @@ import {
 	Plugin,
 	PluginSettingTab,
 	Setting,
+	TAbstractFile,
 	TFile,
 	TFolder,
 	WorkspaceLeaf,
@@ -36,6 +37,7 @@ interface AnTouSettings {
 	collapseExplorer: boolean;
 	applyLook: boolean;
 	skipPaths: string[];
+	skipSeeded: boolean;
 	rooms: Room[];
 	uiLang: UiLang;
 }
@@ -45,7 +47,8 @@ const DEFAULT_SETTINGS: AnTouSettings = {
 	openOnStart: true,
 	collapseExplorer: true,
 	applyLook: true,
-	skipPaths: [],
+	skipPaths: ["attachments"],
+	skipSeeded: false,
 	rooms: [],
 	uiLang: "zh",
 };
@@ -192,6 +195,8 @@ type Page =
 	| ({ type: "folder" } & FolderPage)
 	| ({ type: "more" } & FolderPage & { skip: number });
 
+type LiveFolder = { id: string; folder: string; kicker: string };
+
 function slug(name: string): string {
 	const s = name
 		.toLowerCase()
@@ -245,13 +250,18 @@ function isAutoLine(line?: string): boolean {
 	return /^\d+\s*篇笔记$/.test(s) || /^\d+\s*notes?$/i.test(s);
 }
 
+function isAutoKicker(room: Room): boolean {
+	if (!room.kicker || !room.folder) return false;
+	const base = room.folder.slice(room.folder.lastIndexOf("/") + 1);
+	return room.kicker === kickerOf(base);
+}
+
 function inFolder(file: TFile, folder: string): boolean {
 	if (!folder) return false;
 	return file.path === folder + ".md" || file.path.startsWith(folder + "/");
 }
 
 function skipped(path: string, skipPaths: string[]): boolean {
-	if (path.includes("/attachments/")) return true;
 	return skipPaths.some((s) => path === s || path.startsWith(s + "/"));
 }
 
@@ -307,7 +317,11 @@ function firstReadableFrom(body: string): string {
 	return "";
 }
 
-function stripFrontmatter(text: string): string {
+function stripFrontmatter(app: App, file: TFile, text: string): string {
+	const offset = app.metadataCache.getFileCache(file)?.frontmatterPosition?.end?.offset;
+	if (typeof offset === "number" && offset > 0 && offset <= text.length) {
+		return text.slice(offset);
+	}
 	if (!text.startsWith("---")) return text;
 	const end = text.indexOf("\n---", 3);
 	if (end === -1) return text;
@@ -318,7 +332,7 @@ async function noteCardCopy(app: App, file: TFile): Promise<{ title: string; lin
 	if (file.basename === "BACKLOG") return { title: "Backlog", line: "" };
 	let body = "";
 	try {
-		body = stripFrontmatter(await app.vault.cachedRead(file));
+		body = stripFrontmatter(app, file, await app.vault.cachedRead(file));
 	} catch {
 		/* ignore */
 	}
@@ -386,6 +400,8 @@ class DeskView extends ItemView {
 	stack: Page[] = [{ type: "home" }];
 	_tid = 0;
 	renderSeq = 0;
+	dirty = false;
+	renderFiles: TFile[] | null = null;
 
 	constructor(leaf: WorkspaceLeaf, plugin: AnTouPlugin) {
 		super(leaf);
@@ -407,7 +423,19 @@ class DeskView extends ItemView {
 		this.registerEvent(this.app.vault.on("create", () => this.safeRender()));
 		this.registerEvent(this.app.vault.on("delete", () => this.safeRender()));
 		this.registerEvent(this.app.vault.on("rename", () => this.safeRender()));
-		this.registerEvent(this.app.vault.on("modify", () => this.safeRender()));
+		this.registerEvent(
+			this.app.vault.on("modify", (file) => {
+				if (this.modifyAffectsPage(file)) this.safeRender();
+			})
+		);
+		this.registerEvent(
+			this.app.workspace.on("active-leaf-change", () => {
+				if (this.dirty && this.isShownNow()) {
+					this.dirty = false;
+					void this.render();
+				}
+			})
+		);
 		await this.render();
 	}
 
@@ -417,9 +445,35 @@ class DeskView extends ItemView {
 		this.contentEl.empty();
 	}
 
+	isShownNow(): boolean {
+		if (typeof this.contentEl.isShown === "function") return this.contentEl.isShown();
+		return this.contentEl.offsetParent !== null;
+	}
+
+	modifyAffectsPage(file: TAbstractFile): boolean {
+		if (!(file instanceof TFile)) return true;
+		const page = this.current();
+		if (page.type === "folder" || page.type === "more") {
+			return inFolder(file, page.folder);
+		}
+		if (page.type === "home") {
+			return !!this.ownerOf(file, this.liveFolders());
+		}
+		return true;
+	}
+
 	safeRender() {
+		if (!this.isShownNow()) {
+			this.dirty = true;
+			if (this._tid) {
+				window.clearTimeout(this._tid);
+				this._tid = 0;
+			}
+			return;
+		}
 		if (this._tid) window.clearTimeout(this._tid);
 		this._tid = window.setTimeout(() => {
+			this._tid = 0;
 			void this.render();
 		}, 200);
 	}
@@ -448,7 +502,8 @@ class DeskView extends ItemView {
 	mdIn(folder: string, extraSkip: string[] = []): TFile[] {
 		if (!folder) return [];
 		const skip = this.plugin.settings.skipPaths;
-		return this.app.vault.getMarkdownFiles().filter((f) => {
+		const all = this.renderFiles ?? this.app.vault.getMarkdownFiles();
+		return all.filter((f) => {
 			if (!inFolder(f, folder)) return false;
 			if (skipped(f.path, skip)) return false;
 			return !extraSkip.some((s) => f.path.endsWith(s) || f.basename === s);
@@ -486,8 +541,8 @@ class DeskView extends ItemView {
 		return parent ? this.isQuietLine(parent, visited) : false;
 	}
 
-	liveFolders(): { id: string; folder: string; kicker: string }[] {
-		const out: { id: string; folder: string; kicker: string }[] = [];
+	liveFolders(): LiveFolder[] {
+		const out: LiveFolder[] = [];
 		for (const room of this.plugin.settings.rooms) {
 			if (room.draft) continue;
 			if (this.isQuietLine(room)) continue;
@@ -501,11 +556,8 @@ class DeskView extends ItemView {
 		return out;
 	}
 
-	ownerOf(
-		file: TFile,
-		live: { id: string; folder: string; kicker: string }[]
-	): { id: string; folder: string; kicker: string } | undefined {
-		let best: { id: string; folder: string; kicker: string } | undefined;
+	ownerOf(file: TFile, live: LiveFolder[]): LiveFolder | undefined {
+		let best: LiveFolder | undefined;
 		for (const room of live) {
 			if (!inFolder(file, room.folder)) continue;
 			if (!best || room.folder.length > best.folder.length) best = room;
@@ -627,14 +679,19 @@ class DeskView extends ItemView {
 
 	async render() {
 		const seq = ++this.renderSeq;
-		const root = this.contentEl;
-		root.empty();
-		const inner = root.createDiv({ cls: "an-tou-inner" });
-		const page = this.current();
-		if (page.type === "home") await this.renderHome(inner, seq);
-		else if (page.type === "group") this.renderGroup(inner, page.room);
-		else if (page.type === "more") await this.renderMore(inner, page, seq);
-		else await this.renderFolder(inner, page, seq);
+		this.renderFiles = this.app.vault.getMarkdownFiles();
+		try {
+			const root = this.contentEl;
+			root.empty();
+			const inner = root.createDiv({ cls: "an-tou-inner" });
+			const page = this.current();
+			if (page.type === "home") await this.renderHome(inner, seq);
+			else if (page.type === "group") this.renderGroup(inner, page.room);
+			else if (page.type === "more") await this.renderMore(inner, page, seq);
+			else await this.renderFolder(inner, page, seq);
+		} finally {
+			if (this.renderSeq === seq) this.renderFiles = null;
+		}
 	}
 
 	async renderHome(inner: HTMLElement, seq: number) {
@@ -669,16 +726,15 @@ class DeskView extends ItemView {
 
 		inner.createEl("h2", { text: "最近" });
 		const recentGrid = inner.createDiv({ cls: "an-tou-grid" });
-		const live = this.liveFolders();
 		const recent = this.recentNotes();
-		for (const file of recent) {
+		for (const entry of recent) {
+			const file = entry.file;
 			const copy = await noteCardCopy(this.app, file);
 			if (seq !== this.renderSeq) return;
-			const hit = this.ownerOf(file, live);
 			this.card(
 				recentGrid,
 				{
-					kicker: hit?.kicker || "Note",
+					kicker: entry.owner.kicker || "Note",
 					title: copy.title,
 					line: copy.line,
 					note: true,
@@ -690,43 +746,44 @@ class DeskView extends ItemView {
 		}
 	}
 
-	recentNotes(): TFile[] {
+	recentNotes(): { file: TFile; owner: LiveFolder }[] {
 		const live = this.liveFolders();
 		const skip = this.plugin.settings.skipPaths;
-		const files = this.app.vault.getMarkdownFiles().filter((f) => {
-			if (!this.ownerOf(f, live)) return false;
-			if (skipped(f.path, skip)) return false;
-			if (f.basename === "BACKLOG" || f.basename.startsWith("BACKLOG")) return false;
-			return true;
-		});
-		const buckets = new Map<string, TFile[]>();
-		for (const file of files) {
+		const all = this.renderFiles ?? this.app.vault.getMarkdownFiles();
+		const owned: { file: TFile; owner: LiveFolder }[] = [];
+		for (const file of all) {
+			if (skipped(file.path, skip)) continue;
+			if (file.basename === "BACKLOG" || file.basename.startsWith("BACKLOG")) continue;
 			const owner = this.ownerOf(file, live);
 			if (!owner) continue;
-			const list = buckets.get(owner.id) || [];
-			list.push(file);
-			buckets.set(owner.id, list);
+			owned.push({ file, owner });
+		}
+		const buckets = new Map<string, { file: TFile; owner: LiveFolder }[]>();
+		for (const entry of owned) {
+			const list = buckets.get(entry.owner.id) || [];
+			list.push(entry);
+			buckets.set(entry.owner.id, list);
 		}
 		for (const list of buckets.values()) {
-			list.sort((a, b) => b.stat.mtime - a.stat.mtime);
+			list.sort((a, b) => b.file.stat.mtime - a.file.stat.mtime);
 		}
 		const rooms = Array.from(buckets.values())
 			.filter((list) => list.length)
-			.sort((a, b) => b[0].stat.mtime - a[0].stat.mtime);
-		const picked: TFile[] = [];
+			.sort((a, b) => b[0].file.stat.mtime - a[0].file.stat.mtime);
+		const picked: { file: TFile; owner: LiveFolder }[] = [];
 		const seen = new Set<string>();
 		for (const list of rooms) {
 			if (picked.length >= RECENT_CAP) break;
 			picked.push(list[0]);
-			seen.add(list[0].path);
+			seen.add(list[0].file.path);
 		}
 		if (picked.length < RECENT_CAP) {
-			const rest = files
-				.filter((f) => !seen.has(f.path))
-				.sort((a, b) => b.stat.mtime - a.stat.mtime);
-			for (const file of rest) {
+			const rest = owned
+				.filter((e) => !seen.has(e.file.path))
+				.sort((a, b) => b.file.stat.mtime - a.file.stat.mtime);
+			for (const entry of rest) {
 				if (picked.length >= RECENT_CAP) break;
-				picked.push(file);
+				picked.push(entry);
 			}
 		}
 		return picked;
@@ -747,7 +804,7 @@ class DeskView extends ItemView {
 					count: n,
 					title: child.name,
 					line: child.line || (n === 1 && files[0] ? titleOf(files[0]) : ""),
-					quiet: child.quiet || room.quiet,
+					quiet: this.isQuietLine(child),
 				},
 				() => this.openRoom(child, room.name)
 			);
@@ -806,7 +863,7 @@ class DeskView extends ItemView {
 		let notes = all
 			.filter((f) => f.basename !== "BACKLOG" && f.basename !== "BACKLOG-archive")
 			.sort((a, b) => b.stat.mtime - a.stat.mtime);
-		const cap = useBacklog ? 7 : page.maxNotes || (notes.length > 40 ? 24 : notes.length);
+		const cap = page.maxNotes || (useBacklog ? 7 : notes.length > 40 ? 24 : notes.length);
 		const rest = Math.max(0, notes.length - cap);
 		if (rest) notes = notes.slice(0, cap);
 
@@ -882,6 +939,8 @@ class DeskView extends ItemView {
 
 class AnTouSettingTab extends PluginSettingTab {
 	plugin: AnTouPlugin;
+	_saveTimer: number | null = null;
+	_savePending = false;
 
 	constructor(app: App, plugin: AnTouPlugin) {
 		super(app, plugin);
@@ -922,7 +981,7 @@ class AnTouSettingTab extends PluginSettingTab {
 			.addText((box) =>
 				box.setValue(this.plugin.settings.title).onChange((v) => {
 					this.plugin.settings.title = v.trim() || DEFAULT_TITLE;
-					void this.saveAndRefresh();
+					this.debouncedSave();
 				})
 			);
 
@@ -966,7 +1025,7 @@ class AnTouSettingTab extends PluginSettingTab {
 						.split(",")
 						.map((s) => s.trim())
 						.filter(Boolean);
-					void this.saveAndRefresh();
+					this.debouncedSave();
 				})
 			);
 
@@ -1001,8 +1060,31 @@ class AnTouSettingTab extends PluginSettingTab {
 	}
 
 	async saveAndRefresh() {
+		if (this._saveTimer !== null) {
+			window.clearTimeout(this._saveTimer);
+			this._saveTimer = null;
+		}
+		this._savePending = false;
 		await this.plugin.saveSettings();
 		this.plugin.refreshDesks();
+	}
+
+	debouncedSave() {
+		this._savePending = true;
+		if (this._saveTimer !== null) window.clearTimeout(this._saveTimer);
+		this._saveTimer = window.setTimeout(() => {
+			void this.saveAndRefresh();
+		}, 400);
+	}
+
+	hide() {
+		const pending = this._savePending;
+		if (this._saveTimer !== null) {
+			window.clearTimeout(this._saveTimer);
+			this._saveTimer = null;
+		}
+		this._savePending = false;
+		if (pending) void this.saveAndRefresh();
 	}
 
 	async addRoom() {
@@ -1133,7 +1215,7 @@ class AnTouSettingTab extends PluginSettingTab {
 			.addText((box) =>
 				box.setValue(value).onChange((v) => {
 					assign(v);
-					void this.saveAndRefresh();
+					this.debouncedSave();
 				})
 			);
 	}
@@ -1203,6 +1285,13 @@ export default class AnTouPlugin extends Plugin {
 		if (!this.settings.title || this.settings.title === "An Tou") {
 			this.settings.title = DEFAULT_TITLE;
 		}
+		if (this.settings.skipSeeded !== true) {
+			if (!this.settings.skipPaths.includes("attachments")) {
+				this.settings.skipPaths.push("attachments");
+			}
+			this.settings.skipSeeded = true;
+			await this.saveSettings();
+		}
 
 		this.registerView(VIEW_TYPE, (leaf) => new DeskView(leaf, this));
 		this.addCommand({
@@ -1236,13 +1325,14 @@ export default class AnTouPlugin extends Plugin {
 		const used = new Set<string>();
 		const skip = this.settings.skipPaths;
 		const zh = this.settings.uiLang !== "en";
+		const files = this.app.vault.getMarkdownFiles();
 		const root = this.app.vault.getRoot();
 		for (const child of root.children) {
 			if (!(child instanceof TFolder)) continue;
 			if (child.name.startsWith(".")) continue;
 			if (skipped(child.path, skip)) continue;
 			const id = uniqueId(slug(child.name), used);
-			const n = this.mdCount(child.path);
+			const n = this.mdCount(child.path, files);
 			const room: Room = {
 				id,
 				name: child.name,
@@ -1257,7 +1347,7 @@ export default class AnTouPlugin extends Plugin {
 				if (sub.name.startsWith(".")) continue;
 				if (skipped(sub.path, skip)) continue;
 				const sid = uniqueId(slug(sub.name), used);
-				const sn = this.mdCount(sub.path);
+				const sn = this.mdCount(sub.path, files);
 				const childRoom: Room = {
 					id: sid,
 					name: sub.name,
@@ -1273,9 +1363,10 @@ export default class AnTouPlugin extends Plugin {
 		return rooms;
 	}
 
-	mdCount(folder: string): number {
+	mdCount(folder: string, files?: TFile[]): number {
 		const skip = this.settings.skipPaths;
-		return this.app.vault.getMarkdownFiles().filter((f) => {
+		const all = files ?? this.app.vault.getMarkdownFiles();
+		return all.filter((f) => {
 			if (!inFolder(f, folder)) return false;
 			if (skipped(f.path, skip)) return false;
 			return true;
@@ -1311,7 +1402,7 @@ export default class AnTouPlugin extends Plugin {
 			const parent = all.find((r) => r.id === pid);
 			if (!parent) continue;
 			if (!parent.folder) parent.folder = s.folder;
-			if (parent.kicker === "ROOM") parent.kicker = s.kicker;
+			if (isAutoKicker(parent)) parent.kicker = s.kicker;
 			if (isAutoLine(parent.line)) parent.line = s.line;
 		}
 
@@ -1320,7 +1411,7 @@ export default class AnTouPlugin extends Plugin {
 			if (!eid) continue;
 			const ex = all.find((r) => r.id === eid);
 			if (!ex) continue;
-			if (ex.kicker === "ROOM") ex.kicker = s.kicker;
+			if (isAutoKicker(ex)) ex.kicker = s.kicker;
 			if (isAutoLine(ex.line)) ex.line = s.line;
 		}
 

@@ -36,7 +36,8 @@ var DEFAULT_SETTINGS = {
   openOnStart: true,
   collapseExplorer: true,
   applyLook: true,
-  skipPaths: [],
+  skipPaths: ["attachments"],
+  skipSeeded: false,
   rooms: [],
   uiLang: "zh"
 };
@@ -214,14 +215,18 @@ function isAutoLine(line) {
   const s = line.trim();
   return /^\d+\s*篇笔记$/.test(s) || /^\d+\s*notes?$/i.test(s);
 }
+function isAutoKicker(room) {
+  if (!room.kicker || !room.folder)
+    return false;
+  const base = room.folder.slice(room.folder.lastIndexOf("/") + 1);
+  return room.kicker === kickerOf(base);
+}
 function inFolder(file, folder) {
   if (!folder)
     return false;
   return file.path === folder + ".md" || file.path.startsWith(folder + "/");
 }
 function skipped(path, skipPaths) {
-  if (path.includes("/attachments/"))
-    return true;
   return skipPaths.some((s) => path === s || path.startsWith(s + "/"));
 }
 function weakBasename(file) {
@@ -277,7 +282,12 @@ function firstReadableFrom(body) {
   }
   return "";
 }
-function stripFrontmatter(text) {
+function stripFrontmatter(app, file, text) {
+  var _a, _b, _c;
+  const offset = (_c = (_b = (_a = app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatterPosition) == null ? void 0 : _b.end) == null ? void 0 : _c.offset;
+  if (typeof offset === "number" && offset > 0 && offset <= text.length) {
+    return text.slice(offset);
+  }
   if (!text.startsWith("---"))
     return text;
   const end = text.indexOf("\n---", 3);
@@ -290,7 +300,7 @@ async function noteCardCopy(app, file) {
     return { title: "Backlog", line: "" };
   let body = "";
   try {
-    body = stripFrontmatter(await app.vault.cachedRead(file));
+    body = stripFrontmatter(app, file, await app.vault.cachedRead(file));
   } catch (e) {
   }
   const yaml = frontmatterTitle(app, file);
@@ -349,6 +359,8 @@ var DeskView = class extends import_obsidian.ItemView {
     this.stack = [{ type: "home" }];
     this._tid = 0;
     this.renderSeq = 0;
+    this.dirty = false;
+    this.renderFiles = null;
     this.plugin = plugin;
   }
   getViewType() {
@@ -365,7 +377,20 @@ var DeskView = class extends import_obsidian.ItemView {
     this.registerEvent(this.app.vault.on("create", () => this.safeRender()));
     this.registerEvent(this.app.vault.on("delete", () => this.safeRender()));
     this.registerEvent(this.app.vault.on("rename", () => this.safeRender()));
-    this.registerEvent(this.app.vault.on("modify", () => this.safeRender()));
+    this.registerEvent(
+      this.app.vault.on("modify", (file) => {
+        if (this.modifyAffectsPage(file))
+          this.safeRender();
+      })
+    );
+    this.registerEvent(
+      this.app.workspace.on("active-leaf-change", () => {
+        if (this.dirty && this.isShownNow()) {
+          this.dirty = false;
+          void this.render();
+        }
+      })
+    );
     await this.render();
   }
   async onClose() {
@@ -374,10 +399,36 @@ var DeskView = class extends import_obsidian.ItemView {
     this.renderSeq++;
     this.contentEl.empty();
   }
+  isShownNow() {
+    if (typeof this.contentEl.isShown === "function")
+      return this.contentEl.isShown();
+    return this.contentEl.offsetParent !== null;
+  }
+  modifyAffectsPage(file) {
+    if (!(file instanceof import_obsidian.TFile))
+      return true;
+    const page = this.current();
+    if (page.type === "folder" || page.type === "more") {
+      return inFolder(file, page.folder);
+    }
+    if (page.type === "home") {
+      return !!this.ownerOf(file, this.liveFolders());
+    }
+    return true;
+  }
   safeRender() {
+    if (!this.isShownNow()) {
+      this.dirty = true;
+      if (this._tid) {
+        window.clearTimeout(this._tid);
+        this._tid = 0;
+      }
+      return;
+    }
     if (this._tid)
       window.clearTimeout(this._tid);
     this._tid = window.setTimeout(() => {
+      this._tid = 0;
       void this.render();
     }, 200);
   }
@@ -399,10 +450,12 @@ var DeskView = class extends import_obsidian.ItemView {
     }
   }
   mdIn(folder, extraSkip = []) {
+    var _a;
     if (!folder)
       return [];
     const skip = this.plugin.settings.skipPaths;
-    return this.app.vault.getMarkdownFiles().filter((f) => {
+    const all = (_a = this.renderFiles) != null ? _a : this.app.vault.getMarkdownFiles();
+    return all.filter((f) => {
       if (!inFolder(f, folder))
         return false;
       if (skipped(f.path, skip))
@@ -571,18 +624,24 @@ var DeskView = class extends import_obsidian.ItemView {
   }
   async render() {
     const seq = ++this.renderSeq;
-    const root = this.contentEl;
-    root.empty();
-    const inner = root.createDiv({ cls: "an-tou-inner" });
-    const page = this.current();
-    if (page.type === "home")
-      await this.renderHome(inner, seq);
-    else if (page.type === "group")
-      this.renderGroup(inner, page.room);
-    else if (page.type === "more")
-      await this.renderMore(inner, page, seq);
-    else
-      await this.renderFolder(inner, page, seq);
+    this.renderFiles = this.app.vault.getMarkdownFiles();
+    try {
+      const root = this.contentEl;
+      root.empty();
+      const inner = root.createDiv({ cls: "an-tou-inner" });
+      const page = this.current();
+      if (page.type === "home")
+        await this.renderHome(inner, seq);
+      else if (page.type === "group")
+        this.renderGroup(inner, page.room);
+      else if (page.type === "more")
+        await this.renderMore(inner, page, seq);
+      else
+        await this.renderFolder(inner, page, seq);
+    } finally {
+      if (this.renderSeq === seq)
+        this.renderFiles = null;
+    }
   }
   async renderHome(inner, seq) {
     const title = this.plugin.settings.title || DEFAULT_TITLE;
@@ -613,17 +672,16 @@ var DeskView = class extends import_obsidian.ItemView {
     }
     inner.createEl("h2", { text: "\u6700\u8FD1" });
     const recentGrid = inner.createDiv({ cls: "an-tou-grid" });
-    const live = this.liveFolders();
     const recent = this.recentNotes();
-    for (const file of recent) {
+    for (const entry of recent) {
+      const file = entry.file;
       const copy = await noteCardCopy(this.app, file);
       if (seq !== this.renderSeq)
         return;
-      const hit = this.ownerOf(file, live);
       this.card(
         recentGrid,
         {
-          kicker: (hit == null ? void 0 : hit.kicker) || "Note",
+          kicker: entry.owner.kicker || "Note",
           title: copy.title,
           line: copy.line,
           note: true
@@ -635,44 +693,45 @@ var DeskView = class extends import_obsidian.ItemView {
     }
   }
   recentNotes() {
+    var _a;
     const live = this.liveFolders();
     const skip = this.plugin.settings.skipPaths;
-    const files = this.app.vault.getMarkdownFiles().filter((f) => {
-      if (!this.ownerOf(f, live))
-        return false;
-      if (skipped(f.path, skip))
-        return false;
-      if (f.basename === "BACKLOG" || f.basename.startsWith("BACKLOG"))
-        return false;
-      return true;
-    });
-    const buckets = /* @__PURE__ */ new Map();
-    for (const file of files) {
+    const all = (_a = this.renderFiles) != null ? _a : this.app.vault.getMarkdownFiles();
+    const owned = [];
+    for (const file of all) {
+      if (skipped(file.path, skip))
+        continue;
+      if (file.basename === "BACKLOG" || file.basename.startsWith("BACKLOG"))
+        continue;
       const owner = this.ownerOf(file, live);
       if (!owner)
         continue;
-      const list = buckets.get(owner.id) || [];
-      list.push(file);
-      buckets.set(owner.id, list);
+      owned.push({ file, owner });
+    }
+    const buckets = /* @__PURE__ */ new Map();
+    for (const entry of owned) {
+      const list = buckets.get(entry.owner.id) || [];
+      list.push(entry);
+      buckets.set(entry.owner.id, list);
     }
     for (const list of buckets.values()) {
-      list.sort((a, b) => b.stat.mtime - a.stat.mtime);
+      list.sort((a, b) => b.file.stat.mtime - a.file.stat.mtime);
     }
-    const rooms = Array.from(buckets.values()).filter((list) => list.length).sort((a, b) => b[0].stat.mtime - a[0].stat.mtime);
+    const rooms = Array.from(buckets.values()).filter((list) => list.length).sort((a, b) => b[0].file.stat.mtime - a[0].file.stat.mtime);
     const picked = [];
     const seen = /* @__PURE__ */ new Set();
     for (const list of rooms) {
       if (picked.length >= RECENT_CAP)
         break;
       picked.push(list[0]);
-      seen.add(list[0].path);
+      seen.add(list[0].file.path);
     }
     if (picked.length < RECENT_CAP) {
-      const rest = files.filter((f) => !seen.has(f.path)).sort((a, b) => b.stat.mtime - a.stat.mtime);
-      for (const file of rest) {
+      const rest = owned.filter((e) => !seen.has(e.file.path)).sort((a, b) => b.file.stat.mtime - a.file.stat.mtime);
+      for (const entry of rest) {
         if (picked.length >= RECENT_CAP)
           break;
-        picked.push(file);
+        picked.push(entry);
       }
     }
     return picked;
@@ -693,7 +752,7 @@ var DeskView = class extends import_obsidian.ItemView {
           count: n,
           title: child.name,
           line: child.line || (n === 1 && files[0] ? titleOf(files[0]) : ""),
-          quiet: child.quiet || room.quiet
+          quiet: this.isQuietLine(child)
         },
         () => this.openRoom(child, room.name)
       );
@@ -742,7 +801,7 @@ var DeskView = class extends import_obsidian.ItemView {
       }
     }
     let notes = all.filter((f) => f.basename !== "BACKLOG" && f.basename !== "BACKLOG-archive").sort((a, b) => b.stat.mtime - a.stat.mtime);
-    const cap = useBacklog ? 7 : page.maxNotes || (notes.length > 40 ? 24 : notes.length);
+    const cap = page.maxNotes || (useBacklog ? 7 : notes.length > 40 ? 24 : notes.length);
     const rest = Math.max(0, notes.length - cap);
     if (rest)
       notes = notes.slice(0, cap);
@@ -817,6 +876,8 @@ var DeskView = class extends import_obsidian.ItemView {
 var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
+    this._saveTimer = null;
+    this._savePending = false;
     this.plugin = plugin;
   }
   copy() {
@@ -844,7 +905,7 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
     new import_obsidian.Setting(containerEl).setName(t.title).setDesc(t.titleDesc).addText(
       (box) => box.setValue(this.plugin.settings.title).onChange((v) => {
         this.plugin.settings.title = v.trim() || DEFAULT_TITLE;
-        void this.saveAndRefresh();
+        this.debouncedSave();
       })
     );
     new import_obsidian.Setting(containerEl).setName(t.look).setDesc(t.lookDesc).addToggle(
@@ -869,7 +930,7 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
     new import_obsidian.Setting(containerEl).setName(t.skip).setDesc(t.skipDesc).addText(
       (box) => box.setValue(this.plugin.settings.skipPaths.join(", ")).onChange((v) => {
         this.plugin.settings.skipPaths = v.split(",").map((s) => s.trim()).filter(Boolean);
-        void this.saveAndRefresh();
+        this.debouncedSave();
       })
     );
     new import_obsidian.Setting(containerEl).setName(t.rooms).setHeading();
@@ -895,8 +956,31 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
     this.display();
   }
   async saveAndRefresh() {
+    if (this._saveTimer !== null) {
+      window.clearTimeout(this._saveTimer);
+      this._saveTimer = null;
+    }
+    this._savePending = false;
     await this.plugin.saveSettings();
     this.plugin.refreshDesks();
+  }
+  debouncedSave() {
+    this._savePending = true;
+    if (this._saveTimer !== null)
+      window.clearTimeout(this._saveTimer);
+    this._saveTimer = window.setTimeout(() => {
+      void this.saveAndRefresh();
+    }, 400);
+  }
+  hide() {
+    const pending = this._savePending;
+    if (this._saveTimer !== null) {
+      window.clearTimeout(this._saveTimer);
+      this._saveTimer = null;
+    }
+    this._savePending = false;
+    if (pending)
+      void this.saveAndRefresh();
   }
   async addRoom() {
     const t = this.copy();
@@ -1005,7 +1089,7 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
     new import_obsidian.Setting(parent).setName(name).setDesc(desc).addText(
       (box) => box.setValue(value).onChange((v) => {
         assign(v);
-        void this.saveAndRefresh();
+        this.debouncedSave();
       })
     );
   }
@@ -1073,6 +1157,13 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
     if (!this.settings.title || this.settings.title === "An Tou") {
       this.settings.title = DEFAULT_TITLE;
     }
+    if (this.settings.skipSeeded !== true) {
+      if (!this.settings.skipPaths.includes("attachments")) {
+        this.settings.skipPaths.push("attachments");
+      }
+      this.settings.skipSeeded = true;
+      await this.saveSettings();
+    }
     this.registerView(VIEW_TYPE, (leaf) => new DeskView(leaf, this));
     this.addCommand({
       id: "open-desk",
@@ -1103,6 +1194,7 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
     const used = /* @__PURE__ */ new Set();
     const skip = this.settings.skipPaths;
     const zh = this.settings.uiLang !== "en";
+    const files = this.app.vault.getMarkdownFiles();
     const root = this.app.vault.getRoot();
     for (const child of root.children) {
       if (!(child instanceof import_obsidian.TFolder))
@@ -1112,7 +1204,7 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
       if (skipped(child.path, skip))
         continue;
       const id = uniqueId(slug(child.name), used);
-      const n = this.mdCount(child.path);
+      const n = this.mdCount(child.path, files);
       const room = {
         id,
         name: child.name,
@@ -1131,7 +1223,7 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
         if (skipped(sub.path, skip))
           continue;
         const sid = uniqueId(slug(sub.name), used);
-        const sn = this.mdCount(sub.path);
+        const sn = this.mdCount(sub.path, files);
         const childRoom = {
           id: sid,
           name: sub.name,
@@ -1147,9 +1239,10 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
     }
     return rooms;
   }
-  mdCount(folder) {
+  mdCount(folder, files) {
     const skip = this.settings.skipPaths;
-    return this.app.vault.getMarkdownFiles().filter((f) => {
+    const all = files != null ? files : this.app.vault.getMarkdownFiles();
+    return all.filter((f) => {
       if (!inFolder(f, folder))
         return false;
       if (skipped(f.path, skip))
@@ -1193,7 +1286,7 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
         continue;
       if (!parent.folder)
         parent.folder = s.folder;
-      if (parent.kicker === "ROOM")
+      if (isAutoKicker(parent))
         parent.kicker = s.kicker;
       if (isAutoLine(parent.line))
         parent.line = s.line;
@@ -1205,7 +1298,7 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
       const ex = all.find((r) => r.id === eid);
       if (!ex)
         continue;
-      if (ex.kicker === "ROOM")
+      if (isAutoKicker(ex))
         ex.kicker = s.kicker;
       if (isAutoLine(ex.line))
         ex.line = s.line;
