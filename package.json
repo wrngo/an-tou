@@ -1,7 +1,7 @@
 {
-	"name": "an-tou",
-	"version": "0.2.4",
-	"description": "Open a glass card desk instead of the file tree.",
+	"name": "quiet-desk",
+	"version": "0.2.5",
+	"description": "Quiet Desk — a glass card desk for Obsidian.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",

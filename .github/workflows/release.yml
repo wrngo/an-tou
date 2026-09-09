@@ -54,5 +54,5 @@ jobs:
           tag="${GITHUB_REF#refs/tags/}"
           gh release create "$tag" \
             --title "$tag" \
-            --notes "An Tou $tag. Built and attested on GitHub Actions." \
+            --notes "Quiet Desk $tag. Built and attested on GitHub Actions." \
             main.js manifest.json styles.css

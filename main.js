@@ -29,8 +29,10 @@ __export(main_exports, {
 module.exports = __toCommonJS(main_exports);
 var import_obsidian = require("obsidian");
 var VIEW_TYPE = "an-tou-desk";
+var DEFAULT_TITLE = "\u683C\u7269\u6210\u6816";
+var RECENT_CAP = 3;
 var DEFAULT_SETTINGS = {
-  title: "An Tou",
+  title: DEFAULT_TITLE,
   openOnStart: true,
   collapseExplorer: true,
   applyLook: true,
@@ -47,7 +49,7 @@ var COPY = {
     desk: "\u4E66\u684C",
     title: "\u4E66\u684C\u6807\u9898",
     titleDesc: "\u9996\u9875\u6700\u5927\u90A3\u884C\u5B57\uFF0C\u4E5F\u663E\u793A\u5728\u6807\u7B7E\u4E0A\u3002",
-    look: "\u6362\u4E0A\u8FD9\u5957\u5916\u89C2",
+    look: "\u5E94\u7528 Quiet Glass \u5916\u89C2",
     lookDesc: "\u8584\u8377\u7EFF\u5E95\u548C\u886C\u7EBF\u5B57\u3002\u5173\u6389\u5C31\u53EA\u7559\u5361\u7247\u4E66\u684C\uFF0C\u989C\u8272\u4ECD\u7528\u4F60\u73B0\u5728\u7684\u4E3B\u9898\u3002",
     openOnStart: "\u6253\u5F00\u5E93\u65F6\u8FDB\u5165\u4E66\u684C",
     openOnStartDesc: "\u542F\u52A8\u65F6\u6253\u5F00\u4E66\u684C\uFF0C\u800C\u4E0D\u662F\u4E0A\u6B21\u90A3\u7BC7\u7B14\u8BB0\u3002",
@@ -56,25 +58,47 @@ var COPY = {
     skip: "\u8DF3\u8FC7\u8FD9\u4E9B\u8DEF\u5F84",
     skipDesc: "\u7528\u9017\u53F7\u5206\u9694\u3002\u8FD9\u4E9B\u6587\u4EF6\u5939\u4E0D\u4F1A\u51FA\u73B0\u5728\u5361\u7247\u548C\u300C\u6700\u8FD1\u300D\u91CC\u3002",
     rooms: "\u623F\u95F4",
-    roomsDesc: "\u6BCF\u5F20\u5361\u7247\u662F\u4E00\u4E2A\u623F\u95F4\u3002\u586B\u6587\u4EF6\u5939\u5C31\u8FDB\u90A3\u4E2A\u76EE\u5F55\uFF1B\u4E0D\u586B\u6587\u4EF6\u5939\uFF0C\u53EA\u586B\u5B50\u623F\u95F4\u7684\u300C\u7236\u623F\u95F4\u7F16\u53F7\u300D\uFF0C\u8FD9\u4E00\u5F20\u5C31\u662F\u5206\u7EC4\u3002",
+    roomsDesc: "\u4E0B\u9762\u8FD9\u5F20\u56FE\u5C31\u662F\u4E66\u684C\u5361\u7247\uFF0C\u5BF9\u7167\u7740\u586B\u5C31\u884C\u3002",
     addRoom: "\u6DFB\u52A0\u623F\u95F4",
     fromVault: "\u6309\u5E93\u6839\u76EE\u5F55\u751F\u6210",
-    fromVaultNotice: "\u5DF2\u6309\u9876\u5C42\u6587\u4EF6\u5939\u91CD\u5EFA\u623F\u95F4\u3002",
+    fromVaultNotice: "\u5DF2\u6309\u6587\u4EF6\u5939\u66F4\u65B0\u623F\u95F4\u3002\u5DF2\u6709\u540D\u79F0\u3001\u8BF4\u660E\u548C\u5F00\u5173\u6CA1\u52A8\u3002",
     roomId: "\u7F16\u53F7",
     remove: "\u5220\u9664\u8FD9\u4E2A\u623F\u95F4",
     name: "\u540D\u79F0",
-    nameDesc: "\u5361\u7247\u4E2D\u95F4\u7684\u5927\u6807\u9898\u3002",
+    nameDesc: "\u5361\u7247\u6B63\u4E2D\u95F4\u6700\u5927\u7684\u90A3\u884C\u5B57\u3002",
     folder: "\u6587\u4EF6\u5939",
-    folderDesc: "\u5E93\u91CC\u7684\u8DEF\u5F84\uFF0C\u6BD4\u5982 00-Inbox\u3002\u7559\u7A7A\u5219\u8FD9\u5F20\u5361\u662F\u5206\u7EC4\u3002",
-    kicker: "\u89D2\u6807",
-    kickerDesc: "\u5361\u7247\u5DE6\u4E0A\u89D2\u90A3\u4E00\u5C0F\u884C\uFF0C\u6BD4\u5982 Inbox\u3002",
-    line: "\u8BF4\u660E",
-    lineDesc: "\u5361\u7247\u5E95\u4E0B\u90A3\u4E00\u884C\uFF0C\u5199\u8FD9\u683C\u662F\u5E72\u4EC0\u4E48\u7684\u3002",
-    parent: "\u7236\u623F\u95F4\u7F16\u53F7",
-    parentDesc: "\u586B\u4E0A\u4E00\u7EA7\u7684\u7F16\u53F7\uFF0C\u6BD4\u5982 cabinet\u3002\u586B\u4E86\u5C31\u4E0D\u51FA\u73B0\u5728\u9996\u9875\u3002",
-    quiet: "\u5B89\u9759",
-    quietDesc: "\u6253\u5F00\u540E\u5361\u7247\u53D8\u6DE1\uFF0C\u91CC\u9762\u7684\u7B14\u8BB0\u4E5F\u4E0D\u8FDB\u300C\u6700\u8FD1\u300D\u3002",
-    newRoom: "\u65B0\u623F\u95F4"
+    folderDesc: "\u5E93\u91CC\u7684\u8DEF\u5F84\uFF0C\u6BD4\u5982 00-Inbox\u3002\u6536\u7EB3\u67DC\u8FD9\u79CD\u5206\u7EC4\u8BF7\u7559\u7A7A\u3002",
+    kicker: "\u5DE6\u4E0A\u89D2\u5C0F\u5B57",
+    kickerDesc: "\u5361\u7247\u5DE6\u4E0A\u89D2\u90A3\u4E00\u884C\uFF0C\u6BD4\u5982 Inbox\u3002",
+    line: "\u5E95\u4E0B\u90A3\u884C\u8BF4\u660E",
+    lineDesc: "\u6807\u9898\u4E0B\u9762\u90A3\u53E5\uFF0C\u5199\u8FD9\u683C\u662F\u5E72\u4EC0\u4E48\u7684\u3002",
+    parent: "\u653E\u8FDB\u54EA\u4E2A\u623F\u95F4",
+    parentDesc: "\u8981\u51FA\u73B0\u5728\u9996\u9875\u5C31\u7559\u7A7A\u3002\u8981\u6536\u8FDB\u53E6\u4E00\u5F20\u5361\u91CC\uFF0C\u586B\u4E0A\u4E00\u7EA7\u7684\u7F16\u53F7\uFF0C\u6BD4\u5982 cabinet\u3002",
+    quiet: "\u5361\u7247\u53D8\u6DE1",
+    quietDesc: "\u6253\u5F00\u540E\u8FD9\u5F20\u5361\u53D8\u6DE1\uFF0C\u91CC\u9762\u7684\u7B14\u8BB0\u4E5F\u4E0D\u8FDB\u300C\u6700\u8FD1\u300D\u3002",
+    pinBacklog: "\u8FDB\u623F\u95F4\u5148\u770B BACKLOG",
+    pinBacklogDesc: "\u6CA1\u6709 BACKLOG.md \u65F6\u4E5F\u53EF\u4EE5\u5F3A\u5236\uFF1A\u5176\u5B83\u7B14\u8BB0\u53EA\u7559\u51E0\u5F20\u6700\u8FD1\u7684\u3002",
+    backlogNote: "\u8FD9\u4E2A\u623F\u95F4\u6709 BACKLOG.md",
+    backlogNoteDesc: "\u8FDB\u623F\u95F4\u4F1A\u5148\u770B\u5230\u5B83\uFF0C\u5176\u5B83\u7B14\u8BB0\u53D8\u6210\u4E0B\u9762\u51E0\u5F20\u6700\u8FD1\u7684\u3002\u653E\u8FDB BACKLOG.md \u5C31\u4F1A\u8FD9\u6837\uFF0C\u4E0D\u7528\u53E6\u5F00\u5F00\u5173\u3002",
+    newRoom: "\u65B0\u623F\u95F4",
+    saveRoom: "\u4FDD\u5B58",
+    draftHint: "\u672A\u4FDD\u5B58\u3002\u586B\u597D\u540E\u70B9\u4FDD\u5B58\uFF0C\u8FD9\u5F20\u5361\u4F1A\u79FB\u5230\u6700\u4E0B\u9762\u3002",
+    roleGroup: "\u9996\u9875\u5206\u7EC4\u3002\u6587\u4EF6\u5939\u7A7A\u7740\u6CA1\u95EE\u9898\uFF0C\u5B50\u623F\u95F4\u628A\u300C\u653E\u8FDB\u54EA\u4E2A\u623F\u95F4\u300D\u586B\u6210\u8FD9\u4E2A\u7F16\u53F7\u3002",
+    roleHomeFolder: "\u9996\u9875\u5361\u7247\uFF0C\u5BF9\u7740\u4E0B\u9762\u7684\u6587\u4EF6\u5939\u3002",
+    roleNested: "\u4E0D\u5728\u9996\u9875\uFF0C\u6536\u5728\u7F16\u53F7 ",
+    helpTitle: "\u4E66\u684C\u5361\u7247\u957F\u8FD9\u6837",
+    helpKickerCap: "\u5DE6\u4E0A\u89D2\u5C0F\u5B57",
+    helpNameCap: "\u540D\u79F0",
+    helpLineCap: "\u5E95\u4E0B\u90A3\u884C\u8BF4\u660E",
+    helpFolderCap: "\u6587\u4EF6\u5939",
+    helpFolderNote: "\u586B 00-Inbox \u8FD9\u7C7B\u8DEF\u5F84\u3002\u7559\u7A7A\u7684\u8BDD\uFF0C\u70B9\u8FDB\u53BB\u770B\u5230\u7684\u662F\u5B50\u623F\u95F4\uFF0C\u4E0D\u662F\u7B14\u8BB0\u3002",
+    helpParentCap: "\u653E\u8FDB\u54EA\u4E2A\u623F\u95F4",
+    helpParentNote: "\u6536\u7EB3\u67DC\u7684\u7F16\u53F7\u662F cabinet\u3002\u4E2A\u4EBA\u601D\u8003\u8981\u85CF\u8FDB\u67DC\u5B50\uFF0C\u8FD9\u91CC\u586B cabinet\uFF0C\u9996\u9875\u5C31\u53EA\u5269\u6536\u7EB3\u67DC\u3002",
+    helpQuietCap: "\u5361\u7247\u53D8\u6DE1",
+    helpQuietNote: "\u6253\u5F00\u540E\u8FD9\u5F20\u5361\u53D8\u6DE1\uFF0C\u91CC\u9762\u7684\u7B14\u8BB0\u4E5F\u4E0D\u51FA\u73B0\u5728\u300C\u6700\u8FD1\u300D\u3002",
+    helpCountCap: "\u6570\u91CF\uFF0C\u4E0D\u7528\u586B",
+    helpHome: "\u9996\u9875",
+    helpInside: "\u70B9\u8FDB\u6536\u7EB3\u67DC\u4E4B\u540E"
   },
   en: {
     language: "Language",
@@ -84,7 +108,7 @@ var COPY = {
     desk: "Desk",
     title: "Desk title",
     titleDesc: "The large heading on the home cards and the tab.",
-    look: "Apply this look",
+    look: "Apply Quiet Glass look",
     lookDesc: "Mint paper and serif type. Off keeps the cards and your current theme.",
     openOnStart: "Open on start",
     openOnStartDesc: "Show the desk when the vault opens, instead of the last note.",
@@ -93,30 +117,98 @@ var COPY = {
     skip: "Skip these paths",
     skipDesc: "Comma-separated folder prefixes hidden from cards and recents.",
     rooms: "Rooms",
-    roomsDesc: "Each card is a room. Point it at a folder, or leave the folder empty and nest child rooms under its id.",
+    roomsDesc: "The picture below is a desk card. Fill the fields to match.",
     addRoom: "Add room",
     fromVault: "Build from top-level folders",
-    fromVaultNotice: "Rooms rebuilt from top-level folders.",
+    fromVaultNotice: "Rooms updated from folders. Names, captions, and toggles were kept.",
     roomId: "Id",
     remove: "Remove this room",
     name: "Name",
     nameDesc: "The large title in the middle of the card.",
     folder: "Folder",
-    folderDesc: "A vault path such as 00-Inbox. Leave empty to make a group.",
-    kicker: "Kicker",
-    kickerDesc: "The small line at the top-left of the card, such as Inbox.",
-    line: "Line",
+    folderDesc: "A vault path such as 00-Inbox. Leave empty for a group like Cabinet.",
+    kicker: "Top-left text",
+    kickerDesc: "The small line at the top-left, such as Inbox.",
+    line: "Caption under the title",
     lineDesc: "The sentence under the title, what this room is for.",
-    parent: "Parent room id",
-    parentDesc: "The id of the parent room, such as cabinet. Then it leaves the home grid.",
-    quiet: "Quiet",
-    quietDesc: "Fades the card and keeps its notes out of recents.",
-    newRoom: "New room"
+    parent: "Put inside this room",
+    parentDesc: "Leave empty to stay on the home grid. To nest it, type the parent id, such as cabinet.",
+    quiet: "Fade the card",
+    quietDesc: "The card fades, and its notes stay out of recents.",
+    pinBacklog: "Show BACKLOG first",
+    pinBacklogDesc: "Force the same layout without a BACKLOG.md: other notes stay as a few recent slips.",
+    backlogNote: "This room has BACKLOG.md",
+    backlogNoteDesc: "Opening the room shows it first; other notes become a few recent slips. Automatic when that file exists.",
+    newRoom: "New room",
+    saveRoom: "Save",
+    draftHint: "Unsaved. Fill it in, then save, and it moves to the bottom.",
+    roleGroup: "Home group. Empty folder is fine; children type this id in Put inside this room.",
+    roleHomeFolder: "Home card, pointed at the folder below.",
+    roleNested: "Not on home. Nested under ",
+    helpTitle: "A desk card looks like this",
+    helpKickerCap: "Top-left text",
+    helpNameCap: "Name",
+    helpLineCap: "Caption under the title",
+    helpFolderCap: "Folder",
+    helpFolderNote: "A path like 00-Inbox. Leave empty and this card is only a group.",
+    helpParentCap: "Put inside this room",
+    helpParentNote: "Cabinet's id is cabinet. A child that should live there types cabinet, and leaves the home grid.",
+    helpQuietCap: "Fade the card",
+    helpQuietNote: "The card fades, and its notes stay out of recents.",
+    helpCountCap: "Count, automatic",
+    helpHome: "Home",
+    helpInside: "After you open Cabinet"
   }
 };
 function slug(name) {
   const s = name.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]+/g, "-").replace(/^-|-$/g, "");
   return s || "room-" + Date.now().toString(36);
+}
+function uniqueId(base, used) {
+  const root = base || "room";
+  if (!used.has(root)) {
+    used.add(root);
+    return root;
+  }
+  let n = 2;
+  while (used.has(root + "-" + n))
+    n++;
+  const id = root + "-" + n;
+  used.add(id);
+  return id;
+}
+function kickerOf(folderName) {
+  let s = folderName.replace(/^\d+[-_\s]*/, "").trim();
+  s = s.replace(/（[^）]*）/g, "").replace(/\([^)]*\)/g, "").trim();
+  if (!s)
+    s = folderName.replace(/^\d+[-_\s]*/, "").trim() || folderName;
+  if (/[\u4e00-\u9fff]/.test(s)) {
+    s = s.replace(/^[A-Za-z0-9]+[-_]/, "").trim() || s;
+    return s.slice(0, 4);
+  }
+  if (/^[A-Za-z0-9][A-Za-z0-9._ -]*$/.test(s)) {
+    const parts = s.split(/[-_\s]+/).filter(Boolean);
+    if (parts.length === 1) {
+      const w = parts[0];
+      return w.length <= 12 ? w : w.slice(0, 8);
+    }
+    const first = parts[0];
+    if (first.length >= 3 && first.length <= 10)
+      return first;
+    return parts.map((p) => p[0]).join("").slice(0, 8);
+  }
+  return s.slice(0, 4);
+}
+function noteCountLine(n, zh) {
+  if (n <= 0)
+    return void 0;
+  return zh ? n + " \u7BC7\u7B14\u8BB0" : n + " notes";
+}
+function isAutoLine(line) {
+  if (!line)
+    return false;
+  const s = line.trim();
+  return /^\d+\s*篇笔记$/.test(s) || /^\d+\s*notes?$/i.test(s);
 }
 function inFolder(file, folder) {
   if (!folder)
@@ -128,12 +220,82 @@ function skipped(path, skipPaths) {
     return true;
   return skipPaths.some((s) => path === s || path.startsWith(s + "/"));
 }
+function weakBasename(file) {
+  return /^\d{4}-\d{2}-\d{2}\b/.test(file.basename) || /quick$/i.test(file.basename);
+}
 function titleOf(file) {
-  if (/^\d{4}-\d{2}-\d{2}\b/.test(file.basename) || /quick$/i.test(file.basename))
+  if (weakBasename(file))
     return "";
   if (file.basename === "BACKLOG")
     return "Backlog";
   return file.basename;
+}
+function frontmatterTitle(app, file) {
+  var _a, _b;
+  const raw = (_b = (_a = app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter) == null ? void 0 : _b.title;
+  if (typeof raw === "string" && raw.trim())
+    return raw.trim();
+  if (Array.isArray(raw) && raw.length && String(raw[0]).trim())
+    return String(raw[0]).trim();
+  return "";
+}
+function firstH1(app, file, body) {
+  var _a, _b, _c;
+  const heading = (_b = (_a = app.metadataCache.getFileCache(file)) == null ? void 0 : _a.headings) == null ? void 0 : _b.find((h) => h.level === 1);
+  if ((_c = heading == null ? void 0 : heading.heading) == null ? void 0 : _c.trim())
+    return heading.heading.trim();
+  for (const raw of body.split("\n")) {
+    const m = raw.trim().match(/^#\s+(.+)$/);
+    if (m)
+      return m[1].replace(/\s+#+\s*$/, "").trim();
+  }
+  return "";
+}
+function firstReadableFrom(body) {
+  for (const raw of body.split("\n")) {
+    let ln = raw.trim();
+    if (!ln)
+      continue;
+    if (ln === "---" || ln === "***" || ln === "___")
+      continue;
+    if (ln.startsWith("```") || ln.startsWith("`"))
+      continue;
+    if (ln.startsWith("#"))
+      continue;
+    if (ln.startsWith("!"))
+      continue;
+    if (ln.startsWith(">"))
+      continue;
+    ln = ln.replace(/^[-*+]\s+\[[ xX]\]\s*/, "").replace(/^[-*+]\s+/, "").replace(/^\d+\.\s+/, "").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").replace(/\[\[([^\]|]+)(\|[^\]]*)?\]\]/g, (_m, p1, p2) => p2 ? String(p2).slice(1) : p1).replace(/`[^`]+`/g, "").replace(/[*_]/g, "").replace(/\s+/g, " ").trim();
+    if (ln.length < 2)
+      continue;
+    return ln.slice(0, 48);
+  }
+  return "";
+}
+function stripFrontmatter(text) {
+  if (!text.startsWith("---"))
+    return text;
+  const end = text.indexOf("\n---", 3);
+  if (end === -1)
+    return text;
+  return text.slice(end + 4);
+}
+async function noteCardCopy(app, file) {
+  if (file.basename === "BACKLOG")
+    return { title: "Backlog", line: "" };
+  let body = "";
+  try {
+    body = stripFrontmatter(await app.vault.cachedRead(file));
+  } catch (e) {
+  }
+  const yaml = frontmatterTitle(app, file);
+  const h1 = firstH1(app, file, body);
+  const sentence = firstReadableFrom(body);
+  const base = file.basename;
+  const title = yaml || h1 || sentence || (weakBasename(file) ? "" : titleOf(file)) || base;
+  const line = sentence && sentence !== title ? sentence : "";
+  return { title, line };
 }
 function todayLabel() {
   const lang = document.documentElement.lang || navigator.language || "zh-CN";
@@ -152,29 +314,6 @@ function safeName(name) {
 }
 function isInboxFolder(folder) {
   return /inbox/i.test(folder);
-}
-async function firstLine(app, file) {
-  try {
-    let t = await app.vault.cachedRead(file);
-    if (t.startsWith("---")) {
-      const end = t.indexOf("\n---", 3);
-      if (end !== -1)
-        t = t.slice(end + 4);
-    }
-    for (const raw of t.split("\n")) {
-      let ln = raw.trim();
-      if (!ln || ln.startsWith("#") || ln.startsWith("!") || ln.startsWith(">"))
-        continue;
-      if (ln.startsWith("```") || ln.startsWith("`"))
-        continue;
-      ln = ln.replace(/`[^`]+`/g, "").replace(/\s+/g, " ").trim();
-      if (ln.length < 4)
-        continue;
-      return ln.slice(0, 36);
-    }
-  } catch (e) {
-  }
-  return "";
 }
 var NameModal = class extends import_obsidian.Modal {
   constructor(app, preset, onSubmit) {
@@ -213,7 +352,7 @@ var DeskView = class extends import_obsidian.ItemView {
     return VIEW_TYPE;
   }
   getDisplayText() {
-    return this.plugin.settings.title || "An Tou";
+    return this.plugin.settings.title || DEFAULT_TITLE;
   }
   getIcon() {
     return "layout-grid";
@@ -279,10 +418,10 @@ var DeskView = class extends import_obsidian.ItemView {
     });
   }
   homeRooms() {
-    return this.plugin.settings.rooms.filter((r) => !r.parent);
+    return this.plugin.settings.rooms.filter((r) => !r.parent && !r.draft);
   }
   childrenOf(id) {
-    return this.plugin.settings.rooms.filter((r) => r.parent === id);
+    return this.plugin.settings.rooms.filter((r) => r.parent === id && !r.draft);
   }
   isQuietLine(room) {
     if (room.quiet)
@@ -295,13 +434,29 @@ var DeskView = class extends import_obsidian.ItemView {
   liveFolders() {
     const out = [];
     for (const room of this.plugin.settings.rooms) {
+      if (room.draft)
+        continue;
       if (this.isQuietLine(room))
         continue;
       if (!room.folder)
         continue;
-      out.push({ folder: room.folder, kicker: room.name });
+      out.push({
+        id: room.id,
+        folder: room.folder,
+        kicker: room.kicker || room.name
+      });
     }
     return out;
+  }
+  ownerOf(file, live) {
+    let best;
+    for (const room of live) {
+      if (!inFolder(file, room.folder))
+        continue;
+      if (!best || room.folder.length > best.folder.length)
+        best = room;
+    }
+    return best;
   }
   roomCount(room) {
     const kids = this.childrenOf(room.id);
@@ -411,11 +566,13 @@ var DeskView = class extends import_obsidian.ItemView {
       await this.renderHome(inner);
     else if (page.type === "group")
       this.renderGroup(inner, page.room);
+    else if (page.type === "more")
+      await this.renderMore(inner, page);
     else
       await this.renderFolder(inner, page);
   }
   async renderHome(inner) {
-    const title = this.plugin.settings.title || "An Tou";
+    const title = this.plugin.settings.title || DEFAULT_TITLE;
     inner.createEl("h1", { text: title });
     inner.createEl("span", { cls: "an-tou-date", text: todayLabel() });
     const rooms = this.homeRooms();
@@ -444,19 +601,16 @@ var DeskView = class extends import_obsidian.ItemView {
     inner.createEl("h2", { text: "\u6700\u8FD1" });
     const recentGrid = inner.createDiv({ cls: "an-tou-grid" });
     const live = this.liveFolders();
-    const recent = this.app.vault.getMarkdownFiles().filter((f) => live.some((r) => inFolder(f, r.folder))).filter((f) => !skipped(f.path, this.plugin.settings.skipPaths)).filter((f) => f.basename !== "BACKLOG" && !f.basename.startsWith("BACKLOG")).sort((a, b) => b.stat.mtime - a.stat.mtime).slice(0, 3);
+    const recent = this.recentNotes();
     for (const file of recent) {
-      let titleText = titleOf(file);
-      const line = await firstLine(this.app, file);
-      if (!titleText)
-        titleText = line || file.basename;
-      const hit = live.find((r) => inFolder(file, r.folder));
+      const copy = await noteCardCopy(this.app, file);
+      const hit = this.ownerOf(file, live);
       this.card(
         recentGrid,
         {
           kicker: (hit == null ? void 0 : hit.kicker) || "Note",
-          title: titleText,
-          line: titleText === line ? "" : line,
+          title: copy.title,
+          line: copy.line,
           note: true
         },
         () => {
@@ -465,8 +619,51 @@ var DeskView = class extends import_obsidian.ItemView {
       );
     }
   }
+  recentNotes() {
+    const live = this.liveFolders();
+    const skip = this.plugin.settings.skipPaths;
+    const files = this.app.vault.getMarkdownFiles().filter((f) => {
+      if (!this.ownerOf(f, live))
+        return false;
+      if (skipped(f.path, skip))
+        return false;
+      if (f.basename === "BACKLOG" || f.basename.startsWith("BACKLOG"))
+        return false;
+      return true;
+    });
+    const buckets = /* @__PURE__ */ new Map();
+    for (const file of files) {
+      const owner = this.ownerOf(file, live);
+      if (!owner)
+        continue;
+      const list = buckets.get(owner.id) || [];
+      list.push(file);
+      buckets.set(owner.id, list);
+    }
+    for (const list of buckets.values()) {
+      list.sort((a, b) => b.stat.mtime - a.stat.mtime);
+    }
+    const rooms = Array.from(buckets.values()).filter((list) => list.length).sort((a, b) => b[0].stat.mtime - a[0].stat.mtime);
+    const picked = [];
+    const seen = /* @__PURE__ */ new Set();
+    for (const list of rooms) {
+      if (picked.length >= RECENT_CAP)
+        break;
+      picked.push(list[0]);
+      seen.add(list[0].path);
+    }
+    if (picked.length < RECENT_CAP) {
+      const rest = files.filter((f) => !seen.has(f.path)).sort((a, b) => b.stat.mtime - a.stat.mtime);
+      for (const file of rest) {
+        if (picked.length >= RECENT_CAP)
+          break;
+        picked.push(file);
+      }
+    }
+    return picked;
+  }
   renderGroup(inner, room) {
-    const title = this.plugin.settings.title || "An Tou";
+    const title = this.plugin.settings.title || DEFAULT_TITLE;
     this.nav(inner, [{ label: "\u2190 " + title, go: () => this.back() }]);
     inner.createEl("h1", { text: room.name });
     if (room.line)
@@ -488,7 +685,7 @@ var DeskView = class extends import_obsidian.ItemView {
     }
   }
   async renderFolder(inner, page) {
-    const title = this.plugin.settings.title || "An Tou";
+    const title = this.plugin.settings.title || DEFAULT_TITLE;
     const goHome = () => {
       this.stack = [{ type: "home" }];
       void this.render();
@@ -538,25 +735,63 @@ var DeskView = class extends import_obsidian.ItemView {
       inner.createEl("h2", { text: "\u6700\u8FD1\u7684\u7EB8\u6761" });
     const grid = inner.createDiv({ cls: "an-tou-grid" });
     for (const file of notes) {
-      const line = await firstLine(this.app, file);
+      const copy = await noteCardCopy(this.app, file);
       this.card(
         grid,
-        { kicker: page.kicker, title: titleOf(file) || line || file.basename, line, note: true },
+        { kicker: page.kicker, title: copy.title, line: copy.line, note: true },
         () => {
           void this.openNote(file);
         }
       );
     }
     if (rest > 0) {
-      this.card(grid, {
-        title: "\u5176\u4F59 " + rest + " \u6761",
-        line: "\u7528\u5FEB\u901F\u5207\u6362\u641C\u6807\u9898\u3002",
-        note: true,
-        quiet: true
-      });
+      this.card(
+        grid,
+        {
+          title: "\u5176\u4F59 " + rest + " \u6761",
+          note: true,
+          quiet: true
+        },
+        () => {
+          this.push({
+            type: "more",
+            title: page.title,
+            folder: page.folder,
+            kicker: page.kicker,
+            parentLabel: page.parentLabel,
+            pinBacklog: page.pinBacklog,
+            maxNotes: page.maxNotes,
+            skip: cap
+          });
+        }
+      );
     }
     if (!notes.length && !subs.length && !backlog) {
       inner.createEl("p", { cls: "an-tou-lede", text: "\u8FD9\u4E00\u683C\u8FD8\u6CA1\u6709\u7B14\u8BB0\u3002" });
+    }
+  }
+  async renderMore(inner, page) {
+    this.nav(
+      inner,
+      [{ label: "\u2190 " + page.title, go: () => this.back() }],
+      page.folder
+    );
+    inner.createEl("h1", { text: page.title });
+    const notes = this.mdIn(page.folder).filter((f) => f.basename !== "BACKLOG" && f.basename !== "BACKLOG-archive").sort((a, b) => b.stat.mtime - a.stat.mtime).slice(page.skip);
+    inner.createEl("p", {
+      cls: "an-tou-lede",
+      text: notes.length ? "\u5176\u4F59 " + notes.length + " \u6761" : "\u6CA1\u6709\u66F4\u591A\u7B14\u8BB0\u3002"
+    });
+    const grid = inner.createDiv({ cls: "an-tou-grid" });
+    for (const file of notes) {
+      const copy = await noteCardCopy(this.app, file);
+      this.card(
+        grid,
+        { kicker: page.kicker, title: copy.title, line: copy.line, note: true },
+        () => {
+          void this.openNote(file);
+        }
+      );
     }
   }
 };
@@ -589,7 +824,7 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
     new import_obsidian.Setting(containerEl).setName(t.desk).setHeading();
     new import_obsidian.Setting(containerEl).setName(t.title).setDesc(t.titleDesc).addText(
       (box) => box.setValue(this.plugin.settings.title).onChange((v) => {
-        this.plugin.settings.title = v.trim() || "An Tou";
+        this.plugin.settings.title = v.trim() || DEFAULT_TITLE;
         void this.saveAndRefresh();
       })
     );
@@ -619,6 +854,7 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
       })
     );
     new import_obsidian.Setting(containerEl).setName(t.rooms).setHeading();
+    this.fillHelp(containerEl.createDiv({ cls: "an-tou-help-inline" }), t);
     new import_obsidian.Setting(containerEl).setDesc(t.roomsDesc).addButton(
       (b) => b.setButtonText(t.addRoom).onClick(() => {
         void this.addRoom();
@@ -628,7 +864,9 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
         void this.rebuildRooms();
       })
     );
-    for (const room of this.plugin.settings.rooms) {
+    const drafts = this.plugin.settings.rooms.filter((r) => r.draft);
+    const rest = this.plugin.settings.rooms.filter((r) => !r.draft);
+    for (const room of drafts.concat(rest)) {
       this.drawRoom(containerEl, room, t);
     }
   }
@@ -643,23 +881,44 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
   }
   async addRoom() {
     const t = this.copy();
-    this.plugin.settings.rooms.push({
+    this.plugin.settings.rooms.unshift({
       id: "room-" + Date.now().toString(36),
       name: t.newRoom,
-      kicker: "ROOM"
+      draft: true
     });
     await this.saveAndRefresh();
     this.display();
   }
+  async saveRoom(id) {
+    const rooms = this.plugin.settings.rooms;
+    const i = rooms.findIndex((r) => r.id === id);
+    if (i < 0)
+      return;
+    const [room] = rooms.splice(i, 1);
+    delete room.draft;
+    rooms.push(room);
+    await this.saveAndRefresh();
+    this.display();
+  }
   async rebuildRooms() {
-    this.plugin.settings.rooms = this.plugin.scanRooms();
+    this.plugin.settings.rooms = this.plugin.mergeRooms(this.plugin.scanRooms());
     await this.saveAndRefresh();
     this.display();
     new import_obsidian.Notice(this.copy().fromVaultNotice);
   }
   drawRoom(containerEl, room, t) {
-    const wrap = containerEl.createDiv({ cls: "an-tou-room-edit" });
-    new import_obsidian.Setting(wrap).setName(room.name || t.newRoom).setDesc(t.roomId + " \xB7 " + room.id).addExtraButton(
+    const wrap = containerEl.createDiv({
+      cls: "an-tou-room-edit" + (room.draft ? " is-draft" : "")
+    });
+    const head = new import_obsidian.Setting(wrap).setName(room.name || t.newRoom).setDesc(t.roomId + " \xB7 " + room.id + "\n" + this.roomRole(room, t));
+    if (room.draft) {
+      head.addButton(
+        (b) => b.setButtonText(t.saveRoom).setCta().onClick(() => {
+          void this.saveRoom(room.id);
+        })
+      );
+    }
+    head.addExtraButton(
       (b) => b.setIcon("trash").setTooltip(t.remove).onClick(() => {
         void this.removeRoom(room.id);
       })
@@ -686,6 +945,31 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
         void this.saveAndRefresh();
       })
     );
+    if (this.hasBacklogFile(room)) {
+      new import_obsidian.Setting(grid).setName(t.backlogNote).setDesc(t.backlogNoteDesc);
+    } else if (room.pinBacklog) {
+      new import_obsidian.Setting(grid).setName(t.pinBacklog).setDesc(t.pinBacklogDesc).addToggle(
+        (box) => box.setValue(true).onChange((v) => {
+          room.pinBacklog = v;
+          void this.saveAndRefresh();
+        })
+      );
+    }
+  }
+  hasBacklogFile(room) {
+    if (!room.folder)
+      return false;
+    const f = this.app.vault.getAbstractFileByPath(room.folder + "/BACKLOG.md");
+    return f instanceof import_obsidian.TFile;
+  }
+  roomRole(room, t) {
+    if (room.draft)
+      return t.draftHint;
+    if (room.parent)
+      return t.roleNested + room.parent;
+    if (room.folder)
+      return t.roleHomeFolder;
+    return t.roleGroup;
   }
   textField(parent, name, desc, value, assign) {
     new import_obsidian.Setting(parent).setName(name).setDesc(desc).addText(
@@ -694,6 +978,43 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
         void this.saveAndRefresh();
       })
     );
+  }
+  fillHelp(pop, t) {
+    pop.createDiv({ cls: "an-tou-help-kicker-line", text: t.helpTitle });
+    const demo = pop.createDiv({ cls: "an-tou-help-demo" });
+    const card = demo.createDiv({ cls: "an-tou-help-card" });
+    card.createSpan({ cls: "an-tou-help-kicker", text: "Inbox" });
+    card.createSpan({ cls: "an-tou-help-count", text: "3" });
+    card.createEl("strong", { text: "\u5165\u53E3" });
+    card.createSpan({ cls: "an-tou-help-line", text: "\u4ECA\u5929\u8FD9\u4E00\u5F20" });
+    const keys = demo.createDiv({ cls: "an-tou-help-keys" });
+    const addKey = (cls, cap, sample) => {
+      const row = keys.createDiv({ cls: "an-tou-help-key" });
+      row.createSpan({ cls: "an-tou-help-swatch " + cls });
+      row.createSpan({ text: cap + " \xB7 " + sample });
+    };
+    addKey("is-kicker", t.helpKickerCap, "Inbox");
+    addKey("is-name", t.helpNameCap, "\u5165\u53E3");
+    addKey("is-line", t.helpLineCap, "\u4ECA\u5929\u8FD9\u4E00\u5F20");
+    addKey("is-folder", t.helpFolderCap, "00-Inbox");
+    addKey("is-count", t.helpCountCap, "3");
+    pop.createDiv({ cls: "an-tou-help-note", text: t.helpFolderNote });
+    const nest = pop.createDiv({ cls: "an-tou-help-nest" });
+    nest.createDiv({ cls: "an-tou-help-kicker-line", text: t.helpParentCap });
+    const home = nest.createDiv({ cls: "an-tou-help-flow" });
+    home.createSpan({ cls: "an-tou-help-chip", text: t.helpHome });
+    const cab = home.createDiv({ cls: "an-tou-help-mini" });
+    cab.createSpan({ cls: "an-tou-help-kicker", text: "Cabinet" });
+    cab.createEl("strong", { text: "\u6536\u7EB3\u67DC" });
+    cab.createSpan({ cls: "an-tou-help-id", text: "cabinet" });
+    home.createSpan({ cls: "an-tou-help-arrow", text: "\u2193" });
+    home.createSpan({ cls: "an-tou-help-chip", text: t.helpInside });
+    const child = home.createDiv({ cls: "an-tou-help-mini" });
+    child.createSpan({ cls: "an-tou-help-kicker", text: "Thinking" });
+    child.createEl("strong", { text: "\u4E2A\u4EBA\u601D\u8003" });
+    child.createSpan({ cls: "an-tou-help-id", text: "cabinet" });
+    nest.createDiv({ cls: "an-tou-help-note", text: t.helpParentNote });
+    pop.createDiv({ cls: "an-tou-help-note", text: t.helpQuietNote });
   }
   async removeRoom(id) {
     this.plugin.settings.rooms = this.plugin.settings.rooms.filter((r) => r.id !== id);
@@ -715,10 +1036,13 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
       this.settings.skipPaths = [];
     if (this.settings.uiLang !== "en")
       this.settings.uiLang = "zh";
+    if (!this.settings.title || this.settings.title === "An Tou") {
+      this.settings.title = DEFAULT_TITLE;
+    }
     this.registerView(VIEW_TYPE, (leaf) => new DeskView(leaf, this));
     this.addCommand({
       id: "open-desk",
-      name: "Open desk",
+      name: "Open Quiet Desk",
       callback: () => {
         void this.activateView();
       }
@@ -742,22 +1066,137 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
   }
   scanRooms() {
     const rooms = [];
+    const used = /* @__PURE__ */ new Set();
+    const skip = this.settings.skipPaths;
+    const zh = this.settings.uiLang !== "en";
     const root = this.app.vault.getRoot();
     for (const child of root.children) {
       if (!(child instanceof import_obsidian.TFolder))
         continue;
       if (child.name.startsWith("."))
         continue;
-      if (skipped(child.path, this.settings.skipPaths))
+      if (skipped(child.path, skip))
         continue;
-      rooms.push({
-        id: slug(child.name),
+      const id = uniqueId(slug(child.name), used);
+      const n = this.mdCount(child.path);
+      const room = {
+        id,
         name: child.name,
         folder: child.path,
-        kicker: "ROOM"
-      });
+        kicker: kickerOf(child.name)
+      };
+      const line = noteCountLine(n, zh);
+      if (line)
+        room.line = line;
+      rooms.push(room);
+      for (const sub of child.children) {
+        if (!(sub instanceof import_obsidian.TFolder))
+          continue;
+        if (sub.name.startsWith("."))
+          continue;
+        if (skipped(sub.path, skip))
+          continue;
+        const sid = uniqueId(slug(sub.name), used);
+        const sn = this.mdCount(sub.path);
+        const childRoom = {
+          id: sid,
+          name: sub.name,
+          folder: sub.path,
+          kicker: kickerOf(sub.name),
+          parent: id
+        };
+        const childLine = noteCountLine(sn, zh);
+        if (childLine)
+          childRoom.line = childLine;
+        rooms.push(childRoom);
+      }
     }
     return rooms;
+  }
+  mdCount(folder) {
+    const skip = this.settings.skipPaths;
+    return this.app.vault.getMarkdownFiles().filter((f) => {
+      if (!inFolder(f, folder))
+        return false;
+      if (skipped(f.path, skip))
+        return false;
+      return true;
+    }).length;
+  }
+  mergeRooms(scanned) {
+    const all = this.settings.rooms.slice();
+    const usedIds = new Set(all.map((r) => r.id));
+    const byFolder = /* @__PURE__ */ new Map();
+    for (const room of all) {
+      if (room.folder)
+        byFolder.set(room.folder, room);
+    }
+    const idMap = /* @__PURE__ */ new Map();
+    for (const s of scanned) {
+      if (!s.folder)
+        continue;
+      const hit = byFolder.get(s.folder);
+      if (hit)
+        idMap.set(s.id, hit.id);
+    }
+    for (const s of scanned) {
+      if (s.parent || !s.folder || idMap.has(s.id))
+        continue;
+      const prefix = s.folder + "/";
+      const parents = /* @__PURE__ */ new Set();
+      for (const room of all) {
+        if (!room.folder || !room.folder.startsWith(prefix))
+          continue;
+        if (room.parent)
+          parents.add(room.parent);
+      }
+      if (parents.size !== 1)
+        continue;
+      const pid = [...parents][0];
+      idMap.set(s.id, pid);
+      const parent = all.find((r) => r.id === pid);
+      if (!parent)
+        continue;
+      if (!parent.folder)
+        parent.folder = s.folder;
+      if (parent.kicker === "ROOM")
+        parent.kicker = s.kicker;
+      if (isAutoLine(parent.line))
+        parent.line = s.line;
+    }
+    for (const s of scanned) {
+      const eid = idMap.get(s.id);
+      if (!eid)
+        continue;
+      const ex = all.find((r) => r.id === eid);
+      if (!ex)
+        continue;
+      if (ex.kicker === "ROOM")
+        ex.kicker = s.kicker;
+      if (isAutoLine(ex.line))
+        ex.line = s.line;
+    }
+    for (const s of scanned) {
+      if (idMap.has(s.id))
+        continue;
+      let parent = s.parent;
+      if (parent) {
+        const mapped = idMap.get(parent);
+        if (mapped)
+          parent = mapped;
+      }
+      const id = uniqueId(s.id, usedIds);
+      idMap.set(s.id, id);
+      const room = { ...s, id };
+      if (parent)
+        room.parent = parent;
+      else
+        delete room.parent;
+      all.push(room);
+      if (room.folder)
+        byFolder.set(room.folder, room);
+    }
+    return all;
   }
   async saveSettings() {
     await this.saveData(this.settings);

@@ -1,4 +1,4 @@
-/* An Tou — desk view only */
+/* Quiet Desk — desk view only */
 
 .workspace-leaf-content[data-type="an-tou-desk"] {
   background: transparent;
@@ -334,9 +334,12 @@
   background: var(--background-secondary);
 }
 
-.an-tou-room-edit > .setting-item {
-  border-top: none;
-  padding-top: 12px;
+.an-tou-room-edit.is-draft {
+  border-color: var(--interactive-accent);
+}
+
+.an-tou-room-edit > .setting-item .setting-item-description {
+  white-space: pre-line;
 }
 
 .an-tou-room-grid {
@@ -373,6 +376,197 @@
   .an-tou-view { padding: 20px 20px 40px; }
   .an-tou-grid { grid-template-columns: 1fr; }
   .an-tou-view .desk-card.span-2 { grid-column: auto; }
+}
+
+.an-tou-help-hit {
+  cursor: help;
+}
+
+.an-tou-help-inline {
+  margin: 4px 0 18px;
+  padding: 14px 16px 16px;
+  border-radius: 16px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-normal);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.an-tou-help-kicker-line {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.an-tou-help-demo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.an-tou-help-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 148px;
+  padding: 16px 16px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(28, 42, 38, 0.12);
+  background:
+    radial-gradient(220px 120px at 12% 8%, rgba(43, 187, 173, 0.16), transparent 60%),
+    rgba(255, 255, 255, 0.78);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 16px 32px -20px rgba(28, 42, 38, 0.28);
+  color: #1c2a26;
+}
+
+.theme-dark .an-tou-help-card {
+  border-color: rgba(255, 255, 255, 0.14);
+  background:
+    radial-gradient(220px 120px at 12% 8%, rgba(43, 187, 173, 0.16), transparent 60%),
+    rgba(255, 255, 255, 0.08);
+  color: #e4eeea;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    0 16px 32px -20px rgba(0, 0, 0, 0.45);
+}
+
+.an-tou-help-card.is-quiet {
+  opacity: 0.45;
+}
+
+.an-tou-help-kicker {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #6b7a76;
+}
+
+.theme-dark .an-tou-help-kicker {
+  color: #8a9a96;
+}
+
+.an-tou-help-count {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-family: "Songti SC", Georgia, serif;
+  font-size: 20px;
+  opacity: 0.35;
+}
+
+.an-tou-help-card strong {
+  font-family: "Songti SC", "Iowan Old Style", Georgia, serif;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.an-tou-help-line {
+  font-size: 12px;
+  line-height: 1.45;
+  color: #6b7a76;
+}
+
+.theme-dark .an-tou-help-line {
+  color: #8a9a96;
+}
+
+.an-tou-help-kicker.is-on,
+.an-tou-help-name.is-on,
+.an-tou-help-line.is-on,
+.an-tou-help-key.is-on,
+.an-tou-help-nest.is-on {
+  border-radius: 6px;
+  box-shadow: 0 0 0 2px var(--interactive-accent);
+}
+
+.an-tou-help-keys {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  justify-content: center;
+}
+
+.an-tou-help-key {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  color: var(--text-muted);
+  padding: 5px 6px;
+  border-radius: 8px;
+}
+
+.an-tou-help-swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 99px;
+  margin-top: 4px;
+  flex: 0 0 auto;
+}
+
+.an-tou-help-swatch.is-kicker { background: #8aa39c; }
+.an-tou-help-swatch.is-name { background: #1c2a26; }
+.an-tou-help-swatch.is-line { background: #6b7a76; }
+.an-tou-help-swatch.is-folder { background: #2bbbad; }
+.an-tou-help-swatch.is-count { background: #c4b49a; }
+
+.an-tou-help-note {
+  margin-top: 8px;
+  color: var(--text-muted);
+}
+
+.an-tou-help-nest {
+  margin-top: 12px;
+  padding: 10px 10px 8px;
+  border-radius: 12px;
+  background: var(--background-secondary);
+}
+
+.an-tou-help-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.an-tou-help-chip {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.an-tou-help-mini {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.an-tou-help-mini strong {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.an-tou-help-id {
+  font-family: var(--font-monospace);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.an-tou-help-arrow {
+  text-align: center;
+  color: var(--text-muted);
+}
+
+@media (max-width: 720px) {
+  .an-tou-help-demo { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {
