@@ -1,6 +1,6 @@
 {
 	"name": "quiet-desk",
-	"version": "0.2.5",
+	"version": "0.3.0",
 	"description": "Quiet Desk — a glass card desk for Obsidian.",
 	"main": "main.js",
 	"scripts": {

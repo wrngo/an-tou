@@ -6,33 +6,54 @@ Chinese name: 静桌. Desk title defaults to 格物成栖 (you can change it).
 
 Formerly **An Tou**. Plugin id stays `an-tou` so existing installs keep their `data.json` and desk tabs.
 
+Requires Obsidian **1.7.2** or newer.
+
 ## What it does
 
 - Opens on a card desk instead of the file tree
 - Each card is a folder you configure (a room)
 - A room with children and no notes grid is a group, like a cabinet
 - Notes inside a room stay cards
-- Applies the Quiet Glass look (can be turned off in settings)
+- Every card that points at a folder has a **+** in its corner — one click writes a timestamped note and opens it, no dialog
+- Applies the Quiet Glass look (three separate switches, see below)
 
-On first run, if you have not added rooms, it maps top-level folders and nests their subfolders.
+## First run
+
+A new vault opens on a welcome page. It says what the plugin changed, confirms your notes and folders were not touched, and lets you pick which top-level folders go on the home grid — six are pre-selected, and **Add all** maps every folder and its subfolders the way older versions did automatically.
+
+Vaults that already have rooms skip the welcome page entirely.
 
 ## Settings
 
-Settings default to Chinese. Switch to English at the top of the page.
+Settings default to Chinese. Switch to English at the top of the page — the desk itself follows, including the date format.
+
+**Desk**
 
 - **Desk title** — home heading and tab (default: 格物成栖)
-- **Apply Quiet Glass look** — mint paper and serif type
-- **Rooms** — one card per room
-  - **Name** — large title on the card
-  - **Folder** — vault path; empty makes a group
-  - **Kicker** — small top-left line
-  - **Line** — sentence under the title
-  - **Parent room id** — nest under another room
-  - **Quiet** — fade the card, skip recents
+- **Mint palette** — the mint paper and its background wash
+- **Serif type** — serif body text and looser line height
+- **Hide the ribbon** — off by default. Tidier, but the vault switcher and settings entry go with it
+- **Open on start** — show the desk when the vault opens
+- **Collapse file explorer** — fold the left file tree when the desk opens
+- **Skip these paths** — comma-separated folder prefixes hidden from cards and recents (`attachments` is there by default)
+
+**Rooms**
+
+Each room collapses to one line: its name plus where it sits — home card, home group, or inside another room by name. Click the line to edit.
+
+- **Name** — large title on the card
+- **Folder** — vault path, with autocompletion; a path that does not exist says so and suggests the closest match. Empty makes a group
+- **Top-left text** — small line at the card's top-left
+- **Caption** — sentence under the title
+- **Put inside this room** — a dropdown of room names. Anything that would make a cycle (the room itself, its descendants) is left out
+- **Max notes shown** — how many note cards this room shows at most
+- **Fade the card** — the card fades and its notes stay out of recents
 
 If a room folder contains `BACKLOG.md`, opening it shows that note first and the rest as a few recent slips. No extra switch.
 
-Build from top-level folders keeps names, captions, and quiet you already edited. New folders are appended.
+Deleting a room asks first and says where its children go — back to the home grid, never deleted with it.
+
+Build from top-level folders keeps names, captions, and toggles you already edited. Rooms whose folder has disappeared are flagged rather than removed.
 
 ## Install
 
@@ -54,8 +75,8 @@ npm run build
 Push a version tag that matches `manifest.json` (no `v` prefix). GitHub Actions builds the plugin, signs artifact attestations, and creates the release:
 
 ```
-git tag 0.2.5
-git push origin 0.2.5
+git tag 0.3.0
+git push origin 0.3.0
 ```
 
 Then submit or re-request review at [community.obsidian.md](https://community.obsidian.md).
