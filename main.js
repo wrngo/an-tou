@@ -36,6 +36,8 @@ var DEFAULT_SETTINGS = {
   openOnStart: true,
   collapseExplorer: true,
   applyLook: true,
+  applySerif: true,
+  hideRibbon: false,
   skipPaths: ["attachments"],
   skipSeeded: false,
   rooms: [],
@@ -50,8 +52,12 @@ var COPY = {
     desk: "\u4E66\u684C",
     title: "\u4E66\u684C\u6807\u9898",
     titleDesc: "\u9996\u9875\u6700\u5927\u90A3\u884C\u5B57\uFF0C\u4E5F\u663E\u793A\u5728\u6807\u7B7E\u4E0A\u3002",
-    look: "\u5E94\u7528 Quiet Glass \u5916\u89C2",
-    lookDesc: "\u8584\u8377\u7EFF\u5E95\u548C\u886C\u7EBF\u5B57\u3002\u5173\u6389\u5C31\u53EA\u7559\u5361\u7247\u4E66\u684C\uFF0C\u989C\u8272\u4ECD\u7528\u4F60\u73B0\u5728\u7684\u4E3B\u9898\u3002",
+    look: "\u8584\u8377\u7EFF\u914D\u8272",
+    lookDesc: "\u8584\u8377\u7EFF\u5E95\u8272\u3001\u6E10\u53D8\u80CC\u666F\uFF0C\u72B6\u6001\u680F\u548C\u6807\u7B7E\u680F\u53D8\u900F\u660E\u3002\u5173\u6389\u5C31\u53EA\u7559\u5361\u7247\u4E66\u684C\uFF0C\u989C\u8272\u4ECD\u7528\u4F60\u73B0\u5728\u7684\u4E3B\u9898\u3002",
+    serif: "\u886C\u7EBF\u5B57\u4F53",
+    serifDesc: "\u6B63\u6587\u548C\u6807\u9898\u6362\u6210\u886C\u7EBF\u5B57\uFF0C\u884C\u9AD8\u653E\u5BBD\u3002\u5173\u6389\u5C31\u7528\u4F60\u4E3B\u9898\u539F\u672C\u7684\u5B57\u4F53\u3002",
+    hideRibbon: "\u9690\u85CF\u5DE6\u8FB9\u7684\u56FE\u6807\u680F",
+    hideRibbonDesc: "\u66F4\u6E05\u723D\uFF0C\u4F46\u5207\u6362\u5E93\u548C\u8BBE\u7F6E\u7684\u5165\u53E3\u4E5F\u4F1A\u8DDF\u7740\u4E0D\u89C1\u3002",
     openOnStart: "\u6253\u5F00\u5E93\u65F6\u8FDB\u5165\u4E66\u684C",
     openOnStartDesc: "\u542F\u52A8\u65F6\u6253\u5F00\u4E66\u684C\uFF0C\u800C\u4E0D\u662F\u4E0A\u6B21\u90A3\u7BC7\u7B14\u8BB0\u3002",
     collapse: "\u6536\u8D77\u6587\u4EF6\u5217\u8868",
@@ -69,12 +75,17 @@ var COPY = {
     nameDesc: "\u5361\u7247\u6B63\u4E2D\u95F4\u6700\u5927\u7684\u90A3\u884C\u5B57\u3002",
     folder: "\u6587\u4EF6\u5939",
     folderDesc: "\u5E93\u91CC\u7684\u8DEF\u5F84\uFF0C\u6BD4\u5982 00-Inbox\u3002\u6536\u7EB3\u67DC\u8FD9\u79CD\u5206\u7EC4\u8BF7\u7559\u7A7A\u3002",
+    folderMissing: "\u5E93\u91CC\u6CA1\u6709\u8FD9\u4E2A\u6587\u4EF6\u5939\u3002",
+    folderDidYouMean: "\u4F60\u662F\u4E0D\u662F\u60F3\u586B {folder}\uFF1F",
     kicker: "\u5DE6\u4E0A\u89D2\u5C0F\u5B57",
     kickerDesc: "\u5361\u7247\u5DE6\u4E0A\u89D2\u90A3\u4E00\u884C\uFF0C\u6BD4\u5982 Inbox\u3002",
     line: "\u5E95\u4E0B\u90A3\u884C\u8BF4\u660E",
     lineDesc: "\u6807\u9898\u4E0B\u9762\u90A3\u53E5\uFF0C\u5199\u8FD9\u683C\u662F\u5E72\u4EC0\u4E48\u7684\u3002",
     parent: "\u653E\u8FDB\u54EA\u4E2A\u623F\u95F4",
-    parentDesc: "\u8981\u51FA\u73B0\u5728\u9996\u9875\u5C31\u7559\u7A7A\u3002\u8981\u6536\u8FDB\u53E6\u4E00\u5F20\u5361\u91CC\uFF0C\u586B\u4E0A\u4E00\u7EA7\u7684\u7F16\u53F7\uFF0C\u6BD4\u5982 cabinet\u3002",
+    parentDesc: "\u9009\u300C\u4E0D\u653E\uFF0C\u7559\u5728\u9996\u9875\u300D\u5B83\u5C31\u7559\u5728\u9996\u9875\uFF1B\u9009\u53E6\u4E00\u4E2A\u623F\u95F4\uFF0C\u5B83\u5C31\u6536\u8FDB\u90A3\u5F20\u5361\u91CC\u3002",
+    parentNone: "\u4E0D\u653E\uFF0C\u7559\u5728\u9996\u9875",
+    parentMissing: "\u26A0\uFE0F {id}\uFF08\u4E0D\u5B58\u5728\uFF09",
+    parentUnselectable: "\u26A0\uFE0F {name}\uFF08\u5F53\u524D\u503C\uFF0C\u4E0D\u80FD\u518D\u9009\uFF09",
     quiet: "\u5361\u7247\u53D8\u6DE1",
     quietDesc: "\u6253\u5F00\u540E\u8FD9\u5F20\u5361\u53D8\u6DE1\uFF0C\u91CC\u9762\u7684\u7B14\u8BB0\u4E5F\u4E0D\u8FDB\u300C\u6700\u8FD1\u300D\u3002",
     pinBacklog: "\u8FDB\u623F\u95F4\u5148\u770B BACKLOG",
@@ -86,9 +97,15 @@ var COPY = {
     newRoom: "\u65B0\u623F\u95F4",
     saveRoom: "\u4FDD\u5B58",
     draftHint: "\u672A\u4FDD\u5B58\u3002\u586B\u597D\u540E\u70B9\u4FDD\u5B58\uFF0C\u8FD9\u5F20\u5361\u4F1A\u79FB\u5230\u6700\u4E0B\u9762\u3002",
-    roleGroup: "\u9996\u9875\u5206\u7EC4\u3002\u6587\u4EF6\u5939\u7A7A\u7740\u6CA1\u95EE\u9898\uFF0C\u5B50\u623F\u95F4\u628A\u300C\u653E\u8FDB\u54EA\u4E2A\u623F\u95F4\u300D\u586B\u6210\u8FD9\u4E2A\u7F16\u53F7\u3002",
-    roleHomeFolder: "\u9996\u9875\u5361\u7247\uFF0C\u5BF9\u7740\u4E0B\u9762\u7684\u6587\u4EF6\u5939\u3002",
-    roleNested: "\u4E0D\u5728\u9996\u9875\uFF0C\u6536\u5728\u7F16\u53F7 ",
+    deleteTitle: "\u5220\u6389\u300C{name}\u300D\uFF1F",
+    deleteHolds: "\u91CC\u9762\u8FD8\u6536\u7740 {n} \u4E2A\u623F\u95F4\u3002\u5220\u6389\u4E4B\u540E\u5B83\u4EEC\u4F1A\u56DE\u5230\u9996\u9875\uFF0C\u4E0D\u4F1A\u8DDF\u7740\u6D88\u5931\u3002",
+    deleteNotesSafe: "\u4F60\u7684\u7B14\u8BB0\u548C\u6587\u4EF6\u5939\u4E00\u4E2A\u90FD\u4E0D\u4F1A\u52A8\u3002",
+    deleteConfirm: "\u5220\u6389",
+    deleteCancel: "\u7B97\u4E86",
+    roleGroup: "\u9996\u9875\u5206\u7EC4 \xB7 {n} \u4E2A\u5B50\u623F\u95F4",
+    roleHome: "\u9996\u9875 \xB7 {folder}",
+    roleNested: "\u6536\u5728\u300C{name}\u300D\u91CC",
+    roleParentMissing: "\u7236\u623F\u95F4\u4E0D\u5B58\u5728\uFF0C\u8FD9\u5F20\u5361\u4E0D\u4F1A\u663E\u793A",
     helpTitle: "\u4E66\u684C\u5361\u7247\u957F\u8FD9\u6837",
     helpKickerCap: "\u5DE6\u4E0A\u89D2\u5C0F\u5B57",
     helpNameCap: "\u540D\u79F0",
@@ -96,7 +113,7 @@ var COPY = {
     helpFolderCap: "\u6587\u4EF6\u5939",
     helpFolderNote: "\u586B 00-Inbox \u8FD9\u7C7B\u8DEF\u5F84\u3002\u7559\u7A7A\u7684\u8BDD\uFF0C\u70B9\u8FDB\u53BB\u770B\u5230\u7684\u662F\u5B50\u623F\u95F4\uFF0C\u4E0D\u662F\u7B14\u8BB0\u3002",
     helpParentCap: "\u653E\u8FDB\u54EA\u4E2A\u623F\u95F4",
-    helpParentNote: "\u6536\u7EB3\u67DC\u7684\u7F16\u53F7\u662F cabinet\u3002\u4E2A\u4EBA\u601D\u8003\u8981\u85CF\u8FDB\u67DC\u5B50\uFF0C\u8FD9\u91CC\u586B cabinet\uFF0C\u9996\u9875\u5C31\u53EA\u5269\u6536\u7EB3\u67DC\u3002",
+    helpParentNote: "\u4E2A\u4EBA\u601D\u8003\u8981\u85CF\u8FDB\u6536\u7EB3\u67DC\uFF0C\u5C31\u5728\u5B83\u7684\u300C\u653E\u8FDB\u54EA\u4E2A\u623F\u95F4\u300D\u91CC\u9009\u6536\u7EB3\u67DC\uFF0C\u9996\u9875\u5C31\u53EA\u5269\u6536\u7EB3\u67DC\u3002",
     helpQuietCap: "\u5361\u7247\u53D8\u6DE1",
     helpQuietNote: "\u6253\u5F00\u540E\u8FD9\u5F20\u5361\u53D8\u6DE1\uFF0C\u91CC\u9762\u7684\u7B14\u8BB0\u4E5F\u4E0D\u51FA\u73B0\u5728\u300C\u6700\u8FD1\u300D\u3002",
     helpCountCap: "\u6570\u91CF\uFF0C\u4E0D\u7528\u586B",
@@ -111,8 +128,12 @@ var COPY = {
     desk: "Desk",
     title: "Desk title",
     titleDesc: "The large heading on the home cards and the tab.",
-    look: "Apply Quiet Glass look",
-    lookDesc: "Mint paper and serif type. Off keeps the cards and your current theme.",
+    look: "Mint palette",
+    lookDesc: "Mint paper, soft gradients, transparent status and tab bars. Off keeps the cards and your current theme.",
+    serif: "Serif type",
+    serifDesc: "Serif body and headings with looser line height. Off uses your theme's own fonts.",
+    hideRibbon: "Hide the ribbon",
+    hideRibbonDesc: "Tidier, but the vault switcher and settings entry go with it.",
     openOnStart: "Open on start",
     openOnStartDesc: "Show the desk when the vault opens, instead of the last note.",
     collapse: "Collapse file explorer",
@@ -130,12 +151,17 @@ var COPY = {
     nameDesc: "The large title in the middle of the card.",
     folder: "Folder",
     folderDesc: "A vault path such as 00-Inbox. Leave empty for a group like Cabinet.",
+    folderMissing: "No such folder in the vault.",
+    folderDidYouMean: "Did you mean {folder}?",
     kicker: "Top-left text",
     kickerDesc: "The small line at the top-left, such as Inbox.",
     line: "Caption under the title",
     lineDesc: "The sentence under the title, what this room is for.",
     parent: "Put inside this room",
-    parentDesc: "Leave empty to stay on the home grid. To nest it, type the parent id, such as cabinet.",
+    parentDesc: 'Pick "Leave on home" to keep it on the home grid, or pick the room it should live inside.',
+    parentNone: "Leave on home",
+    parentMissing: "\u26A0\uFE0F {id} (missing)",
+    parentUnselectable: "\u26A0\uFE0F {name} (current, not selectable)",
     quiet: "Fade the card",
     quietDesc: "The card fades, and its notes stay out of recents.",
     pinBacklog: "Show BACKLOG first",
@@ -147,9 +173,15 @@ var COPY = {
     newRoom: "New room",
     saveRoom: "Save",
     draftHint: "Unsaved. Fill it in, then save, and it moves to the bottom.",
-    roleGroup: "Home group. Empty folder is fine; children type this id in Put inside this room.",
-    roleHomeFolder: "Home card, pointed at the folder below.",
-    roleNested: "Not on home. Nested under ",
+    deleteTitle: 'Delete "{name}"?',
+    deleteHolds: "It holds {n} rooms. They move back to home instead of disappearing.",
+    deleteNotesSafe: "Your notes and folders are untouched.",
+    deleteConfirm: "Delete",
+    deleteCancel: "Cancel",
+    roleGroup: "Home group \xB7 {n} children",
+    roleHome: "Home \xB7 {folder}",
+    roleNested: 'Inside "{name}"',
+    roleParentMissing: "Parent missing \u2014 this card is hidden",
     helpTitle: "A desk card looks like this",
     helpKickerCap: "Top-left text",
     helpNameCap: "Name",
@@ -157,7 +189,7 @@ var COPY = {
     helpFolderCap: "Folder",
     helpFolderNote: "A path like 00-Inbox. Leave empty and this card is only a group.",
     helpParentCap: "Put inside this room",
-    helpParentNote: "Cabinet's id is cabinet. A child that should live there types cabinet, and leaves the home grid.",
+    helpParentNote: "To hide Thinking inside Cabinet, pick Cabinet in its Put inside this room, and it leaves the home grid.",
     helpQuietCap: "Fade the card",
     helpQuietNote: "The card fades, and its notes stay out of recents.",
     helpCountCap: "Count, automatic",
@@ -329,6 +361,34 @@ function safeName(name) {
 function isInboxFolder(folder) {
   return /inbox/i.test(folder);
 }
+function folderKey(path) {
+  return path.toLowerCase().replace(/[\d\-_.\/\s]+/g, "");
+}
+function closestFolder(query, folders) {
+  const q = query.trim();
+  if (!q)
+    return "";
+  const lower = q.toLowerCase();
+  for (const f of folders) {
+    if (f.toLowerCase() === lower)
+      return f;
+  }
+  const key = folderKey(q);
+  if (key) {
+    for (const f of folders) {
+      if (folderKey(f) === key)
+        return f;
+    }
+  }
+  for (const f of folders) {
+    const fl = f.toLowerCase();
+    if (fl.length < 2)
+      continue;
+    if (fl.indexOf(lower) !== -1 || lower.indexOf(fl) !== -1)
+      return f;
+  }
+  return "";
+}
 var NameModal = class extends import_obsidian.Modal {
   constructor(app, preset, onSubmit) {
     super(app);
@@ -351,6 +411,60 @@ var NameModal = class extends import_obsidian.Modal {
     input.focus();
     if (this.preset)
       input.select();
+  }
+};
+var FolderSuggest = class extends import_obsidian.AbstractInputSuggest {
+  constructor(app, inputEl, onPick) {
+    super(app, inputEl);
+    this.inputEl = inputEl;
+    this.onPick = onPick;
+    this.limit = 20;
+  }
+  getSuggestions(query) {
+    const all = this.app.vault.getAllFolders(false).map((f) => f.path);
+    const q = query.trim().toLowerCase();
+    if (!q)
+      return all.slice(0, this.limit);
+    return all.filter((p) => p.toLowerCase().indexOf(q) !== -1).slice(0, this.limit);
+  }
+  renderSuggestion(value, el) {
+    el.setText(value);
+  }
+  selectSuggestion(value) {
+    this.inputEl.value = value;
+    this.onPick(value);
+    this.close();
+  }
+};
+var ConfirmModal = class extends import_obsidian.Modal {
+  constructor(app, opts) {
+    super(app);
+    this.heading = opts.title;
+    this.lines = opts.lines;
+    this.confirmText = opts.confirm;
+    this.cancelText = opts.cancel;
+    this.onConfirm = opts.onConfirm;
+  }
+  onOpen() {
+    this.titleEl.setText(this.heading);
+    for (const line of this.lines) {
+      this.contentEl.createEl("p", { cls: "an-tou-confirm-line", text: line });
+    }
+    const row = this.contentEl.createDiv({ cls: "an-tou-confirm-actions" });
+    const cancel = row.createEl("button", {
+      text: this.cancelText,
+      attr: { type: "button" }
+    });
+    cancel.addEventListener("click", () => this.close());
+    const ok = row.createEl("button", {
+      cls: "mod-warning",
+      text: this.confirmText,
+      attr: { type: "button" }
+    });
+    ok.addEventListener("click", () => {
+      this.close();
+      this.onConfirm();
+    });
   }
 };
 var DeskView = class extends import_obsidian.ItemView {
@@ -915,6 +1029,20 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
         void this.plugin.saveSettings();
       })
     );
+    new import_obsidian.Setting(containerEl).setName(t.serif).setDesc(t.serifDesc).addToggle(
+      (box) => box.setValue(this.plugin.settings.applySerif !== false).onChange((v) => {
+        this.plugin.settings.applySerif = v;
+        this.plugin.applyLook();
+        void this.plugin.saveSettings();
+      })
+    );
+    new import_obsidian.Setting(containerEl).setName(t.hideRibbon).setDesc(t.hideRibbonDesc).addToggle(
+      (box) => box.setValue(this.plugin.settings.hideRibbon === true).onChange((v) => {
+        this.plugin.settings.hideRibbon = v;
+        this.plugin.applyLook();
+        void this.plugin.saveSettings();
+      })
+    );
     new import_obsidian.Setting(containerEl).setName(t.openOnStart).setDesc(t.openOnStartDesc).addToggle(
       (box) => box.setValue(this.plugin.settings.openOnStart).onChange((v) => {
         this.plugin.settings.openOnStart = v;
@@ -1010,38 +1138,65 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
     new import_obsidian.Notice(this.copy().fromVaultNotice);
   }
   drawRoom(containerEl, room, t) {
-    const wrap = containerEl.createDiv({
+    const details = containerEl.createEl("details", {
       cls: "an-tou-room-edit" + (room.draft ? " is-draft" : "")
     });
-    const head = new import_obsidian.Setting(wrap).setName(room.name || t.newRoom).setDesc(t.roomId + " \xB7 " + room.id + "\n" + this.roomRole(room, t));
+    if (room.draft)
+      details.open = true;
+    const summary = details.createEl("summary", { cls: "an-tou-room-summary" });
+    summary.createSpan({ cls: "an-tou-room-caret", text: "\u25B8" });
+    const nameEl = summary.createSpan({
+      cls: "an-tou-room-name",
+      text: room.name || t.newRoom
+    });
+    const role = this.roomRole(room, t);
+    const roleEl = summary.createSpan({
+      cls: "an-tou-room-role" + (role.bad ? " is-bad" : ""),
+      text: role.text
+    });
+    const syncSummary = () => {
+      nameEl.setText(room.name || t.newRoom);
+      const next = this.roomRole(room, t);
+      roleEl.setText(next.text);
+      roleEl.toggleClass("is-bad", next.bad);
+    };
+    const actions = summary.createDiv({ cls: "an-tou-room-actions" });
     if (room.draft) {
-      head.addButton(
-        (b) => b.setButtonText(t.saveRoom).setCta().onClick(() => {
-          void this.saveRoom(room.id);
-        })
-      );
+      const save = actions.createEl("button", {
+        cls: "an-tou-room-save mod-cta",
+        text: t.saveRoom,
+        attr: { type: "button" }
+      });
+      save.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        void this.saveRoom(room.id);
+      });
     }
-    head.addExtraButton(
-      (b) => b.setIcon("trash").setTooltip(t.remove).onClick(() => {
-        void this.removeRoom(room.id);
-      })
-    );
-    const grid = wrap.createDiv({ cls: "an-tou-room-grid" });
+    const del = actions.createEl("button", {
+      cls: "an-tou-room-del",
+      attr: { type: "button", "aria-label": t.remove, title: t.remove }
+    });
+    (0, import_obsidian.setIcon)(del, "trash");
+    del.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.confirmRemove(room, t);
+    });
+    details.createDiv({ cls: "an-tou-room-id", text: t.roomId + " \xB7 " + room.id });
+    const grid = details.createDiv({ cls: "an-tou-room-grid" });
     this.textField(grid, t.name, t.nameDesc, room.name, (v) => {
       room.name = v;
+      syncSummary();
     });
-    this.textField(grid, t.folder, t.folderDesc, room.folder || "", (v) => {
-      room.folder = v.trim() || void 0;
-    });
+    this.folderField(grid, room, t, syncSummary);
     this.textField(grid, t.kicker, t.kickerDesc, room.kicker || "", (v) => {
       room.kicker = v;
     });
     this.textField(grid, t.line, t.lineDesc, room.line || "", (v) => {
       room.line = v;
     });
-    this.textField(grid, t.parent, t.parentDesc, room.parent || "", (v) => {
-      room.parent = v.trim() || void 0;
-    });
+    this.parentField(grid, room, t);
     this.textField(
       grid,
       t.maxNotes,
@@ -1078,12 +1233,121 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
   }
   roomRole(room, t) {
     if (room.draft)
-      return t.draftHint;
-    if (room.parent)
-      return t.roleNested + room.parent;
+      return { text: t.draftHint, bad: false };
+    if (room.parent) {
+      const parent = this.plugin.settings.rooms.find((r) => r.id === room.parent);
+      if (!parent)
+        return { text: t.roleParentMissing, bad: true };
+      return { text: t.roleNested.replace("{name}", parent.name || parent.id), bad: false };
+    }
     if (room.folder)
-      return t.roleHomeFolder;
-    return t.roleGroup;
+      return { text: t.roleHome.replace("{folder}", room.folder), bad: false };
+    const kids = this.childrenIds(room.id).length;
+    return { text: t.roleGroup.replace("{n}", String(kids)), bad: false };
+  }
+  childrenIds(id) {
+    return this.plugin.settings.rooms.filter((r) => r.parent === id && r.id !== id && !r.draft).map((r) => r.id);
+  }
+  blockedParentIds(room) {
+    const blocked = /* @__PURE__ */ new Set();
+    const walk = (id) => {
+      if (blocked.has(id))
+        return;
+      blocked.add(id);
+      for (const r of this.plugin.settings.rooms) {
+        if (r.parent === id && r.id !== id)
+          walk(r.id);
+      }
+    };
+    walk(room.id);
+    return blocked;
+  }
+  async changeParent(room, value) {
+    room.parent = value || void 0;
+    await this.saveAndRefresh();
+    this.display();
+  }
+  parentField(grid, room, t) {
+    new import_obsidian.Setting(grid).setName(t.parent).setDesc(t.parentDesc).addDropdown((dd) => {
+      var _a, _b;
+      dd.addOption("", t.parentNone);
+      const blocked = this.blockedParentIds(room);
+      const rooms = this.plugin.settings.rooms;
+      const candidates = rooms.filter((r) => !r.draft && !blocked.has(r.id));
+      const counts = /* @__PURE__ */ new Map();
+      for (const r of candidates)
+        counts.set(r.name, ((_a = counts.get(r.name)) != null ? _a : 0) + 1);
+      for (const r of candidates) {
+        const dup = ((_b = counts.get(r.name)) != null ? _b : 0) > 1;
+        dd.addOption(r.id, dup ? r.name + " \xB7 " + r.id : r.name);
+      }
+      const current = room.parent || "";
+      if (current && !candidates.some((r) => r.id === current)) {
+        const known = rooms.find((r) => r.id === current);
+        dd.addOption(
+          current,
+          known ? t.parentUnselectable.replace("{name}", known.name || known.id) : t.parentMissing.replace("{id}", current)
+        );
+      }
+      dd.setValue(current);
+      dd.onChange((v) => {
+        void this.changeParent(room, v);
+      });
+    });
+  }
+  folderField(grid, room, t, sync) {
+    const setting = new import_obsidian.Setting(grid).setName(t.folder).setDesc(t.folderDesc);
+    setting.addText((box) => {
+      const apply = (v) => {
+        room.folder = v.trim() || void 0;
+        this.showFolderError(setting, box.inputEl, v);
+        sync();
+        this.debouncedSave();
+      };
+      box.setValue(room.folder || "").onChange(apply);
+      new FolderSuggest(this.app, box.inputEl, (picked) => apply(picked));
+      this.showFolderError(setting, box.inputEl, room.folder || "");
+    });
+  }
+  showFolderError(setting, inputEl, raw) {
+    const path = raw.trim();
+    const prev = setting.settingEl.querySelector(".an-tou-field-error");
+    if (prev)
+      prev.remove();
+    if (!path) {
+      inputEl.removeClass("is-invalid");
+      return;
+    }
+    const folders = this.app.vault.getAllFolders(false).map((f) => f.path);
+    if (folders.indexOf(path) !== -1) {
+      inputEl.removeClass("is-invalid");
+      return;
+    }
+    inputEl.addClass("is-invalid");
+    const t = this.copy();
+    const box = setting.settingEl.createDiv({ cls: "an-tou-field-error" });
+    box.createDiv({ text: t.folderMissing });
+    const near = closestFolder(path, folders);
+    if (near)
+      box.createDiv({ text: t.folderDidYouMean.replace("{folder}", near) });
+  }
+  confirmRemove(room, t) {
+    const kids = this.plugin.settings.rooms.filter(
+      (r) => r.parent === room.id && r.id !== room.id
+    ).length;
+    const lines = [];
+    if (kids)
+      lines.push(t.deleteHolds.replace("{n}", String(kids)));
+    lines.push(t.deleteNotesSafe);
+    new ConfirmModal(this.app, {
+      title: t.deleteTitle.replace("{name}", room.name || t.newRoom),
+      lines,
+      confirm: t.deleteConfirm,
+      cancel: t.deleteCancel,
+      onConfirm: () => {
+        void this.removeRoom(room.id);
+      }
+    }).open();
   }
   textField(parent, name, desc, value, assign) {
     new import_obsidian.Setting(parent).setName(name).setDesc(desc).addText(
@@ -1157,6 +1421,17 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
     if (!this.settings.title || this.settings.title === "An Tou") {
       this.settings.title = DEFAULT_TITLE;
     }
+    let migrated = false;
+    if (saved && typeof saved.applySerif === "undefined") {
+      this.settings.applySerif = this.settings.applyLook !== false;
+      migrated = true;
+    }
+    if (saved && typeof saved.hideRibbon === "undefined") {
+      this.settings.hideRibbon = false;
+      migrated = true;
+    }
+    if (migrated)
+      await this.saveSettings();
     if (this.settings.skipSeeded !== true) {
       if (!this.settings.skipPaths.includes("attachments")) {
         this.settings.skipPaths.push("attachments");
@@ -1184,10 +1459,13 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
     });
   }
   onunload() {
-    document.body.removeClass("an-tou-look");
+    document.body.removeClass("an-tou-look", "an-tou-serif", "an-tou-hide-ribbon");
   }
   applyLook() {
-    document.body.toggleClass("an-tou-look", this.settings.applyLook !== false);
+    const body = document.body;
+    body.toggleClass("an-tou-look", this.settings.applyLook !== false);
+    body.toggleClass("an-tou-serif", this.settings.applySerif !== false);
+    body.toggleClass("an-tou-hide-ribbon", this.settings.hideRibbon === true);
   }
   scanRooms() {
     const rooms = [];

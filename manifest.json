@@ -2,7 +2,7 @@
 	"id": "an-tou",
 	"name": "Quiet Desk",
 	"version": "0.2.5",
-	"minAppVersion": "1.6.0",
+	"minAppVersion": "1.7.2",
 	"description": "A glass card desk instead of the file tree. Map folders to rooms, then click into notes.",
 	"author": "Tao",
 	"isDesktopOnly": false
