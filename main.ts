@@ -26,7 +26,6 @@ interface Room {
 	line?: string;
 	quiet?: boolean;
 	parent?: string;
-	pinBacklog?: boolean;
 	maxNotes?: number;
 	draft?: boolean;
 	stale?: boolean;
@@ -72,15 +71,21 @@ const COPY = {
 		title: "书桌标题",
 		titleDesc: "首页最大那行字，也显示在标签上。",
 		look: "薄荷绿配色",
-		lookDesc: "薄荷绿底色、渐变背景，状态栏和标签栏变透明。关掉就只留卡片书桌，颜色仍用你现在的主题。",
+		lookDesc: "书桌底色、毛玻璃卡片，以及状态栏和标签栏。关掉就全部改用你当前主题。",
 		serif: "衬线字体",
-		serifDesc: "正文和标题换成衬线字，行高放宽。关掉就用你主题原本的字体。",
+		serifDesc: "书桌标题、卡片大字，还有笔记正文。关掉就用主题自己的字体。",
 		hideRibbon: "隐藏左边的图标栏",
-		hideRibbonDesc: "更清爽，但切换库和设置的入口也会跟着不见。",
+		hideRibbonDesc: "关掉就显示最左边那排图标，底下有设置。打开就整栏藏起来。",
+		ribbonSettings: "打开设置",
+		ribbonHelp: "帮助",
+		sectionDraft: "还没保存",
+		sectionHome: "首页 · {n} 张",
+		sectionNested: "收在「{name}」里 · {n} 张",
+		sectionOrphan: "所属卡片已失效",
 		openOnStart: "打开库时进入书桌",
 		openOnStartDesc: "启动时打开书桌，而不是上次那篇笔记。",
 		collapse: "收起文件列表",
-		collapseDesc: "打开书桌时把左边文件树收起来。",
+		collapseDesc: "关掉就显示左边的文件树；打开就收起来。",
 		skip: "跳过这些路径",
 		skipDesc: "用逗号分隔。这些文件夹不会出现在卡片和「最近」里。",
 		rooms: "房间",
@@ -107,10 +112,6 @@ const COPY = {
 		parentUnselectable: "⚠️ {name}（当前值，不能再选）",
 		quiet: "卡片变淡",
 		quietDesc: "打开后这张卡变淡，里面的笔记也不进「最近」。",
-		pinBacklog: "进房间先看 BACKLOG",
-		pinBacklogDesc: "没有 BACKLOG.md 时也可以强制：其它笔记只留几张最近的。",
-		backlogNote: "这个房间有 BACKLOG.md",
-		backlogNoteDesc: "进房间会先看到它，其它笔记变成下面几张最近的。放进 BACKLOG.md 就会这样，不用另开开关。",
 		maxNotes: "最多显示几张",
 		maxNotesDesc: "这个房间里最多显示多少张笔记卡片。留空就自动决定。",
 		newRoom: "新房间",
@@ -149,9 +150,6 @@ const COPY = {
 		nameRequired: "先给这个房间起个名字。",
 		recent: "最近",
 		emptyRooms: "还没有房间。打开设置添加文件夹，或从库根目录生成。",
-		backlogLede: "正本在 Backlog。",
-		mainFile: "正本",
-		recentSlips: "最近的纸条",
 		noMoreNotes: "没有更多笔记。",
 		emptyFolder: "这一格还没有笔记。",
 		newNote: "新笔记",
@@ -181,15 +179,21 @@ const COPY = {
 		title: "Desk title",
 		titleDesc: "The large heading on the home cards and the tab.",
 		look: "Mint palette",
-		lookDesc: "Mint paper, soft gradients, transparent status and tab bars. Off keeps the cards and your current theme.",
+		lookDesc: "Desk paper, glass cards, and transparent chrome. Off uses your current theme everywhere.",
 		serif: "Serif type",
-		serifDesc: "Serif body and headings with looser line height. Off uses your theme's own fonts.",
+		serifDesc: "Desk titles, card names, and note text. Off uses your theme fonts.",
 		hideRibbon: "Hide the ribbon",
-		hideRibbonDesc: "Tidier, but the vault switcher and settings entry go with it.",
+		hideRibbonDesc: "Off shows the left icon bar, with Settings at the bottom. On hides the bar.",
+		ribbonSettings: "Open settings",
+		ribbonHelp: "Help",
+		sectionDraft: "Unsaved",
+		sectionHome: "Home · {n}",
+		sectionNested: "Inside \"{name}\" · {n}",
+		sectionOrphan: "Parent missing",
 		openOnStart: "Open on start",
 		openOnStartDesc: "Show the desk when the vault opens, instead of the last note.",
 		collapse: "Collapse file explorer",
-		collapseDesc: "Fold the left file tree when the desk opens.",
+		collapseDesc: "Off shows the left file tree. On folds it.",
 		skip: "Skip these paths",
 		skipDesc: "Comma-separated folder prefixes hidden from cards and recents.",
 		rooms: "Rooms",
@@ -216,10 +220,6 @@ const COPY = {
 		parentUnselectable: "⚠️ {name} (current, not selectable)",
 		quiet: "Fade the card",
 		quietDesc: "The card fades, and its notes stay out of recents.",
-		pinBacklog: "Show BACKLOG first",
-		pinBacklogDesc: "Force the same layout without a BACKLOG.md: other notes stay as a few recent slips.",
-		backlogNote: "This room has BACKLOG.md",
-		backlogNoteDesc: "Opening the room shows it first; other notes become a few recent slips. Automatic when that file exists.",
 		maxNotes: "Max notes shown",
 		maxNotesDesc: "How many note cards this room shows at most. Empty means automatic.",
 		newRoom: "New room",
@@ -258,9 +258,6 @@ const COPY = {
 		nameRequired: "Give the room a name first.",
 		recent: "Recent",
 		emptyRooms: "No rooms yet. Add folders in settings, or build them from your vault.",
-		backlogLede: "The main file is Backlog.",
-		mainFile: "Main file",
-		recentSlips: "Recent slips",
 		noMoreNotes: "No more notes.",
 		emptyFolder: "No notes in this room yet.",
 		newNote: "New note",
@@ -290,7 +287,6 @@ type FolderPage = {
 	folder: string;
 	kicker: string;
 	parentLabel: string;
-	pinBacklog?: boolean;
 	maxNotes?: number;
 };
 
@@ -302,6 +298,27 @@ type Page =
 	| ({ type: "more" } & FolderPage & { skip: number });
 
 type LiveFolder = { id: string; folder: string; kicker: string };
+
+type VaultConfig = {
+	getConfig?: (key: string) => unknown;
+	setConfig?: (key: string, value: unknown) => void;
+};
+
+function setShowRibbon(app: App, show: boolean) {
+	const vault = app.vault as unknown as VaultConfig;
+	if (typeof vault.setConfig === "function") vault.setConfig("showRibbon", show);
+}
+
+type LeftRibbon = {
+	ribbonSettingEl?: HTMLElement;
+	show?: () => void;
+	hide?: () => void;
+	setCollapsedState?: (collapsed: boolean) => void;
+};
+
+function leftRibbonOf(app: App): LeftRibbon {
+	return app.workspace.leftRibbon as unknown as LeftRibbon;
+}
 
 function slug(name: string): string {
 	const s = name
@@ -377,7 +394,6 @@ function weakBasename(file: TFile): boolean {
 
 function titleOf(file: TFile): string {
 	if (weakBasename(file)) return "";
-	if (file.basename === "BACKLOG") return "Backlog";
 	return file.basename;
 }
 
@@ -435,7 +451,6 @@ function stripFrontmatter(app: App, file: TFile, text: string): string {
 }
 
 async function noteCardCopy(app: App, file: TFile): Promise<{ title: string; line: string }> {
-	if (file.basename === "BACKLOG") return { title: "Backlog", line: "" };
 	let body = "";
 	try {
 		body = stripFrontmatter(app, file, await app.vault.cachedRead(file));
@@ -799,7 +814,6 @@ class DeskView extends ItemView {
 				folder: room.folder,
 				kicker: room.kicker || room.name,
 				parentLabel,
-				pinBacklog: room.pinBacklog,
 				maxNotes: room.maxNotes,
 			});
 		}
@@ -1003,6 +1017,7 @@ class DeskView extends ItemView {
 	}
 
 	async renderHome(inner: HTMLElement, seq: number) {
+		const t = this.copy();
 		const title = this.plugin.settings.title || DEFAULT_TITLE;
 		inner.createEl("h1", { text: title });
 		inner.createEl("span", { cls: "an-tou-date", text: todayLabel(this.plugin.settings.uiLang) });
@@ -1011,7 +1026,7 @@ class DeskView extends ItemView {
 		if (rooms.length === 0) {
 			inner.createEl("p", {
 				cls: "an-tou-lede",
-				text: this.copy().emptyRooms,
+				text: t.emptyRooms,
 			});
 			return;
 		}
@@ -1033,7 +1048,7 @@ class DeskView extends ItemView {
 			);
 		}
 
-		inner.createEl("h2", { text: this.copy().recent });
+		inner.createEl("h2", { text: t.recent });
 		const recentGrid = inner.createDiv({ cls: "an-tou-grid" });
 		const recent = this.recentNotes();
 		const recentCopies = await Promise.all(recent.map((e) => noteCardCopy(this.app, e.file)));
@@ -1064,7 +1079,6 @@ class DeskView extends ItemView {
 		const owned: { file: TFile; owner: LiveFolder }[] = [];
 		for (const file of all) {
 			if (skipped(file.path, skip)) continue;
-			if (file.basename === "BACKLOG" || file.basename.startsWith("BACKLOG")) continue;
 			const owner = this.ownerOf(file, live);
 			if (!owner) continue;
 			owned.push({ file, owner });
@@ -1107,7 +1121,7 @@ class DeskView extends ItemView {
 		if (room.line) inner.createEl("p", { cls: "an-tou-lede", text: room.line });
 		const grid = inner.createDiv({ cls: "an-tou-grid" });
 		for (const child of this.childrenOf(room.id)) {
-			const files = child.folder ? this.mdIn(child.folder, child.pinBacklog ? ["BACKLOG"] : []) : [];
+			const files = child.folder ? this.mdIn(child.folder) : [];
 			const n = this.roomCount(child);
 			this.card(
 				grid,
@@ -1140,24 +1154,9 @@ class DeskView extends ItemView {
 		inner.createEl("h1", { text: page.title });
 
 		const all = this.mdIn(page.folder);
-		const backlog = all.find((f) => f.basename === "BACKLOG");
-		const useBacklog = page.pinBacklog || !!backlog;
 		const subs = this.subfolders(page.folder);
 
-		if (useBacklog && backlog) {
-			inner.createEl("p", { cls: "an-tou-lede", text: t.backlogLede });
-			inner.createEl("h2", { text: t.mainFile });
-			const top = inner.createDiv({ cls: "an-tou-grid" });
-			this.card(
-				top,
-				{ kicker: page.kicker, title: "Backlog", line: backlog.basename, span2: true },
-				() => {
-					void this.openNote(backlog);
-				}
-			);
-		}
-
-		if (subs.length && !useBacklog) {
+		if (subs.length) {
 			const grid = inner.createDiv({ cls: "an-tou-grid" });
 			for (const folder of subs) {
 				const n = this.mdIn(folder.path).length;
@@ -1173,14 +1172,11 @@ class DeskView extends ItemView {
 			}
 		}
 
-		let notes = all
-			.filter((f) => f.basename !== "BACKLOG" && f.basename !== "BACKLOG-archive")
-			.sort((a, b) => b.stat.mtime - a.stat.mtime);
-		const cap = page.maxNotes || (useBacklog ? 7 : notes.length > 40 ? 24 : notes.length);
+		let notes = all.sort((a, b) => b.stat.mtime - a.stat.mtime);
+		const cap = page.maxNotes || (notes.length > 40 ? 24 : notes.length);
 		const rest = Math.max(0, notes.length - cap);
 		if (rest) notes = notes.slice(0, cap);
 
-		if (useBacklog) inner.createEl("h2", { text: t.recentSlips });
 		const grid = inner.createDiv({ cls: "an-tou-grid" });
 		const copies = await Promise.all(notes.map((f) => noteCardCopy(this.app, f)));
 		if (seq !== this.renderSeq) return;
@@ -1210,14 +1206,13 @@ class DeskView extends ItemView {
 						folder: page.folder,
 						kicker: page.kicker,
 						parentLabel: page.parentLabel,
-						pinBacklog: page.pinBacklog,
 						maxNotes: page.maxNotes,
 						skip: cap,
 					});
 				}
 			);
 		}
-		if (!notes.length && !subs.length && !backlog) {
+		if (!notes.length && !subs.length) {
 			inner.createEl("p", { cls: "an-tou-lede", text: t.emptyFolder });
 		}
 	}
@@ -1231,7 +1226,6 @@ class DeskView extends ItemView {
 		);
 		inner.createEl("h1", { text: page.title });
 		const notes = this.mdIn(page.folder)
-			.filter((f) => f.basename !== "BACKLOG" && f.basename !== "BACKLOG-archive")
 			.sort((a, b) => b.stat.mtime - a.stat.mtime)
 			.slice(page.skip);
 		inner.createEl("p", {
@@ -1352,6 +1346,7 @@ class AnTouSettingTab extends PluginSettingTab {
 			.addToggle((box) =>
 				box.setValue(this.plugin.settings.collapseExplorer).onChange((v) => {
 					this.plugin.settings.collapseExplorer = v;
+					this.plugin.applyExplorer();
 					void this.plugin.saveSettings();
 				})
 			);
@@ -1386,11 +1381,46 @@ class AnTouSettingTab extends PluginSettingTab {
 				})
 			);
 
+		this.drawRoomList(containerEl, t);
+	}
+
+	drawRoomList(containerEl: HTMLElement, t: Copy) {
 		const drafts = this.plugin.settings.rooms.filter((r) => r.draft);
-		const rest = this.plugin.settings.rooms.filter((r) => !r.draft);
-		for (const room of drafts.concat(rest)) {
-			this.drawRoom(containerEl, room, t);
+		const saved = this.plugin.settings.rooms.filter((r) => !r.draft);
+		const home = saved.filter((r) => !r.parent);
+		const byId = new Map(saved.map((r) => [r.id, r]));
+
+		if (drafts.length) {
+			this.drawZone(containerEl, t.sectionDraft, drafts, t);
 		}
+		this.drawZone(containerEl, t.sectionHome.replace("{n}", String(home.length)), home, t);
+
+		const seen = new Set<string>();
+		for (const parent of [...home, ...saved]) {
+			if (seen.has(parent.id)) continue;
+			const kids = saved.filter((r) => r.parent === parent.id && r.id !== parent.id);
+			if (!kids.length) continue;
+			seen.add(parent.id);
+			this.drawZone(
+				containerEl,
+				t.sectionNested.replace("{name}", parent.name || parent.id).replace("{n}", String(kids.length)),
+				kids,
+				t
+			);
+		}
+
+		const orphans = saved.filter((r) => !!r.parent && !byId.has(r.parent));
+		if (orphans.length) {
+			this.drawZone(containerEl, t.sectionOrphan, orphans, t);
+		}
+	}
+
+	drawZone(containerEl: HTMLElement, title: string, rooms: Room[], t: Copy) {
+		if (!rooms.length) return;
+		const box = containerEl.createDiv({ cls: "an-tou-set-zone" });
+		box.createEl("h3", { cls: "an-tou-set-zone-title", text: title });
+		const list = box.createDiv({ cls: "an-tou-set-zone-list" });
+		for (const room of rooms) this.drawRoom(list, room, t);
 	}
 
 	async setLang(uiLang: UiLang) {
@@ -1548,25 +1578,6 @@ class AnTouSettingTab extends PluginSettingTab {
 					void this.saveAndRefresh();
 				})
 			);
-		if (this.hasBacklogFile(room)) {
-			new Setting(grid).setName(t.backlogNote).setDesc(t.backlogNoteDesc);
-		} else {
-			new Setting(grid)
-				.setName(t.pinBacklog)
-				.setDesc(t.pinBacklogDesc)
-				.addToggle((box) =>
-					box.setValue(!!room.pinBacklog).onChange((v) => {
-						room.pinBacklog = v;
-						void this.saveAndRefresh();
-					})
-				);
-		}
-	}
-
-	hasBacklogFile(room: Room): boolean {
-		if (!room.folder) return false;
-		const f = this.app.vault.getAbstractFileByPath(room.folder + "/BACKLOG.md");
-		return f instanceof TFile;
 	}
 
 	roomRole(room: Room, t: Copy): { text: string; bad: boolean } {
@@ -1783,6 +1794,7 @@ class AnTouSettingTab extends PluginSettingTab {
 
 export default class AnTouPlugin extends Plugin {
 	settings: AnTouSettings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+	ribbonChrome: HTMLElement[] = [];
 
 	async onload() {
 		const saved = (await this.loadData()) as Partial<AnTouSettings> | null;
@@ -1827,6 +1839,8 @@ export default class AnTouPlugin extends Plugin {
 		this.addSettingTab(new AnTouSettingTab(this.app, this));
 		this.applyLook();
 		this.app.workspace.onLayoutReady(async () => {
+			this.applyLook();
+			this.applyExplorer();
 			const fresh = this.settings.rooms.length === 0 && this.settings.welcomed !== true;
 			if (!fresh && this.settings.welcomed !== true) {
 				// 已经在用的老用户：标记一下，别拿欢迎页打扰他
@@ -1846,14 +1860,66 @@ export default class AnTouPlugin extends Plugin {
 	}
 
 	onunload() {
-		document.body.removeClass("an-tou-look", "an-tou-serif", "an-tou-hide-ribbon");
+		this.clearRibbonChrome();
+		document.body.removeClass(
+			"an-tou-look",
+			"an-tou-serif",
+			"an-tou-hide-ribbon",
+			"an-tou-show-ribbon"
+		);
 	}
 
 	applyLook() {
 		const body = document.body;
 		body.toggleClass("an-tou-look", this.settings.applyLook !== false);
 		body.toggleClass("an-tou-serif", this.settings.applySerif !== false);
-		body.toggleClass("an-tou-hide-ribbon", this.settings.hideRibbon === true);
+		const hide = this.settings.hideRibbon === true;
+		body.toggleClass("an-tou-hide-ribbon", hide);
+		body.toggleClass("an-tou-show-ribbon", !hide);
+		setShowRibbon(this.app, !hide);
+		const ribbon = leftRibbonOf(this.app);
+		if (hide) {
+			this.clearRibbonChrome();
+			ribbon.hide?.();
+			return;
+		}
+		ribbon.show?.();
+		ribbon.setCollapsedState?.(false);
+		this.ensureRibbonChrome();
+	}
+
+	clearRibbonChrome() {
+		for (const el of this.ribbonChrome) el.remove();
+		this.ribbonChrome = [];
+	}
+
+	ensureRibbonChrome() {
+		const box = leftRibbonOf(this.app).ribbonSettingEl;
+		if (!box) return;
+		if (box.querySelector(".an-tou-ribbon-chrome")) return;
+		const t = this.settings.uiLang === "en" ? COPY.en : COPY.zh;
+		const add = (icon: string, label: string, run: () => void) => {
+			const btn = box.createDiv({
+				cls: "clickable-icon side-dock-ribbon-action an-tou-ribbon-chrome",
+				attr: { "aria-label": label },
+			});
+			setIcon(btn, icon);
+			btn.addEventListener("click", (e) => {
+				e.preventDefault();
+				e.stopPropagation();
+				run();
+			});
+			this.ribbonChrome.push(btn);
+		};
+		const app = this.app as App & {
+			commands: { executeCommandById: (id: string) => boolean };
+		};
+		add("help", t.ribbonHelp, () => {
+			app.commands.executeCommandById("app:open-help");
+		});
+		add("lucide-settings", t.ribbonSettings, () => {
+			app.commands.executeCommandById("app:open-settings");
+		});
 	}
 
 	scanRooms(only?: string[] | null, withSubs = true): Room[] {
@@ -2011,8 +2077,13 @@ export default class AnTouPlugin extends Plugin {
 			}
 		}
 		await workspace.revealLeaf(leaf);
-		if (this.settings.collapseExplorer && workspace.leftSplit) {
-			workspace.leftSplit.collapse();
-		}
+		this.applyExplorer();
+	}
+
+	applyExplorer() {
+		const split = this.app.workspace.leftSplit;
+		if (!split) return;
+		if (this.settings.collapseExplorer) split.collapse();
+		else split.expand();
 	}
 }

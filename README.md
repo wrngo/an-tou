@@ -30,16 +30,16 @@ Settings default to Chinese. Switch to English at the top of the page — the de
 **Desk**
 
 - **Desk title** — home heading and tab (default: 格物成栖)
-- **Mint palette** — the mint paper and its background wash
-- **Serif type** — serif body text and looser line height
-- **Hide the ribbon** — off by default. Tidier, but the vault switcher and settings entry go with it
+- **Mint palette** — desk paper, glass cards, and chrome. Off uses your current theme everywhere
+- **Serif type** — desk titles, card names, and note text. Off uses your theme fonts
+- **Hide the ribbon** — off shows the left icon bar; on hides it
 - **Open on start** — show the desk when the vault opens
-- **Collapse file explorer** — fold the left file tree when the desk opens
+- **Collapse file explorer** — off shows the left file tree; on folds it
 - **Skip these paths** — comma-separated folder prefixes hidden from cards and recents (`attachments` is there by default)
 
 **Rooms**
 
-Each room collapses to one line: its name plus where it sits — home card, home group, or inside another room by name. Click the line to edit.
+Rooms are grouped: home cards first, then each nested group under its parent. Each room collapses to one line. Click the line to edit.
 
 - **Name** — large title on the card
 - **Folder** — vault path, with autocompletion; a path that does not exist says so and suggests the closest match. Empty makes a group
@@ -48,8 +48,6 @@ Each room collapses to one line: its name plus where it sits — home card, home
 - **Put inside this room** — a dropdown of room names. Anything that would make a cycle (the room itself, its descendants) is left out
 - **Max notes shown** — how many note cards this room shows at most
 - **Fade the card** — the card fades and its notes stay out of recents
-
-If a room folder contains `BACKLOG.md`, opening it shows that note first and the rest as a few recent slips. No extra switch.
 
 Deleting a room asks first and says where its children go — back to the home grid, never deleted with it.
 

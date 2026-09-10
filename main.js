@@ -54,15 +54,21 @@ var COPY = {
     title: "\u4E66\u684C\u6807\u9898",
     titleDesc: "\u9996\u9875\u6700\u5927\u90A3\u884C\u5B57\uFF0C\u4E5F\u663E\u793A\u5728\u6807\u7B7E\u4E0A\u3002",
     look: "\u8584\u8377\u7EFF\u914D\u8272",
-    lookDesc: "\u8584\u8377\u7EFF\u5E95\u8272\u3001\u6E10\u53D8\u80CC\u666F\uFF0C\u72B6\u6001\u680F\u548C\u6807\u7B7E\u680F\u53D8\u900F\u660E\u3002\u5173\u6389\u5C31\u53EA\u7559\u5361\u7247\u4E66\u684C\uFF0C\u989C\u8272\u4ECD\u7528\u4F60\u73B0\u5728\u7684\u4E3B\u9898\u3002",
+    lookDesc: "\u4E66\u684C\u5E95\u8272\u3001\u6BDB\u73BB\u7483\u5361\u7247\uFF0C\u4EE5\u53CA\u72B6\u6001\u680F\u548C\u6807\u7B7E\u680F\u3002\u5173\u6389\u5C31\u5168\u90E8\u6539\u7528\u4F60\u5F53\u524D\u4E3B\u9898\u3002",
     serif: "\u886C\u7EBF\u5B57\u4F53",
-    serifDesc: "\u6B63\u6587\u548C\u6807\u9898\u6362\u6210\u886C\u7EBF\u5B57\uFF0C\u884C\u9AD8\u653E\u5BBD\u3002\u5173\u6389\u5C31\u7528\u4F60\u4E3B\u9898\u539F\u672C\u7684\u5B57\u4F53\u3002",
+    serifDesc: "\u4E66\u684C\u6807\u9898\u3001\u5361\u7247\u5927\u5B57\uFF0C\u8FD8\u6709\u7B14\u8BB0\u6B63\u6587\u3002\u5173\u6389\u5C31\u7528\u4E3B\u9898\u81EA\u5DF1\u7684\u5B57\u4F53\u3002",
     hideRibbon: "\u9690\u85CF\u5DE6\u8FB9\u7684\u56FE\u6807\u680F",
-    hideRibbonDesc: "\u66F4\u6E05\u723D\uFF0C\u4F46\u5207\u6362\u5E93\u548C\u8BBE\u7F6E\u7684\u5165\u53E3\u4E5F\u4F1A\u8DDF\u7740\u4E0D\u89C1\u3002",
+    hideRibbonDesc: "\u5173\u6389\u5C31\u663E\u793A\u6700\u5DE6\u8FB9\u90A3\u6392\u56FE\u6807\uFF0C\u5E95\u4E0B\u6709\u8BBE\u7F6E\u3002\u6253\u5F00\u5C31\u6574\u680F\u85CF\u8D77\u6765\u3002",
+    ribbonSettings: "\u6253\u5F00\u8BBE\u7F6E",
+    ribbonHelp: "\u5E2E\u52A9",
+    sectionDraft: "\u8FD8\u6CA1\u4FDD\u5B58",
+    sectionHome: "\u9996\u9875 \xB7 {n} \u5F20",
+    sectionNested: "\u6536\u5728\u300C{name}\u300D\u91CC \xB7 {n} \u5F20",
+    sectionOrphan: "\u6240\u5C5E\u5361\u7247\u5DF2\u5931\u6548",
     openOnStart: "\u6253\u5F00\u5E93\u65F6\u8FDB\u5165\u4E66\u684C",
     openOnStartDesc: "\u542F\u52A8\u65F6\u6253\u5F00\u4E66\u684C\uFF0C\u800C\u4E0D\u662F\u4E0A\u6B21\u90A3\u7BC7\u7B14\u8BB0\u3002",
     collapse: "\u6536\u8D77\u6587\u4EF6\u5217\u8868",
-    collapseDesc: "\u6253\u5F00\u4E66\u684C\u65F6\u628A\u5DE6\u8FB9\u6587\u4EF6\u6811\u6536\u8D77\u6765\u3002",
+    collapseDesc: "\u5173\u6389\u5C31\u663E\u793A\u5DE6\u8FB9\u7684\u6587\u4EF6\u6811\uFF1B\u6253\u5F00\u5C31\u6536\u8D77\u6765\u3002",
     skip: "\u8DF3\u8FC7\u8FD9\u4E9B\u8DEF\u5F84",
     skipDesc: "\u7528\u9017\u53F7\u5206\u9694\u3002\u8FD9\u4E9B\u6587\u4EF6\u5939\u4E0D\u4F1A\u51FA\u73B0\u5728\u5361\u7247\u548C\u300C\u6700\u8FD1\u300D\u91CC\u3002",
     rooms: "\u623F\u95F4",
@@ -89,10 +95,6 @@ var COPY = {
     parentUnselectable: "\u26A0\uFE0F {name}\uFF08\u5F53\u524D\u503C\uFF0C\u4E0D\u80FD\u518D\u9009\uFF09",
     quiet: "\u5361\u7247\u53D8\u6DE1",
     quietDesc: "\u6253\u5F00\u540E\u8FD9\u5F20\u5361\u53D8\u6DE1\uFF0C\u91CC\u9762\u7684\u7B14\u8BB0\u4E5F\u4E0D\u8FDB\u300C\u6700\u8FD1\u300D\u3002",
-    pinBacklog: "\u8FDB\u623F\u95F4\u5148\u770B BACKLOG",
-    pinBacklogDesc: "\u6CA1\u6709 BACKLOG.md \u65F6\u4E5F\u53EF\u4EE5\u5F3A\u5236\uFF1A\u5176\u5B83\u7B14\u8BB0\u53EA\u7559\u51E0\u5F20\u6700\u8FD1\u7684\u3002",
-    backlogNote: "\u8FD9\u4E2A\u623F\u95F4\u6709 BACKLOG.md",
-    backlogNoteDesc: "\u8FDB\u623F\u95F4\u4F1A\u5148\u770B\u5230\u5B83\uFF0C\u5176\u5B83\u7B14\u8BB0\u53D8\u6210\u4E0B\u9762\u51E0\u5F20\u6700\u8FD1\u7684\u3002\u653E\u8FDB BACKLOG.md \u5C31\u4F1A\u8FD9\u6837\uFF0C\u4E0D\u7528\u53E6\u5F00\u5F00\u5173\u3002",
     maxNotes: "\u6700\u591A\u663E\u793A\u51E0\u5F20",
     maxNotesDesc: "\u8FD9\u4E2A\u623F\u95F4\u91CC\u6700\u591A\u663E\u793A\u591A\u5C11\u5F20\u7B14\u8BB0\u5361\u7247\u3002\u7559\u7A7A\u5C31\u81EA\u52A8\u51B3\u5B9A\u3002",
     newRoom: "\u65B0\u623F\u95F4",
@@ -131,9 +133,6 @@ var COPY = {
     nameRequired: "\u5148\u7ED9\u8FD9\u4E2A\u623F\u95F4\u8D77\u4E2A\u540D\u5B57\u3002",
     recent: "\u6700\u8FD1",
     emptyRooms: "\u8FD8\u6CA1\u6709\u623F\u95F4\u3002\u6253\u5F00\u8BBE\u7F6E\u6DFB\u52A0\u6587\u4EF6\u5939\uFF0C\u6216\u4ECE\u5E93\u6839\u76EE\u5F55\u751F\u6210\u3002",
-    backlogLede: "\u6B63\u672C\u5728 Backlog\u3002",
-    mainFile: "\u6B63\u672C",
-    recentSlips: "\u6700\u8FD1\u7684\u7EB8\u6761",
     noMoreNotes: "\u6CA1\u6709\u66F4\u591A\u7B14\u8BB0\u3002",
     emptyFolder: "\u8FD9\u4E00\u683C\u8FD8\u6CA1\u6709\u7B14\u8BB0\u3002",
     newNote: "\u65B0\u7B14\u8BB0",
@@ -163,15 +162,21 @@ var COPY = {
     title: "Desk title",
     titleDesc: "The large heading on the home cards and the tab.",
     look: "Mint palette",
-    lookDesc: "Mint paper, soft gradients, transparent status and tab bars. Off keeps the cards and your current theme.",
+    lookDesc: "Desk paper, glass cards, and transparent chrome. Off uses your current theme everywhere.",
     serif: "Serif type",
-    serifDesc: "Serif body and headings with looser line height. Off uses your theme's own fonts.",
+    serifDesc: "Desk titles, card names, and note text. Off uses your theme fonts.",
     hideRibbon: "Hide the ribbon",
-    hideRibbonDesc: "Tidier, but the vault switcher and settings entry go with it.",
+    hideRibbonDesc: "Off shows the left icon bar, with Settings at the bottom. On hides the bar.",
+    ribbonSettings: "Open settings",
+    ribbonHelp: "Help",
+    sectionDraft: "Unsaved",
+    sectionHome: "Home \xB7 {n}",
+    sectionNested: 'Inside "{name}" \xB7 {n}',
+    sectionOrphan: "Parent missing",
     openOnStart: "Open on start",
     openOnStartDesc: "Show the desk when the vault opens, instead of the last note.",
     collapse: "Collapse file explorer",
-    collapseDesc: "Fold the left file tree when the desk opens.",
+    collapseDesc: "Off shows the left file tree. On folds it.",
     skip: "Skip these paths",
     skipDesc: "Comma-separated folder prefixes hidden from cards and recents.",
     rooms: "Rooms",
@@ -198,10 +203,6 @@ var COPY = {
     parentUnselectable: "\u26A0\uFE0F {name} (current, not selectable)",
     quiet: "Fade the card",
     quietDesc: "The card fades, and its notes stay out of recents.",
-    pinBacklog: "Show BACKLOG first",
-    pinBacklogDesc: "Force the same layout without a BACKLOG.md: other notes stay as a few recent slips.",
-    backlogNote: "This room has BACKLOG.md",
-    backlogNoteDesc: "Opening the room shows it first; other notes become a few recent slips. Automatic when that file exists.",
     maxNotes: "Max notes shown",
     maxNotesDesc: "How many note cards this room shows at most. Empty means automatic.",
     newRoom: "New room",
@@ -240,9 +241,6 @@ var COPY = {
     nameRequired: "Give the room a name first.",
     recent: "Recent",
     emptyRooms: "No rooms yet. Add folders in settings, or build them from your vault.",
-    backlogLede: "The main file is Backlog.",
-    mainFile: "Main file",
-    recentSlips: "Recent slips",
     noMoreNotes: "No more notes.",
     emptyFolder: "No notes in this room yet.",
     newNote: "New note",
@@ -264,6 +262,14 @@ var COPY = {
     welcomeStart: "Start with these"
   }
 };
+function setShowRibbon(app, show) {
+  const vault = app.vault;
+  if (typeof vault.setConfig === "function")
+    vault.setConfig("showRibbon", show);
+}
+function leftRibbonOf(app) {
+  return app.workspace.leftRibbon;
+}
 function slug(name) {
   const s = name.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]+/g, "-").replace(/^-|-$/g, "");
   return s || "room-" + Date.now().toString(36);
@@ -334,8 +340,6 @@ function weakBasename(file) {
 function titleOf(file) {
   if (weakBasename(file))
     return "";
-  if (file.basename === "BACKLOG")
-    return "Backlog";
   return file.basename;
 }
 function frontmatterTitle(app, file) {
@@ -395,8 +399,6 @@ function stripFrontmatter(app, file, text) {
   return text.slice(end + 4);
 }
 async function noteCardCopy(app, file) {
-  if (file.basename === "BACKLOG")
-    return { title: "Backlog", line: "" };
   let body = "";
   try {
     body = stripFrontmatter(app, file, await app.vault.cachedRead(file));
@@ -730,7 +732,6 @@ var DeskView = class extends import_obsidian.ItemView {
         folder: room.folder,
         kicker: room.kicker || room.name,
         parentLabel,
-        pinBacklog: room.pinBacklog,
         maxNotes: room.maxNotes
       });
     }
@@ -918,6 +919,7 @@ var DeskView = class extends import_obsidian.ItemView {
     await this.resetHome();
   }
   async renderHome(inner, seq) {
+    const t = this.copy();
     const title = this.plugin.settings.title || DEFAULT_TITLE;
     inner.createEl("h1", { text: title });
     inner.createEl("span", { cls: "an-tou-date", text: todayLabel(this.plugin.settings.uiLang) });
@@ -925,7 +927,7 @@ var DeskView = class extends import_obsidian.ItemView {
     if (rooms.length === 0) {
       inner.createEl("p", {
         cls: "an-tou-lede",
-        text: this.copy().emptyRooms
+        text: t.emptyRooms
       });
       return;
     }
@@ -945,7 +947,7 @@ var DeskView = class extends import_obsidian.ItemView {
         () => this.openRoom(room, title)
       );
     }
-    inner.createEl("h2", { text: this.copy().recent });
+    inner.createEl("h2", { text: t.recent });
     const recentGrid = inner.createDiv({ cls: "an-tou-grid" });
     const recent = this.recentNotes();
     const recentCopies = await Promise.all(recent.map((e) => noteCardCopy(this.app, e.file)));
@@ -977,8 +979,6 @@ var DeskView = class extends import_obsidian.ItemView {
     const owned = [];
     for (const file of all) {
       if (skipped(file.path, skip))
-        continue;
-      if (file.basename === "BACKLOG" || file.basename.startsWith("BACKLOG"))
         continue;
       const owner = this.ownerOf(file, live);
       if (!owner)
@@ -1021,7 +1021,7 @@ var DeskView = class extends import_obsidian.ItemView {
       inner.createEl("p", { cls: "an-tou-lede", text: room.line });
     const grid = inner.createDiv({ cls: "an-tou-grid" });
     for (const child of this.childrenOf(room.id)) {
-      const files = child.folder ? this.mdIn(child.folder, child.pinBacklog ? ["BACKLOG"] : []) : [];
+      const files = child.folder ? this.mdIn(child.folder) : [];
       const n = this.roomCount(child);
       this.card(
         grid,
@@ -1049,22 +1049,8 @@ var DeskView = class extends import_obsidian.ItemView {
     this.nav(inner, crumbs, page.folder);
     inner.createEl("h1", { text: page.title });
     const all = this.mdIn(page.folder);
-    const backlog = all.find((f) => f.basename === "BACKLOG");
-    const useBacklog = page.pinBacklog || !!backlog;
     const subs = this.subfolders(page.folder);
-    if (useBacklog && backlog) {
-      inner.createEl("p", { cls: "an-tou-lede", text: t.backlogLede });
-      inner.createEl("h2", { text: t.mainFile });
-      const top = inner.createDiv({ cls: "an-tou-grid" });
-      this.card(
-        top,
-        { kicker: page.kicker, title: "Backlog", line: backlog.basename, span2: true },
-        () => {
-          void this.openNote(backlog);
-        }
-      );
-    }
-    if (subs.length && !useBacklog) {
+    if (subs.length) {
       const grid2 = inner.createDiv({ cls: "an-tou-grid" });
       for (const folder of subs) {
         const n = this.mdIn(folder.path).length;
@@ -1079,13 +1065,11 @@ var DeskView = class extends import_obsidian.ItemView {
         });
       }
     }
-    let notes = all.filter((f) => f.basename !== "BACKLOG" && f.basename !== "BACKLOG-archive").sort((a, b) => b.stat.mtime - a.stat.mtime);
-    const cap = page.maxNotes || (useBacklog ? 7 : notes.length > 40 ? 24 : notes.length);
+    let notes = all.sort((a, b) => b.stat.mtime - a.stat.mtime);
+    const cap = page.maxNotes || (notes.length > 40 ? 24 : notes.length);
     const rest = Math.max(0, notes.length - cap);
     if (rest)
       notes = notes.slice(0, cap);
-    if (useBacklog)
-      inner.createEl("h2", { text: t.recentSlips });
     const grid = inner.createDiv({ cls: "an-tou-grid" });
     const copies = await Promise.all(notes.map((f) => noteCardCopy(this.app, f)));
     if (seq !== this.renderSeq)
@@ -1116,14 +1100,13 @@ var DeskView = class extends import_obsidian.ItemView {
             folder: page.folder,
             kicker: page.kicker,
             parentLabel: page.parentLabel,
-            pinBacklog: page.pinBacklog,
             maxNotes: page.maxNotes,
             skip: cap
           });
         }
       );
     }
-    if (!notes.length && !subs.length && !backlog) {
+    if (!notes.length && !subs.length) {
       inner.createEl("p", { cls: "an-tou-lede", text: t.emptyFolder });
     }
   }
@@ -1135,7 +1118,7 @@ var DeskView = class extends import_obsidian.ItemView {
       page.folder
     );
     inner.createEl("h1", { text: page.title });
-    const notes = this.mdIn(page.folder).filter((f) => f.basename !== "BACKLOG" && f.basename !== "BACKLOG-archive").sort((a, b) => b.stat.mtime - a.stat.mtime).slice(page.skip);
+    const notes = this.mdIn(page.folder).sort((a, b) => b.stat.mtime - a.stat.mtime).slice(page.skip);
     inner.createEl("p", {
       cls: "an-tou-lede",
       text: notes.length ? t.more(notes.length) : t.noMoreNotes
@@ -1222,6 +1205,7 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
     new import_obsidian.Setting(containerEl).setName(t.collapse).setDesc(t.collapseDesc).addToggle(
       (box) => box.setValue(this.plugin.settings.collapseExplorer).onChange((v) => {
         this.plugin.settings.collapseExplorer = v;
+        this.plugin.applyExplorer();
         void this.plugin.saveSettings();
       })
     );
@@ -1242,11 +1226,45 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
         void this.rebuildRooms();
       })
     );
+    this.drawRoomList(containerEl, t);
+  }
+  drawRoomList(containerEl, t) {
     const drafts = this.plugin.settings.rooms.filter((r) => r.draft);
-    const rest = this.plugin.settings.rooms.filter((r) => !r.draft);
-    for (const room of drafts.concat(rest)) {
-      this.drawRoom(containerEl, room, t);
+    const saved = this.plugin.settings.rooms.filter((r) => !r.draft);
+    const home = saved.filter((r) => !r.parent);
+    const byId = new Map(saved.map((r) => [r.id, r]));
+    if (drafts.length) {
+      this.drawZone(containerEl, t.sectionDraft, drafts, t);
     }
+    this.drawZone(containerEl, t.sectionHome.replace("{n}", String(home.length)), home, t);
+    const seen = /* @__PURE__ */ new Set();
+    for (const parent of [...home, ...saved]) {
+      if (seen.has(parent.id))
+        continue;
+      const kids = saved.filter((r) => r.parent === parent.id && r.id !== parent.id);
+      if (!kids.length)
+        continue;
+      seen.add(parent.id);
+      this.drawZone(
+        containerEl,
+        t.sectionNested.replace("{name}", parent.name || parent.id).replace("{n}", String(kids.length)),
+        kids,
+        t
+      );
+    }
+    const orphans = saved.filter((r) => !!r.parent && !byId.has(r.parent));
+    if (orphans.length) {
+      this.drawZone(containerEl, t.sectionOrphan, orphans, t);
+    }
+  }
+  drawZone(containerEl, title, rooms, t) {
+    if (!rooms.length)
+      return;
+    const box = containerEl.createDiv({ cls: "an-tou-set-zone" });
+    box.createEl("h3", { cls: "an-tou-set-zone-title", text: title });
+    const list = box.createDiv({ cls: "an-tou-set-zone-list" });
+    for (const room of rooms)
+      this.drawRoom(list, room, t);
   }
   async setLang(uiLang) {
     this.plugin.settings.uiLang = uiLang;
@@ -1393,22 +1411,6 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
         void this.saveAndRefresh();
       })
     );
-    if (this.hasBacklogFile(room)) {
-      new import_obsidian.Setting(grid).setName(t.backlogNote).setDesc(t.backlogNoteDesc);
-    } else {
-      new import_obsidian.Setting(grid).setName(t.pinBacklog).setDesc(t.pinBacklogDesc).addToggle(
-        (box) => box.setValue(!!room.pinBacklog).onChange((v) => {
-          room.pinBacklog = v;
-          void this.saveAndRefresh();
-        })
-      );
-    }
-  }
-  hasBacklogFile(room) {
-    if (!room.folder)
-      return false;
-    const f = this.app.vault.getAbstractFileByPath(room.folder + "/BACKLOG.md");
-    return f instanceof import_obsidian.TFile;
   }
   roomRole(room, t) {
     if (room.draft)
@@ -1606,6 +1608,7 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
   constructor() {
     super(...arguments);
     this.settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+    this.ribbonChrome = [];
   }
   async onload() {
     const saved = await this.loadData();
@@ -1650,6 +1653,8 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
     this.addSettingTab(new AnTouSettingTab(this.app, this));
     this.applyLook();
     this.app.workspace.onLayoutReady(async () => {
+      this.applyLook();
+      this.applyExplorer();
       const fresh = this.settings.rooms.length === 0 && this.settings.welcomed !== true;
       if (!fresh && this.settings.welcomed !== true) {
         this.settings.welcomed = true;
@@ -1668,13 +1673,65 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
     });
   }
   onunload() {
-    document.body.removeClass("an-tou-look", "an-tou-serif", "an-tou-hide-ribbon");
+    this.clearRibbonChrome();
+    document.body.removeClass(
+      "an-tou-look",
+      "an-tou-serif",
+      "an-tou-hide-ribbon",
+      "an-tou-show-ribbon"
+    );
   }
   applyLook() {
+    var _a, _b, _c;
     const body = document.body;
     body.toggleClass("an-tou-look", this.settings.applyLook !== false);
     body.toggleClass("an-tou-serif", this.settings.applySerif !== false);
-    body.toggleClass("an-tou-hide-ribbon", this.settings.hideRibbon === true);
+    const hide = this.settings.hideRibbon === true;
+    body.toggleClass("an-tou-hide-ribbon", hide);
+    body.toggleClass("an-tou-show-ribbon", !hide);
+    setShowRibbon(this.app, !hide);
+    const ribbon = leftRibbonOf(this.app);
+    if (hide) {
+      this.clearRibbonChrome();
+      (_a = ribbon.hide) == null ? void 0 : _a.call(ribbon);
+      return;
+    }
+    (_b = ribbon.show) == null ? void 0 : _b.call(ribbon);
+    (_c = ribbon.setCollapsedState) == null ? void 0 : _c.call(ribbon, false);
+    this.ensureRibbonChrome();
+  }
+  clearRibbonChrome() {
+    for (const el of this.ribbonChrome)
+      el.remove();
+    this.ribbonChrome = [];
+  }
+  ensureRibbonChrome() {
+    const box = leftRibbonOf(this.app).ribbonSettingEl;
+    if (!box)
+      return;
+    if (box.querySelector(".an-tou-ribbon-chrome"))
+      return;
+    const t = this.settings.uiLang === "en" ? COPY.en : COPY.zh;
+    const add = (icon, label, run) => {
+      const btn = box.createDiv({
+        cls: "clickable-icon side-dock-ribbon-action an-tou-ribbon-chrome",
+        attr: { "aria-label": label }
+      });
+      (0, import_obsidian.setIcon)(btn, icon);
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        run();
+      });
+      this.ribbonChrome.push(btn);
+    };
+    const app = this.app;
+    add("help", t.ribbonHelp, () => {
+      app.commands.executeCommandById("app:open-help");
+    });
+    add("lucide-settings", t.ribbonSettings, () => {
+      app.commands.executeCommandById("app:open-settings");
+    });
   }
   scanRooms(only, withSubs = true) {
     const rooms = [];
@@ -1857,8 +1914,15 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
       }
     }
     await workspace.revealLeaf(leaf);
-    if (this.settings.collapseExplorer && workspace.leftSplit) {
-      workspace.leftSplit.collapse();
-    }
+    this.applyExplorer();
+  }
+  applyExplorer() {
+    const split = this.app.workspace.leftSplit;
+    if (!split)
+      return;
+    if (this.settings.collapseExplorer)
+      split.collapse();
+    else
+      split.expand();
   }
 };
