@@ -140,7 +140,6 @@ var COPY = {
     createFailed: "\u6CA1\u5199\u6210\u3002",
     folderGone: "\u6587\u4EF6\u5939\u4E0D\u5728\u3002",
     untitled: "\u672A\u547D\u540D",
-    addHere: "\u5728\u8FD9\u91CC\u65B0\u5EFA\u7B14\u8BB0",
     more: (n) => "\u5176\u4F59 " + n + " \u6761",
     noteCount: (n) => n + " \u7BC7\u7B14\u8BB0",
     welcomeTitle: "\u4E66\u684C\u51C6\u5907\u597D\u4E86",
@@ -248,7 +247,6 @@ var COPY = {
     createFailed: "Could not create the note.",
     folderGone: "That folder is gone.",
     untitled: "Untitled",
-    addHere: "New note here",
     more: (n) => n + " more",
     noteCount: (n) => n + " notes",
     welcomeTitle: "Your desk is ready",
@@ -333,6 +331,19 @@ function inFolder(file, folder) {
 }
 function skipped(path, skipPaths) {
   return skipPaths.some((s) => path === s || path.startsWith(s + "/"));
+}
+function commonFolder(paths) {
+  const parts = paths.filter(Boolean).map((p) => p.split("/").filter(Boolean));
+  if (!parts.length)
+    return "";
+  let n = parts[0].length;
+  for (let i = 1; i < parts.length && n; i++) {
+    let j = 0;
+    while (j < n && j < parts[i].length && parts[i][j] === parts[0][j])
+      j++;
+    n = j;
+  }
+  return parts[0].slice(0, n).join("/");
 }
 function weakBasename(file) {
   return /^\d{4}-\d{2}-\d{2}\b/.test(file.basename) || /quick$/i.test(file.basename);
@@ -672,6 +683,15 @@ var DeskView = class extends import_obsidian.ItemView {
       (r) => r.parent === id && r.id !== id && !r.draft
     );
   }
+  // ponytail: groups often have no folder; + writes to the shared parent of child rooms
+  noteFolder(room) {
+    if (room.folder)
+      return room.folder;
+    return commonFolder(this.childrenOf(room.id).map((c) => {
+      var _a;
+      return (_a = c.folder) != null ? _a : "";
+    })) || void 0;
+  }
   isQuietLine(room, seen) {
     if (room.quiet)
       return true;
@@ -754,15 +774,6 @@ var DeskView = class extends import_obsidian.ItemView {
       new import_obsidian.Notice(t.createFailed);
     }
   }
-  async quickNote(folder) {
-    if (!folder)
-      return;
-    if (!this.app.vault.getAbstractFileByPath(folder)) {
-      new import_obsidian.Notice(this.copy().folderGone);
-      return;
-    }
-    await this.createNamedNote(folder, inboxStamp());
-  }
   async newNote(folder) {
     if (!folder)
       return;
@@ -792,19 +803,6 @@ var DeskView = class extends import_obsidian.ItemView {
       el.createEl("span", { cls: "desk-line", text: spec.line });
     else if (!spec.note)
       el.createEl("span", { cls: "desk-line", text: "\xA0" });
-    if (spec.onAdd) {
-      const add = el.createEl("button", {
-        cls: "desk-add",
-        text: "+",
-        attr: { type: "button", "aria-label": this.copy().addHere }
-      });
-      add.addEventListener("click", (e) => {
-        var _a;
-        e.preventDefault();
-        e.stopPropagation();
-        (_a = spec.onAdd) == null ? void 0 : _a.call(spec);
-      });
-    }
     if (onClick) {
       el.addEventListener("click", onClick);
       el.addEventListener("keydown", (e) => {
@@ -941,8 +939,7 @@ var DeskView = class extends import_obsidian.ItemView {
           count: room.quiet ? void 0 : n,
           title: room.name,
           line: room.line,
-          quiet: room.quiet,
-          onAdd: room.folder ? () => void this.quickNote(room.folder) : void 0
+          quiet: room.quiet
         },
         () => this.openRoom(room, title)
       );
@@ -1015,7 +1012,7 @@ var DeskView = class extends import_obsidian.ItemView {
   }
   renderGroup(inner, room) {
     const title = this.plugin.settings.title || DEFAULT_TITLE;
-    this.nav(inner, [{ label: "\u2190 " + title, go: () => this.back() }]);
+    this.nav(inner, [{ label: "\u2190 " + title, go: () => this.back() }], this.noteFolder(room));
     inner.createEl("h1", { text: room.name });
     if (room.line)
       inner.createEl("p", { cls: "an-tou-lede", text: room.line });
@@ -1029,8 +1026,7 @@ var DeskView = class extends import_obsidian.ItemView {
           count: n,
           title: child.name,
           line: child.line || (n === 1 && files[0] ? titleOf(files[0]) : ""),
-          quiet: this.isQuietLine(child),
-          onAdd: child.folder ? () => void this.quickNote(child.folder) : void 0
+          quiet: this.isQuietLine(child)
         },
         () => this.openRoom(child, room.name)
       );

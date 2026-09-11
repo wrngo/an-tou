@@ -157,7 +157,6 @@ const COPY = {
 		createFailed: "没写成。",
 		folderGone: "文件夹不在。",
 		untitled: "未命名",
-		addHere: "在这里新建笔记",
 		more: (n: number) => "其余 " + n + " 条",
 		noteCount: (n: number) => n + " 篇笔记",
 		welcomeTitle: "书桌准备好了",
@@ -265,7 +264,6 @@ const COPY = {
 		createFailed: "Could not create the note.",
 		folderGone: "That folder is gone.",
 		untitled: "Untitled",
-		addHere: "New note here",
 		more: (n: number) => n + " more",
 		noteCount: (n: number) => n + " notes",
 		welcomeTitle: "Your desk is ready",
@@ -386,6 +384,18 @@ function inFolder(file: TFile, folder: string): boolean {
 
 function skipped(path: string, skipPaths: string[]): boolean {
 	return skipPaths.some((s) => path === s || path.startsWith(s + "/"));
+}
+
+function commonFolder(paths: string[]): string {
+	const parts = paths.filter(Boolean).map((p) => p.split("/").filter(Boolean));
+	if (!parts.length) return "";
+	let n = parts[0].length;
+	for (let i = 1; i < parts.length && n; i++) {
+		let j = 0;
+		while (j < n && j < parts[i].length && parts[i][j] === parts[0][j]) j++;
+		n = j;
+	}
+	return parts[0].slice(0, n).join("/");
 }
 
 function weakBasename(file: TFile): boolean {
@@ -760,6 +770,12 @@ class DeskView extends ItemView {
 		);
 	}
 
+	// ponytail: groups often have no folder; + writes to the shared parent of child rooms
+	noteFolder(room: Room): string | undefined {
+		if (room.folder) return room.folder;
+		return commonFolder(this.childrenOf(room.id).map((c) => c.folder ?? "")) || undefined;
+	}
+
 	isQuietLine(room: Room, seen?: Set<string>): boolean {
 		if (room.quiet) return true;
 		if (!room.parent) return false;
@@ -839,15 +855,6 @@ class DeskView extends ItemView {
 		}
 	}
 
-	async quickNote(folder: string) {
-		if (!folder) return;
-		if (!this.app.vault.getAbstractFileByPath(folder)) {
-			new Notice(this.copy().folderGone);
-			return;
-		}
-		await this.createNamedNote(folder, inboxStamp());
-	}
-
 	async newNote(folder: string) {
 		if (!folder) return;
 		if (!this.app.vault.getAbstractFileByPath(folder)) {
@@ -870,7 +877,6 @@ class DeskView extends ItemView {
 			quiet?: boolean;
 			note?: boolean;
 			span2?: boolean;
-			onAdd?: () => void;
 		},
 		onClick?: () => void
 	) {
@@ -890,18 +896,6 @@ class DeskView extends ItemView {
 		el.createEl("strong", { text: spec.title });
 		if (spec.line) el.createEl("span", { cls: "desk-line", text: spec.line });
 		else if (!spec.note) el.createEl("span", { cls: "desk-line", text: "\u00a0" });
-		if (spec.onAdd) {
-			const add = el.createEl("button", {
-				cls: "desk-add",
-				text: "+",
-				attr: { type: "button", "aria-label": this.copy().addHere },
-			});
-			add.addEventListener("click", (e) => {
-				e.preventDefault();
-				e.stopPropagation();
-				spec.onAdd?.();
-			});
-		}
 		if (onClick) {
 			el.addEventListener("click", onClick);
 			el.addEventListener("keydown", (e: KeyboardEvent) => {
@@ -1042,7 +1036,6 @@ class DeskView extends ItemView {
 					title: room.name,
 					line: room.line,
 					quiet: room.quiet,
-					onAdd: room.folder ? () => void this.quickNote(room.folder as string) : undefined,
 				},
 				() => this.openRoom(room, title)
 			);
@@ -1116,7 +1109,7 @@ class DeskView extends ItemView {
 
 	renderGroup(inner: HTMLElement, room: Room) {
 		const title = this.plugin.settings.title || DEFAULT_TITLE;
-		this.nav(inner, [{ label: "← " + title, go: () => this.back() }]);
+		this.nav(inner, [{ label: "← " + title, go: () => this.back() }], this.noteFolder(room));
 		inner.createEl("h1", { text: room.name });
 		if (room.line) inner.createEl("p", { cls: "an-tou-lede", text: room.line });
 		const grid = inner.createDiv({ cls: "an-tou-grid" });
@@ -1130,7 +1123,6 @@ class DeskView extends ItemView {
 					title: child.name,
 					line: child.line || (n === 1 && files[0] ? titleOf(files[0]) : ""),
 					quiet: this.isQuietLine(child),
-					onAdd: child.folder ? () => void this.quickNote(child.folder as string) : undefined,
 				},
 				() => this.openRoom(child, room.name)
 			);
