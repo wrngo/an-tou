@@ -1257,7 +1257,7 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
     if (!rooms.length)
       return;
     const box = containerEl.createDiv({ cls: "an-tou-set-zone" });
-    box.createEl("h3", { cls: "an-tou-set-zone-title", text: title });
+    new import_obsidian.Setting(box).setName(title).setHeading();
     const list = box.createDiv({ cls: "an-tou-set-zone-list" });
     for (const room of rooms)
       this.drawRoom(list, room, t);

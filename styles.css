@@ -644,13 +644,6 @@ body.an-tou-serif .an-tou-help-card strong {
   margin: 22px 0 10px;
 }
 
-.an-tou-set-zone-title {
-  margin: 0 0 10px;
-  font-size: var(--font-ui-medium);
-  font-weight: 600;
-  color: var(--text-normal);
-}
-
 .an-tou-set-zone-list {
   padding: 4px 8px;
   border: 1px solid var(--background-modifier-border);

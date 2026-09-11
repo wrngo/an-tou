@@ -1410,7 +1410,7 @@ class AnTouSettingTab extends PluginSettingTab {
 	drawZone(containerEl: HTMLElement, title: string, rooms: Room[], t: Copy) {
 		if (!rooms.length) return;
 		const box = containerEl.createDiv({ cls: "an-tou-set-zone" });
-		box.createEl("h3", { cls: "an-tou-set-zone-title", text: title });
+		new Setting(box).setName(title).setHeading();
 		const list = box.createDiv({ cls: "an-tou-set-zone-list" });
 		for (const room of rooms) this.drawRoom(list, room, t);
 	}
