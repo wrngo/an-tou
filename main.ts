@@ -91,6 +91,7 @@ const COPY = {
 		rooms: "房间",
 		roomsDesc: "下面这张图就是书桌卡片，对照着填就行。",
 		addRoom: "添加房间",
+		addHomeCard: "添加首页卡片",
 		fromVault: "按库根目录生成",
 		fromVaultNotice: "已按文件夹更新房间。已有名称、说明和开关没动。",
 		roomId: "编号",
@@ -149,7 +150,7 @@ const COPY = {
 		maxNotesBad: "只能填大于 0 的整数，留空就自动决定。",
 		nameRequired: "先给这个房间起个名字。",
 		recent: "最近",
-		emptyRooms: "还没有房间。打开设置添加文件夹，或从库根目录生成。",
+		emptyRooms: "还没有房间。点右上角加号加一张，或打开设置。",
 		noMoreNotes: "没有更多笔记。",
 		emptyFolder: "这一格还没有笔记。",
 		newNote: "新笔记",
@@ -198,6 +199,7 @@ const COPY = {
 		rooms: "Rooms",
 		roomsDesc: "The picture below is a desk card. Fill the fields to match.",
 		addRoom: "Add room",
+		addHomeCard: "Add a home card",
 		fromVault: "Build from top-level folders",
 		fromVaultNotice: "Rooms updated from folders. Names, captions, and toggles were kept.",
 		roomId: "Id",
@@ -256,7 +258,7 @@ const COPY = {
 		maxNotesBad: "Whole number above zero, or leave it empty.",
 		nameRequired: "Give the room a name first.",
 		recent: "Recent",
-		emptyRooms: "No rooms yet. Add folders in settings, or build them from your vault.",
+		emptyRooms: "No rooms yet. Use the plus to add a card, or open settings.",
 		noMoreNotes: "No more notes.",
 		emptyFolder: "No notes in this room yet.",
 		newNote: "New note",
@@ -578,6 +580,69 @@ class FolderSuggest extends AbstractInputSuggest<string> {
 		this.inputEl.value = value;
 		this.onPick(value);
 		this.close();
+	}
+}
+
+class RoomModal extends Modal {
+	t: Copy;
+	onSubmit: (name: string, folder: string) => void;
+
+	constructor(app: App, t: Copy, onSubmit: (name: string, folder: string) => void) {
+		super(app);
+		this.t = t;
+		this.onSubmit = onSubmit;
+	}
+
+	onOpen() {
+		const t = this.t;
+		this.titleEl.setText(t.addRoom);
+		this.contentEl.addClass("an-tou-room-modal");
+		let name = "";
+		let folder = "";
+		let folderEl: HTMLInputElement | null = null;
+		const submit = () => {
+			const n = name.trim();
+			if (!n) {
+				new Notice(t.nameRequired);
+				return;
+			}
+			this.close();
+			this.onSubmit(n, folder.trim());
+		};
+		new Setting(this.contentEl).setName(t.name).addText((box) => {
+			box.setPlaceholder(t.name);
+			box.onChange((v) => {
+				name = v;
+			});
+			box.inputEl.addEventListener("keydown", (e) => {
+				if (e.key !== "Enter") return;
+				e.preventDefault();
+				folderEl?.focus();
+			});
+			box.inputEl.focus();
+		});
+		new Setting(this.contentEl)
+			.setName(t.folder)
+			.setDesc(t.folderDesc)
+			.addText((box) => {
+				folderEl = box.inputEl;
+				box.setPlaceholder("00-Inbox");
+				box.onChange((v) => {
+					folder = v;
+				});
+				new FolderSuggest(this.app, box.inputEl, (picked) => {
+					box.setValue(picked);
+					folder = picked;
+				});
+				box.inputEl.addEventListener("keydown", (e) => {
+					if (e.key !== "Enter") return;
+					e.preventDefault();
+					submit();
+				});
+			});
+		new Setting(this.contentEl).addButton((b) => {
+			b.setButtonText(t.saveRoom).setCta().onClick(submit);
+		});
 	}
 }
 
@@ -1010,9 +1075,48 @@ class DeskView extends ItemView {
 		await this.resetHome();
 	}
 
+	addHomeButton(inner: HTMLElement) {
+		const add = inner.createEl("button", {
+			cls: "an-tou-add",
+			text: "+",
+			attr: { type: "button", "aria-label": this.copy().addHomeCard },
+		});
+		add.addEventListener("click", (e) => {
+			e.preventDefault();
+			e.stopPropagation();
+			this.addHomeRoom();
+		});
+	}
+
+	addHomeRoom() {
+		const t = this.copy();
+		new RoomModal(this.app, t, (name, folder) => {
+			void this.createHomeRoom(name, folder);
+		}).open();
+	}
+
+	async createHomeRoom(name: string, folder: string) {
+		const used = new Set(this.plugin.settings.rooms.map((r) => r.id));
+		const room: Room = {
+			id: uniqueId(slug(name), used),
+			name,
+		};
+		if (folder) {
+			room.folder = folder;
+			room.kicker = kickerOf(folder.slice(folder.lastIndexOf("/") + 1));
+			if (!(this.app.vault.getAbstractFileByPath(folder) instanceof TFolder)) {
+				room.stale = true;
+			}
+		}
+		this.plugin.settings.rooms.push(room);
+		await this.plugin.saveSettings();
+		this.plugin.refreshDesks();
+	}
+
 	async renderHome(inner: HTMLElement, seq: number) {
 		const t = this.copy();
 		const title = this.plugin.settings.title || DEFAULT_TITLE;
+		this.addHomeButton(inner);
 		inner.createEl("h1", { text: title });
 		inner.createEl("span", { cls: "an-tou-date", text: todayLabel(this.plugin.settings.uiLang) });
 

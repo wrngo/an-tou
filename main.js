@@ -74,6 +74,7 @@ var COPY = {
     rooms: "\u623F\u95F4",
     roomsDesc: "\u4E0B\u9762\u8FD9\u5F20\u56FE\u5C31\u662F\u4E66\u684C\u5361\u7247\uFF0C\u5BF9\u7167\u7740\u586B\u5C31\u884C\u3002",
     addRoom: "\u6DFB\u52A0\u623F\u95F4",
+    addHomeCard: "\u6DFB\u52A0\u9996\u9875\u5361\u7247",
     fromVault: "\u6309\u5E93\u6839\u76EE\u5F55\u751F\u6210",
     fromVaultNotice: "\u5DF2\u6309\u6587\u4EF6\u5939\u66F4\u65B0\u623F\u95F4\u3002\u5DF2\u6709\u540D\u79F0\u3001\u8BF4\u660E\u548C\u5F00\u5173\u6CA1\u52A8\u3002",
     roomId: "\u7F16\u53F7",
@@ -132,7 +133,7 @@ var COPY = {
     maxNotesBad: "\u53EA\u80FD\u586B\u5927\u4E8E 0 \u7684\u6574\u6570\uFF0C\u7559\u7A7A\u5C31\u81EA\u52A8\u51B3\u5B9A\u3002",
     nameRequired: "\u5148\u7ED9\u8FD9\u4E2A\u623F\u95F4\u8D77\u4E2A\u540D\u5B57\u3002",
     recent: "\u6700\u8FD1",
-    emptyRooms: "\u8FD8\u6CA1\u6709\u623F\u95F4\u3002\u6253\u5F00\u8BBE\u7F6E\u6DFB\u52A0\u6587\u4EF6\u5939\uFF0C\u6216\u4ECE\u5E93\u6839\u76EE\u5F55\u751F\u6210\u3002",
+    emptyRooms: "\u8FD8\u6CA1\u6709\u623F\u95F4\u3002\u70B9\u53F3\u4E0A\u89D2\u52A0\u53F7\u52A0\u4E00\u5F20\uFF0C\u6216\u6253\u5F00\u8BBE\u7F6E\u3002",
     noMoreNotes: "\u6CA1\u6709\u66F4\u591A\u7B14\u8BB0\u3002",
     emptyFolder: "\u8FD9\u4E00\u683C\u8FD8\u6CA1\u6709\u7B14\u8BB0\u3002",
     newNote: "\u65B0\u7B14\u8BB0",
@@ -181,6 +182,7 @@ var COPY = {
     rooms: "Rooms",
     roomsDesc: "The picture below is a desk card. Fill the fields to match.",
     addRoom: "Add room",
+    addHomeCard: "Add a home card",
     fromVault: "Build from top-level folders",
     fromVaultNotice: "Rooms updated from folders. Names, captions, and toggles were kept.",
     roomId: "Id",
@@ -239,7 +241,7 @@ var COPY = {
     maxNotesBad: "Whole number above zero, or leave it empty.",
     nameRequired: "Give the room a name first.",
     recent: "Recent",
-    emptyRooms: "No rooms yet. Add folders in settings, or build them from your vault.",
+    emptyRooms: "No rooms yet. Use the plus to add a card, or open settings.",
     noMoreNotes: "No more notes.",
     emptyFolder: "No notes in this room yet.",
     newNote: "New note",
@@ -514,6 +516,63 @@ var FolderSuggest = class extends import_obsidian.AbstractInputSuggest {
     this.inputEl.value = value;
     this.onPick(value);
     this.close();
+  }
+};
+var RoomModal = class extends import_obsidian.Modal {
+  constructor(app, t, onSubmit) {
+    super(app);
+    this.t = t;
+    this.onSubmit = onSubmit;
+  }
+  onOpen() {
+    const t = this.t;
+    this.titleEl.setText(t.addRoom);
+    this.contentEl.addClass("an-tou-room-modal");
+    let name = "";
+    let folder = "";
+    let folderEl = null;
+    const submit = () => {
+      const n = name.trim();
+      if (!n) {
+        new import_obsidian.Notice(t.nameRequired);
+        return;
+      }
+      this.close();
+      this.onSubmit(n, folder.trim());
+    };
+    new import_obsidian.Setting(this.contentEl).setName(t.name).addText((box) => {
+      box.setPlaceholder(t.name);
+      box.onChange((v) => {
+        name = v;
+      });
+      box.inputEl.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter")
+          return;
+        e.preventDefault();
+        folderEl == null ? void 0 : folderEl.focus();
+      });
+      box.inputEl.focus();
+    });
+    new import_obsidian.Setting(this.contentEl).setName(t.folder).setDesc(t.folderDesc).addText((box) => {
+      folderEl = box.inputEl;
+      box.setPlaceholder("00-Inbox");
+      box.onChange((v) => {
+        folder = v;
+      });
+      new FolderSuggest(this.app, box.inputEl, (picked) => {
+        box.setValue(picked);
+        folder = picked;
+      });
+      box.inputEl.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter")
+          return;
+        e.preventDefault();
+        submit();
+      });
+    });
+    new import_obsidian.Setting(this.contentEl).addButton((b) => {
+      b.setButtonText(t.saveRoom).setCta().onClick(submit);
+    });
   }
 };
 var ConfirmModal = class extends import_obsidian.Modal {
@@ -916,9 +975,45 @@ var DeskView = class extends import_obsidian.ItemView {
     await plugin.saveSettings();
     await this.resetHome();
   }
+  addHomeButton(inner) {
+    const add = inner.createEl("button", {
+      cls: "an-tou-add",
+      text: "+",
+      attr: { type: "button", "aria-label": this.copy().addHomeCard }
+    });
+    add.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.addHomeRoom();
+    });
+  }
+  addHomeRoom() {
+    const t = this.copy();
+    new RoomModal(this.app, t, (name, folder) => {
+      void this.createHomeRoom(name, folder);
+    }).open();
+  }
+  async createHomeRoom(name, folder) {
+    const used = new Set(this.plugin.settings.rooms.map((r) => r.id));
+    const room = {
+      id: uniqueId(slug(name), used),
+      name
+    };
+    if (folder) {
+      room.folder = folder;
+      room.kicker = kickerOf(folder.slice(folder.lastIndexOf("/") + 1));
+      if (!(this.app.vault.getAbstractFileByPath(folder) instanceof import_obsidian.TFolder)) {
+        room.stale = true;
+      }
+    }
+    this.plugin.settings.rooms.push(room);
+    await this.plugin.saveSettings();
+    this.plugin.refreshDesks();
+  }
   async renderHome(inner, seq) {
     const t = this.copy();
     const title = this.plugin.settings.title || DEFAULT_TITLE;
+    this.addHomeButton(inner);
     inner.createEl("h1", { text: title });
     inner.createEl("span", { cls: "an-tou-date", text: todayLabel(this.plugin.settings.uiLang) });
     const rooms = this.homeRooms();

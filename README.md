@@ -14,7 +14,7 @@ Requires Obsidian **1.7.2** or newer.
 - Each card is a folder you configure (a room)
 - A room with children and no notes grid is a group, like a cabinet
 - Notes inside a room stay cards
-- Open a room to add a note — the **+** is on that page, not on the home cards
+- Home **+** adds a card. Open a room — the **+** there writes a note
 - Applies the Quiet Glass look (three separate switches, see below)
 
 ## First run

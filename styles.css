@@ -34,19 +34,13 @@ body.an-tou-look .an-tou-view {
   --desk-mute: #6b7a76;
   --add-accent: #2bbbad;
   font-family: "PingFang SC", -apple-system, sans-serif;
-  background:
-    radial-gradient(900px 520px at 16% 8%, rgba(43, 187, 173, 0.14), transparent 58%),
-    radial-gradient(720px 480px at 90% 86%, rgba(210, 186, 150, 0.16), transparent 55%),
-    linear-gradient(180deg, #f4f8f6 0%, #e7eeeb 100%);
+  background: var(--desk-wash);
 }
 
 body.an-tou-look.theme-dark .an-tou-view {
   --desk-ink: #e4eeea;
   --desk-mute: #8a9a96;
-  background:
-    radial-gradient(900px 520px at 16% 8%, rgba(43, 187, 173, 0.16), transparent 58%),
-    radial-gradient(720px 480px at 90% 86%, rgba(210, 186, 150, 0.08), transparent 55%),
-    linear-gradient(180deg, #1a2220 0%, #121918 100%);
+  background: var(--desk-wash);
 }
 
 body.an-tou-serif .an-tou-view {
@@ -258,7 +252,9 @@ body.an-tou-look.theme-dark .an-tou-view .an-tou-add {
 
 body.an-tou-look .an-tou-view .desk-card {
   border: 1px solid rgba(255, 255, 255, 0.72);
-  background: rgba(255, 255, 255, 0.42);
+  background:
+    radial-gradient(240px 140px at 10% 0%, rgba(43, 187, 173, 0.2), transparent 64%),
+    rgba(255, 255, 255, 0.42);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.8) inset,
     0 18px 40px -24px rgba(28, 42, 38, 0.28);
@@ -269,7 +265,9 @@ body.an-tou-look .an-tou-view .desk-card {
 
 body.an-tou-look.theme-dark .an-tou-view .desk-card {
   border-color: rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.07);
+  background:
+    radial-gradient(240px 140px at 10% 0%, rgba(43, 187, 173, 0.16), transparent 64%),
+    rgba(255, 255, 255, 0.07);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.12) inset,
     0 18px 40px -24px rgba(0, 0, 0, 0.45);
@@ -277,7 +275,9 @@ body.an-tou-look.theme-dark .an-tou-view .desk-card {
 
 body.an-tou-look .an-tou-view .desk-card:hover,
 body.an-tou-look .an-tou-view .desk-card:focus-visible {
-  background: rgba(255, 255, 255, 0.66);
+  background:
+    radial-gradient(260px 150px at 10% 0%, rgba(43, 187, 173, 0.22), transparent 64%),
+    rgba(255, 255, 255, 0.66);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.9) inset,
     0 28px 50px -20px rgba(28, 42, 38, 0.32);
@@ -286,7 +286,9 @@ body.an-tou-look .an-tou-view .desk-card:focus-visible {
 
 body.an-tou-look.theme-dark .an-tou-view .desk-card:hover,
 body.an-tou-look.theme-dark .an-tou-view .desk-card:focus-visible {
-  background: rgba(255, 255, 255, 0.12);
+  background:
+    radial-gradient(260px 150px at 10% 0%, rgba(43, 187, 173, 0.18), transparent 64%),
+    rgba(255, 255, 255, 0.12);
 }
 
 .an-tou-view .desk-card.is-quiet { opacity: 0.5; }
@@ -500,6 +502,11 @@ body.an-tou-look.theme-dark .an-tou-view .desk-card:focus-visible {
   justify-content: flex-end;
   gap: 8px;
   margin-top: 16px;
+}
+
+.an-tou-room-modal .setting-item {
+  border-top: none;
+  padding-top: 8px;
 }
 
 .an-tou-room-grid {
@@ -773,10 +780,10 @@ body.an-tou-look {
 }
 
 body.an-tou-look.theme-light {
-  --background-primary: #eef3f1;
-  --background-primary-alt: #e8efec;
-  --background-secondary: #e4ebe8;
-  --background-secondary-alt: #dce6e2;
+  --background-primary: #e8f4f1;
+  --background-primary-alt: #e2f0ec;
+  --background-secondary: #dceae6;
+  --background-secondary-alt: #d4e4df;
   --background-modifier-border: rgba(28, 42, 38, 0.08);
   --text-normal: var(--desk-ink);
   --text-muted: var(--desk-mute);
@@ -786,6 +793,11 @@ body.an-tou-look.theme-light {
   --tab-container-background: transparent;
   --nav-item-background-hover: rgba(255, 255, 255, 0.45);
   --nav-item-background-active: rgba(255, 255, 255, 0.7);
+  --desk-wash:
+    radial-gradient(ellipse 80% 58% at 12% 0%, rgba(43, 187, 173, 0.3), transparent 68%),
+    radial-gradient(ellipse 55% 48% at 88% 30%, rgba(43, 187, 173, 0.16), transparent 62%),
+    radial-gradient(ellipse 70% 55% at 70% 100%, rgba(210, 186, 150, 0.14), transparent 58%),
+    linear-gradient(180deg, #e8f4f1 0%, #dceae6 100%);
 }
 
 body.an-tou-look.theme-dark {
@@ -804,20 +816,20 @@ body.an-tou-look.theme-dark {
   --tab-container-background: transparent;
   --nav-item-background-hover: rgba(255, 255, 255, 0.06);
   --nav-item-background-active: rgba(255, 255, 255, 0.1);
-}
-
-body.an-tou-look .workspace {
-  background:
-    radial-gradient(900px 520px at 16% 8%, rgba(43, 187, 173, 0.14), transparent 58%),
-    radial-gradient(720px 480px at 90% 86%, rgba(210, 186, 150, 0.16), transparent 55%),
-    linear-gradient(180deg, #f4f8f6 0%, #e7eeeb 100%);
-}
-
-body.an-tou-look.theme-dark .workspace {
-  background:
-    radial-gradient(900px 520px at 16% 8%, rgba(43, 187, 173, 0.16), transparent 58%),
-    radial-gradient(720px 480px at 90% 86%, rgba(210, 186, 150, 0.08), transparent 55%),
+  --desk-wash:
+    radial-gradient(ellipse 80% 58% at 12% 0%, rgba(43, 187, 173, 0.22), transparent 68%),
+    radial-gradient(ellipse 55% 48% at 88% 30%, rgba(43, 187, 173, 0.12), transparent 62%),
+    radial-gradient(ellipse 70% 55% at 70% 100%, rgba(210, 186, 150, 0.08), transparent 58%),
     linear-gradient(180deg, #1a2220 0%, #121918 100%);
+}
+
+body.an-tou-look .workspace,
+body.an-tou-look .workspace-leaf-content[data-type="an-tou-desk"] > .view-content {
+  background: var(--desk-wash);
+}
+
+body.an-tou-look .workspace-split {
+  background: transparent;
 }
 
 body.an-tou-look .status-bar {
