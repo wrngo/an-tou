@@ -29,13 +29,15 @@ body.an-tou-look .an-tou-view {
   --desk-mute: #6b7a76;
   --add-accent: #2bbbad;
   font-family: "PingFang SC", -apple-system, sans-serif;
-  background: transparent;
+  background: var(--desk-wash);
+  background-attachment: fixed;
 }
 
 body.an-tou-look.theme-dark .an-tou-view {
   --desk-ink: #e4eeea;
   --desk-mute: #8a9a96;
-  background: transparent;
+  background: var(--desk-wash);
+  background-attachment: fixed;
 }
 
 body.an-tou-serif .an-tou-view {
@@ -776,10 +778,10 @@ body.an-tou-look {
 }
 
 body.an-tou-look.theme-light {
-  --background-primary: #e8f4f1;
-  --background-primary-alt: #e2f0ec;
-  --background-secondary: #dceae6;
-  --background-secondary-alt: #d4e4df;
+  --background-primary: #d5ebe6;
+  --background-primary-alt: #cee7e1;
+  --background-secondary: #c8e2dc;
+  --background-secondary-alt: #c0dcd6;
   --background-modifier-border: rgba(28, 42, 38, 0.08);
   --text-normal: var(--desk-ink);
   --text-muted: var(--desk-mute);
@@ -791,10 +793,8 @@ body.an-tou-look.theme-light {
   --nav-item-background-hover: rgba(255, 255, 255, 0.45);
   --nav-item-background-active: rgba(255, 255, 255, 0.7);
   --desk-wash:
-    radial-gradient(ellipse 80% 58% at 12% 0%, rgba(43, 187, 173, 0.3), transparent 68%),
-    radial-gradient(ellipse 55% 48% at 88% 30%, rgba(43, 187, 173, 0.16), transparent 62%),
-    radial-gradient(ellipse 70% 55% at 70% 100%, rgba(210, 186, 150, 0.14), transparent 58%),
-    linear-gradient(180deg, #e8f4f1 0%, #dceae6 100%);
+    radial-gradient(ellipse 120% 80% at 50% -8%, rgba(43, 187, 173, 0.22), transparent 64%),
+    linear-gradient(180deg, #d3ebe5 0%, #cce6e0 100%);
 }
 
 body.an-tou-look.theme-dark {
@@ -821,13 +821,14 @@ body.an-tou-look.theme-dark {
     linear-gradient(180deg, #1a2220 0%, #121918 100%);
 }
 
-body.an-tou-look .workspace {
+body.an-tou-look .workspace,
+body.an-tou-look .workspace-leaf-content[data-type="an-tou-desk"] > .view-content {
   background: var(--desk-wash);
+  background-attachment: fixed;
 }
 
 body.an-tou-look .app-container,
-body.an-tou-look .workspace-split,
-body.an-tou-look .workspace-leaf-content[data-type="an-tou-desk"] > .view-content {
+body.an-tou-look .workspace-split {
   background: transparent;
 }
 
