@@ -34,13 +34,13 @@ body.an-tou-look .an-tou-view {
   --desk-mute: #6b7a76;
   --add-accent: #2bbbad;
   font-family: "PingFang SC", -apple-system, sans-serif;
-  background: var(--desk-wash);
+  background: transparent;
 }
 
 body.an-tou-look.theme-dark .an-tou-view {
   --desk-ink: #e4eeea;
   --desk-mute: #8a9a96;
-  background: var(--desk-wash);
+  background: transparent;
 }
 
 body.an-tou-serif .an-tou-view {
@@ -777,6 +777,7 @@ body.an-tou-look {
   --accent-l: 45%;
   --desk-ink: #1c2a26;
   --desk-mute: #6b7a76;
+  --workspace-background-translucent: transparent;
 }
 
 body.an-tou-look.theme-light {
@@ -788,9 +789,10 @@ body.an-tou-look.theme-light {
   --text-normal: var(--desk-ink);
   --text-muted: var(--desk-mute);
   --text-faint: #93a29d;
-  --titlebar-background: var(--background-primary);
-  --titlebar-background-focused: var(--background-primary);
+  --titlebar-background: transparent;
+  --titlebar-background-focused: transparent;
   --tab-container-background: transparent;
+  --tab-background-active: transparent;
   --nav-item-background-hover: rgba(255, 255, 255, 0.45);
   --nav-item-background-active: rgba(255, 255, 255, 0.7);
   --desk-wash:
@@ -811,9 +813,10 @@ body.an-tou-look.theme-dark {
   --text-normal: var(--desk-ink);
   --text-muted: var(--desk-mute);
   --text-faint: #6d7c78;
-  --titlebar-background: var(--background-primary);
-  --titlebar-background-focused: var(--background-primary);
+  --titlebar-background: transparent;
+  --titlebar-background-focused: transparent;
   --tab-container-background: transparent;
+  --tab-background-active: transparent;
   --nav-item-background-hover: rgba(255, 255, 255, 0.06);
   --nav-item-background-active: rgba(255, 255, 255, 0.1);
   --desk-wash:
@@ -823,12 +826,13 @@ body.an-tou-look.theme-dark {
     linear-gradient(180deg, #1a2220 0%, #121918 100%);
 }
 
-body.an-tou-look .workspace,
-body.an-tou-look .workspace-leaf-content[data-type="an-tou-desk"] > .view-content {
+body.an-tou-look .workspace {
   background: var(--desk-wash);
 }
 
-body.an-tou-look .workspace-split {
+body.an-tou-look .app-container,
+body.an-tou-look .workspace-split,
+body.an-tou-look .workspace-leaf-content[data-type="an-tou-desk"] > .view-content {
   background: transparent;
 }
 
@@ -841,6 +845,9 @@ body.an-tou-look .status-bar:hover { opacity: 1; }
 
 body.an-tou-look .workspace-tabs,
 body.an-tou-look .workspace-tab-header-container,
+body.an-tou-look .workspace-tab-header,
+body.an-tou-look .workspace-tab-header.is-active,
+body.an-tou-look .workspace-tab-header.mod-active,
 body.an-tou-look .workspace-leaf,
 body.an-tou-look .view-header {
   background: transparent;
