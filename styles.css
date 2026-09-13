@@ -5,12 +5,7 @@
 }
 
 .workspace-leaf-content[data-type="an-tou-desk"] .view-header {
-  background: transparent;
-  border-bottom: none;
-  opacity: 0.35;
-}
-.workspace-leaf-content[data-type="an-tou-desk"] .view-header:hover {
-  opacity: 1;
+  display: none;
 }
 
 .an-tou-view {
