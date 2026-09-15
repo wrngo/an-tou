@@ -168,22 +168,225 @@ body.an-tou-look.theme-dark .an-tou-view .an-tou-add {
     0 10px 26px -12px rgba(28, 42, 38, 0.22);
 }
 
+/* 甲：日期下面那行安静小字（加一张卡片） */
+.an-tou-quiet-row {
+  margin: 0 0 2px;
+}
+
+.an-tou-view .desk-quiet-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0 2px 13px;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  letter-spacing: 0.01em;
+  color: var(--desk-mute);
+  opacity: 0.75;
+  cursor: pointer;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.an-tou-view .desk-quiet-add:hover,
+.an-tou-view .desk-quiet-add:focus-visible {
+  color: var(--desk-ink);
+  opacity: 1;
+  outline: none;
+}
+
+.an-tou-view .desk-quiet-plus {
+  flex: none;
+  width: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--desk-serif);
+  font-size: 15px;
+  line-height: 1;
+  color: var(--add-accent);
+  opacity: 0.8;
+}
+
+/* 首页搜索行：淡淡的玻璃输入框，宽度由脚本对齐大标题 */
+.an-tou-view .an-tou-search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 8px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.26);
+  backdrop-filter: blur(16px) saturate(1.25);
+  -webkit-backdrop-filter: blur(16px) saturate(1.25);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.55) inset,
+    0 10px 24px -18px rgba(28, 42, 38, 0.28);
+  transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+body.theme-dark .an-tou-view .an-tou-search-row {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 10px 24px -18px rgba(0, 0, 0, 0.4);
+}
+
+.an-tou-view .an-tou-search-row:focus-within,
+.an-tou-view .an-tou-search-row.is-live {
+  border-color: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.42);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 14px 30px -18px rgba(28, 42, 38, 0.32);
+}
+
+body.theme-dark .an-tou-view .an-tou-search-row:focus-within,
+body.theme-dark .an-tou-view .an-tou-search-row.is-live {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.an-tou-view .desk-search-glyph {
+  flex: none;
+  display: flex;
+  color: var(--add-accent);
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.an-tou-view .an-tou-search-row.is-live .desk-search-glyph {
+  opacity: 1;
+}
+
+.an-tou-view .desk-search-glyph svg {
+  width: 14px;
+  height: 14px;
+}
+
+.an-tou-view input.desk-search,
+.an-tou-view .desk-search {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-family: inherit !important;
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+  letter-spacing: 0.01em;
+  color: var(--desk-mute);
+  caret-color: var(--add-accent);
+  opacity: 0.75;
+  outline: none;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.an-tou-view .desk-search::placeholder {
+  color: var(--desk-mute);
+  opacity: 0.9;
+}
+
+.an-tou-view .desk-search:focus,
+.an-tou-view .desk-search.has-q {
+  color: var(--desk-ink);
+  opacity: 1;
+}
+
+.an-tou-view .desk-search-clear {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--desk-mute);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.an-tou-view .desk-search-clear.show {
+  display: flex;
+}
+
+.an-tou-view .desk-search-clear:hover {
+  color: var(--desk-ink);
+  background: rgba(0, 0, 0, 0.06);
+}
+
+body.theme-dark .an-tou-view .desk-search-clear:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* 搜索结果 */
+.an-tou-view .desk-search-head {
+  font-family: var(--desk-serif);
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--desk-ink);
+  margin: 26px 0 0;
+}
+
+.an-tou-view .desk-search-head .q {
+  color: var(--add-accent);
+}
+
+.an-tou-view .desk-search-group {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--desk-mute);
+  margin: 26px 0 0;
+}
+
+.an-tou-view .desk-search-more {
+  font-size: 13px;
+  color: var(--desk-mute);
+  margin: 14px 0 0;
+}
+
+.an-tou-view .desk-search-none {
+  margin: 26px 0 0;
+}
+
+.an-tou-view .desk-search-body .an-tou-grid {
+  margin: 12px 0 8px;
+}
+
+.an-tou-view .hidden {
+  display: none;
+}
+
+.an-tou-modal-hint {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
 .an-tou-view h1 {
   font-family: var(--desk-serif);
   font-size: clamp(28px, 3.2vw, 42px);
   font-weight: 500;
   letter-spacing: -0.02em;
   line-height: 1.25;
-  margin: 8px 0 6px;
-}
-
-.an-tou-date {
-  display: block;
-  font-family: var(--desk-serif);
-  font-style: italic;
-  font-size: 15px;
-  color: var(--desk-mute);
-  margin-bottom: 8px;
+  margin: 8px 0 10px;
 }
 
 .an-tou-view h2 {
@@ -319,6 +522,41 @@ body.an-tou-look.theme-dark .an-tou-view .desk-card:focus-visible {
   font-size: 22px;
   font-weight: 500;
   opacity: 0.4;
+}
+
+.an-tou-view .desk-copy {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--desk-mute);
+  opacity: 0.4;
+  cursor: pointer;
+  transition: opacity 0.2s ease, background 0.2s ease;
+}
+
+.an-tou-view .desk-copy:hover,
+.an-tou-view .desk-copy:focus-visible {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+body.an-tou-look.theme-dark .an-tou-view .desk-copy:hover,
+body.an-tou-look.theme-dark .an-tou-view .desk-copy:focus-visible {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.an-tou-view .desk-copy svg {
+  width: 14px;
+  height: 14px;
 }
 
 .an-tou-view .desk-card strong {

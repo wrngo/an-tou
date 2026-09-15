@@ -17,6 +17,7 @@ import {
 const VIEW_TYPE = "an-tou-desk";
 const DEFAULT_TITLE = "格物成栖";
 const RECENT_CAP = 3;
+const SEARCH_CAP = 30;
 
 interface Room {
 	id: string;
@@ -45,6 +46,7 @@ interface AnTouSettings {
 	rooms: Room[];
 	uiLang: UiLang;
 	welcomed: boolean;
+	captureRoom: string;
 }
 
 const DEFAULT_SETTINGS: AnTouSettings = {
@@ -59,6 +61,7 @@ const DEFAULT_SETTINGS: AnTouSettings = {
 	rooms: [],
 	uiLang: "zh",
 	welcomed: false,
+	captureRoom: "",
 };
 
 const COPY = {
@@ -92,6 +95,14 @@ const COPY = {
 		roomsDesc: "下面这张图就是书桌卡片，对照着填就行。",
 		addRoom: "添加房间",
 		addHomeCard: "添加首页卡片",
+		quietAdd: "加一张卡片",
+		emptyRooms: "还没有房间。点大标题下面那行小字加一张，或打开设置。",
+		searchPlaceholder: "搜一下…",
+		searchClear: "清除搜索",
+		searchNone: "没找到。换个词试试。",
+		searchHead: (n: number) => n + " 条结果",
+		searchMore: (n: number) => "还有 " + n + " 条，把词再收窄一点。",
+		searchOther: "库内其他",
 		fromVault: "按库根目录生成",
 		fromVaultNotice: "已按文件夹更新房间。已有名称、说明和开关没动。",
 		roomId: "编号",
@@ -150,7 +161,6 @@ const COPY = {
 		maxNotesBad: "只能填大于 0 的整数，留空就自动决定。",
 		nameRequired: "先给这个房间起个名字。",
 		recent: "最近",
-		emptyRooms: "还没有房间。点右上角加号加一张，或打开设置。",
 		noMoreNotes: "没有更多笔记。",
 		emptyFolder: "这一格还没有笔记。",
 		newNote: "新笔记",
@@ -158,6 +168,16 @@ const COPY = {
 		createFailed: "没写成。",
 		folderGone: "文件夹不在。",
 		untitled: "未命名",
+		copyLink: "复制这篇的链接",
+		copied: "链接已复制，点它就能回到这篇",
+		copyFailed: "没复制上。",
+		linkMissing: "没找到这篇笔记。",
+		capture: "记一条",
+		captureHint: (folder: string) => "会放进 " + folder,
+		noCaptureFolder: "还没有能放的地方。去设置里给任意一张卡片配上文件夹。",
+		captureDest: "记一条放哪",
+		captureDestDesc: "自动：先找收件箱类的卡片，没有就用首页第一张有文件夹的。",
+		captureAuto: "自动",
 		more: (n: number) => "其余 " + n + " 条",
 		noteCount: (n: number) => n + " 篇笔记",
 		welcomeTitle: "书桌准备好了",
@@ -200,6 +220,14 @@ const COPY = {
 		roomsDesc: "The picture below is a desk card. Fill the fields to match.",
 		addRoom: "Add room",
 		addHomeCard: "Add a home card",
+		quietAdd: "Add a card",
+		emptyRooms: "No rooms yet. Use the small line under the big title to add one, or open settings.",
+		searchPlaceholder: "Search…",
+		searchClear: "Clear search",
+		searchNone: "Nothing found. Try another word.",
+		searchHead: (n: number) => n + (n === 1 ? " result" : " results"),
+		searchMore: (n: number) => n + " more — narrow your words.",
+		searchOther: "Elsewhere in the vault",
 		fromVault: "Build from top-level folders",
 		fromVaultNotice: "Rooms updated from folders. Names, captions, and toggles were kept.",
 		roomId: "Id",
@@ -258,7 +286,6 @@ const COPY = {
 		maxNotesBad: "Whole number above zero, or leave it empty.",
 		nameRequired: "Give the room a name first.",
 		recent: "Recent",
-		emptyRooms: "No rooms yet. Use the plus to add a card, or open settings.",
 		noMoreNotes: "No more notes.",
 		emptyFolder: "No notes in this room yet.",
 		newNote: "New note",
@@ -266,6 +293,16 @@ const COPY = {
 		createFailed: "Could not create the note.",
 		folderGone: "That folder is gone.",
 		untitled: "Untitled",
+		copyLink: "Copy link to this note",
+		copied: "Link copied — it opens this note again",
+		copyFailed: "Could not copy.",
+		linkMissing: "That note is gone.",
+		capture: "Jot a note",
+		captureHint: (folder: string) => "Goes into " + folder,
+		noCaptureFolder: "No room to put it in yet. Give one of the cards a folder in settings.",
+		captureDest: "Where jotted notes go",
+		captureDestDesc: "Auto: an inbox-like card first, else the first home card with a folder.",
+		captureAuto: "Auto",
 		more: (n: number) => n + " more",
 		noteCount: (n: number) => n + " notes",
 		welcomeTitle: "Your desk is ready",
@@ -478,9 +515,19 @@ async function noteCardCopy(app: App, file: TFile): Promise<{ title: string; lin
 	return { title, line };
 }
 
-function todayLabel(uiLang: UiLang): string {
-	const tag = uiLang === "en" ? "en-US" : "zh-CN";
-	return new Date().toLocaleDateString(tag, { month: "long", day: "numeric" });
+function noteUri(app: App, file: TFile): string {
+	const vault = encodeURIComponent(app.vault.getName());
+	const note = encodeURIComponent(file.path);
+	return "obsidian://quiet-desk?vault=" + vault + "&note=" + note;
+}
+
+async function copyText(text: string): Promise<boolean> {
+	try {
+		await navigator.clipboard.writeText(text);
+		return true;
+	} catch {
+		return false;
+	}
 }
 
 function twoDigits(n: number): string {
@@ -497,7 +544,7 @@ function safeName(name: string, copy: Copy): string {
 }
 
 function isInboxFolder(folder: string): boolean {
-	return /inbox/i.test(folder);
+	return /inbox|收件|收集/i.test(folder);
 }
 
 function folderKey(path: string): string {
@@ -527,18 +574,27 @@ function closestFolder(query: string, folders: string[]): string {
 
 class NameModal extends Modal {
 	preset: string;
+	hint: string;
 	t: Copy;
 	onSubmit: (value: string) => void;
 
-	constructor(app: App, preset: string, t: Copy, onSubmit: (value: string) => void) {
+	constructor(
+		app: App,
+		preset: string,
+		t: Copy,
+		onSubmit: (value: string) => void,
+		hint = ""
+	) {
 		super(app);
 		this.preset = preset || "";
+		this.hint = hint;
 		this.t = t;
 		this.onSubmit = onSubmit;
 	}
 
 	onOpen() {
 		this.titleEl.setText(this.t.newNote);
+		if (this.hint) this.contentEl.createEl("p", { cls: "an-tou-modal-hint", text: this.hint });
 		const input = this.contentEl.createEl("input", { type: "text", cls: "prompt-input" });
 		input.value = this.preset;
 		input.placeholder = this.t.newNotePlaceholder;
@@ -701,6 +757,15 @@ class DeskView extends ItemView {
 	renderSeq = 0;
 	dirty = false;
 	renderFiles: TFile[] | null = null;
+	searchIndex = new Map<string, { title: string; line: string }>();
+	searchEls: {
+		row: HTMLElement;
+		input: HTMLInputElement;
+		clearBtn: HTMLButtonElement;
+		home: HTMLElement;
+		body: HTMLElement;
+		title: HTMLElement;
+	} | null = null;
 
 	constructor(leaf: WorkspaceLeaf, plugin: AnTouPlugin) {
 		super(leaf);
@@ -724,13 +789,25 @@ class DeskView extends ItemView {
 	async onOpen() {
 		this.contentEl.addClass("an-tou-view");
 		this.registerEvent(this.app.vault.on("create", () => this.safeRender()));
-		this.registerEvent(this.app.vault.on("delete", () => this.safeRender()));
-		this.registerEvent(this.app.vault.on("rename", () => this.safeRender()));
+		this.registerEvent(
+			this.app.vault.on("delete", (file) => {
+				this.searchIndex.delete(file.path);
+				this.safeRender();
+			})
+		);
+		this.registerEvent(
+			this.app.vault.on("rename", (file, oldPath) => {
+				this.searchIndex.delete(oldPath);
+				this.safeRender();
+			})
+		);
 		this.registerEvent(
 			this.app.vault.on("modify", (file) => {
+				if (file instanceof TFile) this.searchIndex.delete(file.path);
 				if (this.modifyAffectsPage(file)) this.safeRender();
 			})
 		);
+		this.registerDomEvent(window, "resize", () => this.fitSearchWidthNow());
 		this.registerEvent(
 			this.app.workspace.on("active-leaf-change", () => {
 				if (this.dirty && this.isShownNow()) {
@@ -904,6 +981,29 @@ class DeskView extends ItemView {
 		await this.app.workspace.getLeaf("tab").openFile(file);
 	}
 
+	async copyNoteLink(file: TFile) {
+		const t = this.copy();
+		const ok = await copyText(noteUri(this.app, file));
+		new Notice(ok ? t.copied : t.copyFailed);
+	}
+
+	goToNote(file: TFile) {
+		const title = this.plugin.settings.title || DEFAULT_TITLE;
+		this.stack = [{ type: "home" }];
+		const owner = this.ownerOf(file, this.liveFolders());
+		const room = owner
+			? this.plugin.settings.rooms.find((r) => r.id === owner.id)
+			: undefined;
+		if (room) {
+			const parent = room.parent
+				? this.plugin.settings.rooms.find((r) => r.id === room.parent)
+				: undefined;
+			if (parent) this.openRoom(parent, title);
+			this.openRoom(room, parent ? parent.name : title);
+		}
+		void this.render();
+	}
+
 	async createNamedNote(folder: string, raw: string) {
 		const t = this.copy();
 		const base = safeName(raw || (isInboxFolder(folder) ? inboxStamp() : t.untitled), t);
@@ -942,6 +1042,7 @@ class DeskView extends ItemView {
 			quiet?: boolean;
 			note?: boolean;
 			span2?: boolean;
+			onCopy?: () => void;
 		},
 		onClick?: () => void
 	) {
@@ -961,6 +1062,18 @@ class DeskView extends ItemView {
 		el.createEl("strong", { text: spec.title });
 		if (spec.line) el.createEl("span", { cls: "desk-line", text: spec.line });
 		else if (!spec.note) el.createEl("span", { cls: "desk-line", text: "\u00a0" });
+		if (spec.onCopy) {
+			const cp = el.createEl("button", {
+				cls: "desk-copy",
+				attr: { type: "button", "aria-label": this.copy().copyLink },
+			});
+			setIcon(cp, "link");
+			cp.addEventListener("click", (e) => {
+				e.preventDefault();
+				e.stopPropagation();
+				spec.onCopy?.();
+			});
+		}
 		if (onClick) {
 			el.addEventListener("click", onClick);
 			el.addEventListener("keydown", (e: KeyboardEvent) => {
@@ -1075,17 +1188,45 @@ class DeskView extends ItemView {
 		await this.resetHome();
 	}
 
-	addHomeButton(inner: HTMLElement) {
+	homeActions(inner: HTMLElement) {
+		const t = this.copy();
 		const add = inner.createEl("button", {
 			cls: "an-tou-add",
 			text: "+",
-			attr: { type: "button", "aria-label": this.copy().addHomeCard },
+			attr: { type: "button", "aria-label": t.capture },
 		});
 		add.addEventListener("click", (e) => {
 			e.preventDefault();
 			e.stopPropagation();
-			this.addHomeRoom();
+			this.captureNote();
 		});
+	}
+
+	captureFolder(): string | undefined {
+		const rooms = this.plugin.settings.rooms.filter((r) => !r.draft);
+		const chosen = this.plugin.settings.captureRoom;
+		if (chosen) {
+			const room = rooms.find((r) => r.id === chosen);
+			const folder = room ? this.noteFolder(room) : undefined;
+			if (folder) return folder;
+		}
+		const home = this.homeRooms();
+		const inbox = home.find((r) => r.folder && isInboxFolder(r.folder + " " + r.name));
+		const pick = inbox ?? home.find((r) => this.noteFolder(r));
+		return pick ? this.noteFolder(pick) : undefined;
+	}
+
+	captureNote(name = "") {
+		const t = this.copy();
+		const folder = this.captureFolder();
+		if (!folder) {
+			new Notice(t.noCaptureFolder);
+			return;
+		}
+		const preset = name || (isInboxFolder(folder) ? inboxStamp() : "");
+		new NameModal(this.app, preset, t, (raw: string) => {
+			void this.createNamedNote(folder, raw);
+		}, t.captureHint(folder)).open();
 	}
 
 	addHomeRoom() {
@@ -1116,20 +1257,77 @@ class DeskView extends ItemView {
 	async renderHome(inner: HTMLElement, seq: number) {
 		const t = this.copy();
 		const title = this.plugin.settings.title || DEFAULT_TITLE;
-		this.addHomeButton(inner);
-		inner.createEl("h1", { text: title });
-		inner.createEl("span", { cls: "an-tou-date", text: todayLabel(this.plugin.settings.uiLang) });
+		this.homeActions(inner);
+		const heading = inner.createEl("h1", { text: title });
+
+		const quietRow = inner.createDiv({ cls: "an-tou-quiet-row" });
+		const quiet = quietRow.createEl("button", {
+			cls: "desk-quiet-add",
+			attr: { type: "button", "aria-label": t.quietAdd },
+		});
+		quiet.createEl("span", { cls: "desk-quiet-plus", text: "+" });
+		quiet.createEl("span", { text: t.quietAdd });
+		quiet.addEventListener("click", (e) => {
+			e.preventDefault();
+			e.stopPropagation();
+			this.addHomeRoom();
+		});
+
+		const searchRow = inner.createDiv({ cls: "an-tou-search-row" });
+		const glyph = searchRow.createSpan({ cls: "desk-search-glyph" });
+		setIcon(glyph, "search");
+		const input = searchRow.createEl("input", {
+			cls: "desk-search",
+			type: "text",
+			attr: {
+				placeholder: t.searchPlaceholder,
+				autocomplete: "off",
+				spellcheck: "false",
+			},
+		});
+		const clearBtn = searchRow.createEl("button", {
+			cls: "desk-search-clear",
+			text: "×",
+			attr: { type: "button", "aria-label": t.searchClear },
+		});
+		const homeBody = inner.createDiv({ cls: "desk-home-body" });
+		const searchBody = inner.createDiv({ cls: "desk-search-body hidden" });
+		this.searchEls = {
+			row: searchRow,
+			input,
+			clearBtn,
+			home: homeBody,
+			body: searchBody,
+			title: heading,
+		};
+
+		let searchTimer = 0;
+		input.addEventListener("input", () => {
+			window.clearTimeout(searchTimer);
+			searchTimer = window.setTimeout(() => void this.applySearch(), 150);
+		});
+		input.addEventListener("keydown", (e) => {
+			if (e.key !== "Escape") return;
+			e.preventDefault();
+			this.clearSearch();
+		});
+		clearBtn.addEventListener("click", () => {
+			this.clearSearch();
+			input.focus();
+		});
+		this.fitSearchWidthNow();
+		if (document.fonts) void document.fonts.ready.then(() => this.fitSearchWidthNow());
+		window.setTimeout(() => this.fitSearchWidthNow(), 120);
 
 		const rooms = this.homeRooms();
 		if (rooms.length === 0) {
-			inner.createEl("p", {
+			homeBody.createEl("p", {
 				cls: "an-tou-lede",
 				text: t.emptyRooms,
 			});
-			return;
 		}
 
-		const grid = inner.createDiv({ cls: "an-tou-grid" });
+		const grid = homeBody.createDiv({ cls: "an-tou-grid" });
 		for (const room of rooms) {
 			const n = this.roomCount(room);
 			this.card(
@@ -1145,8 +1343,8 @@ class DeskView extends ItemView {
 			);
 		}
 
-		inner.createEl("h2", { text: t.recent });
-		const recentGrid = inner.createDiv({ cls: "an-tou-grid" });
+		homeBody.createEl("h2", { text: t.recent });
+		const recentGrid = homeBody.createDiv({ cls: "an-tou-grid" });
 		const recent = this.recentNotes();
 		const recentCopies = await Promise.all(recent.map((e) => noteCardCopy(this.app, e.file)));
 		if (seq !== this.renderSeq) return;
@@ -1161,11 +1359,133 @@ class DeskView extends ItemView {
 					title: copy.title,
 					line: copy.line,
 					note: true,
+					onCopy: () => {
+						void this.copyNoteLink(file);
+					},
 				},
 				() => {
 					void this.openNote(file);
 				}
 			);
+		}
+	}
+
+	async searchEntry(file: TFile): Promise<{ title: string; line: string }> {
+		const hit = this.searchIndex.get(file.path);
+		if (hit) return hit;
+		const entry = await noteCardCopy(this.app, file);
+		this.searchIndex.set(file.path, entry);
+		return entry;
+	}
+
+	fitSearchWidthNow() {
+		const els = this.searchEls;
+		if (!els || !els.row.isConnected) return;
+		const range = document.createRange();
+		range.selectNodeContents(els.title);
+		const w = Math.max(range.getBoundingClientRect().width, 160);
+		els.row.style.width = w + "px";
+	}
+
+	clearSearch() {
+		const els = this.searchEls;
+		if (!els) return;
+		els.input.value = "";
+		void this.applySearch();
+		els.input.blur();
+	}
+
+	async applySearch() {
+		const els = this.searchEls;
+		if (!els) return;
+		const q = els.input.value.trim();
+		const ql = q.toLowerCase();
+		els.input.classList.toggle("has-q", ql.length > 0);
+		els.clearBtn.classList.toggle("show", ql.length > 0);
+		els.row.classList.toggle("is-live", ql.length > 0);
+		if (!ql) {
+			els.home.removeClass("hidden");
+			els.body.addClass("hidden");
+			els.body.empty();
+			return;
+		}
+		const stale = () =>
+			this.searchEls !== els || els.input.value.trim().toLowerCase() !== ql;
+		const skip = this.plugin.settings.skipPaths;
+		const rooms = this.plugin.settings.rooms.filter((r) => !r.draft && r.folder);
+		const hits: { file: TFile; room?: Room }[] = [];
+		for (const file of this.app.vault.getMarkdownFiles()) {
+			if (skipped(file.path, skip)) continue;
+			const entry = await this.searchEntry(file);
+			const matched =
+				entry.title.toLowerCase().includes(ql) ||
+				entry.line.toLowerCase().includes(ql) ||
+				file.basename.toLowerCase().includes(ql) ||
+				file.path.toLowerCase().includes(ql);
+			if (!matched) continue;
+			let owner: Room | undefined;
+			for (const room of rooms) {
+				if (!inFolder(file, room.folder ?? "")) continue;
+				if (!owner || (room.folder ?? "").length > (owner.folder ?? "").length) {
+					owner = room;
+				}
+			}
+			hits.push({ file, room: owner });
+		}
+		if (stale()) return;
+		els.home.addClass("hidden");
+		els.body.removeClass("hidden");
+		els.body.empty();
+		const t = this.copy();
+		if (hits.length === 0) {
+			els.body.createEl("p", { cls: "an-tou-lede desk-search-none", text: t.searchNone });
+			return;
+		}
+		const head = els.body.createEl("h2", {
+			cls: "desk-search-head",
+			text: t.searchHead(hits.length) + " · ",
+		});
+		head.createEl("span", { cls: "q", text: "“" + q + "”" });
+		const shown = hits.slice(0, SEARCH_CAP);
+		const groups: { room?: Room; items: { file: TFile; room?: Room }[] }[] = [];
+		for (const room of rooms) {
+			const items = shown.filter((h) => h.room === room);
+			if (items.length) groups.push({ room, items });
+		}
+		const others = shown.filter((h) => !h.room);
+		if (others.length) groups.push({ items: others });
+		for (const group of groups) {
+			els.body.createEl("p", {
+				cls: "desk-search-group",
+				text: group.room ? group.room.name : t.searchOther,
+			});
+			const grid = els.body.createDiv({ cls: "an-tou-grid" });
+			const copies = await Promise.all(group.items.map((h) => this.searchEntry(h.file)));
+			if (stale()) return;
+			group.items.forEach((h, i) => {
+				const file = h.file;
+				this.card(
+					grid,
+					{
+						kicker: group.room?.kicker,
+						title: copies[i].title,
+						line: copies[i].line,
+						note: true,
+						onCopy: () => {
+							void this.copyNoteLink(file);
+						},
+					},
+					() => {
+						void this.openNote(file);
+					}
+				);
+			});
+		}
+		if (hits.length > SEARCH_CAP) {
+			els.body.createEl("p", {
+				cls: "desk-search-more",
+				text: t.searchMore(hits.length - SEARCH_CAP),
+			});
 		}
 	}
 
@@ -1281,7 +1601,15 @@ class DeskView extends ItemView {
 			const copy = copies[i];
 			this.card(
 				grid,
-				{ kicker: page.kicker, title: copy.title, line: copy.line, note: true },
+				{
+					kicker: page.kicker,
+					title: copy.title,
+					line: copy.line,
+					note: true,
+					onCopy: () => {
+						void this.copyNoteLink(file);
+					},
+				},
 				() => {
 					void this.openNote(file);
 				}
@@ -1336,7 +1664,15 @@ class DeskView extends ItemView {
 			const copy = copies[i];
 			this.card(
 				grid,
-				{ kicker: page.kicker, title: copy.title, line: copy.line, note: true },
+				{
+					kicker: page.kicker,
+					title: copy.title,
+					line: copy.line,
+					note: true,
+					onCopy: () => {
+						void this.copyNoteLink(file);
+					},
+				},
 				() => {
 					void this.openNote(file);
 				}
@@ -1446,6 +1782,21 @@ class AnTouSettingTab extends PluginSettingTab {
 					void this.plugin.saveSettings();
 				})
 			);
+
+		new Setting(containerEl)
+			.setName(t.captureDest)
+			.setDesc(t.captureDestDesc)
+			.addDropdown((box) => {
+				box.addOption("", t.captureAuto);
+				for (const room of this.plugin.settings.rooms) {
+					if (room.draft || !room.folder) continue;
+					box.addOption(room.id, room.name);
+				}
+				box.setValue(this.plugin.settings.captureRoom || "").onChange((v) => {
+					this.plugin.settings.captureRoom = v;
+					void this.plugin.saveSettings();
+				});
+			});
 
 		new Setting(containerEl)
 			.setName(t.skip)
@@ -1932,6 +2283,29 @@ export default class AnTouPlugin extends Plugin {
 				void this.activateView();
 			},
 		});
+		this.addCommand({
+			id: "copy-desk-link",
+			name: "Copy link to current note",
+			checkCallback: (checking: boolean) => {
+				const file = this.app.workspace.getActiveFile();
+				if (!file || file.extension !== "md") return false;
+				if (!checking) void this.copyActiveLink(file);
+				return true;
+			},
+		});
+		this.addCommand({
+			id: "capture-note",
+			name: "Jot a note",
+			callback: () => {
+				void this.activateView().then(() => {
+					const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE)[0];
+					if (leaf?.view instanceof DeskView) leaf.view.captureNote();
+				});
+			},
+		});
+		this.registerObsidianProtocolHandler("quiet-desk", (data) => {
+			void this.openFromLink(data);
+		});
 		this.addSettingTab(new AnTouSettingTab(this.app, this));
 		this.applyLook();
 		this.app.workspace.onLayoutReady(async () => {
@@ -2146,6 +2520,54 @@ export default class AnTouPlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+	}
+
+	async copyActiveLink(file: TFile) {
+		const t = this.settings.uiLang === "en" ? COPY.en : COPY.zh;
+		const ok = await copyText(noteUri(this.app, file));
+		new Notice(ok ? t.copied : t.copyFailed);
+	}
+
+	async openFromLink(params: Record<string, string>) {
+		const t = this.settings.uiLang === "en" ? COPY.en : COPY.zh;
+		if (params.new === "1") {
+			await this.activateView();
+			const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE)[0];
+			const view = leaf?.view;
+			if (!(view instanceof DeskView)) return;
+			const folder = view.captureFolder();
+			if (!folder) {
+				new Notice(t.noCaptureFolder);
+				return;
+			}
+			if (params.name) await view.createNamedNote(folder, params.name);
+			else view.captureNote();
+			return;
+		}
+		const raw = (params.note || params.file || "").trim();
+		if (!raw) return;
+		const files = this.app.vault.getMarkdownFiles();
+		let file = files.find((f) => f.path === raw || f.path === raw + ".md");
+		if (!file) {
+			const lower = raw.toLowerCase();
+			file = files.find(
+				(f) => f.path.toLowerCase() === lower || f.basename.toLowerCase() === lower
+			);
+		}
+		if (!file) {
+			new Notice(t.linkMissing);
+			return;
+		}
+		if (params.copy === "1") {
+			await this.copyActiveLink(file);
+			return;
+		}
+		await this.activateView();
+		const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE)[0];
+		if (leaf?.view instanceof DeskView) {
+			leaf.view.goToNote(file);
+			await leaf.view.openNote(file);
+		}
 	}
 
 	refreshDesks() {

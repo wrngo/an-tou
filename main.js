@@ -31,6 +31,7 @@ var import_obsidian = require("obsidian");
 var VIEW_TYPE = "an-tou-desk";
 var DEFAULT_TITLE = "\u683C\u7269\u6210\u6816";
 var RECENT_CAP = 3;
+var SEARCH_CAP = 30;
 var DEFAULT_SETTINGS = {
   title: DEFAULT_TITLE,
   openOnStart: true,
@@ -42,7 +43,8 @@ var DEFAULT_SETTINGS = {
   skipSeeded: false,
   rooms: [],
   uiLang: "zh",
-  welcomed: false
+  welcomed: false,
+  captureRoom: ""
 };
 var COPY = {
   zh: {
@@ -75,6 +77,14 @@ var COPY = {
     roomsDesc: "\u4E0B\u9762\u8FD9\u5F20\u56FE\u5C31\u662F\u4E66\u684C\u5361\u7247\uFF0C\u5BF9\u7167\u7740\u586B\u5C31\u884C\u3002",
     addRoom: "\u6DFB\u52A0\u623F\u95F4",
     addHomeCard: "\u6DFB\u52A0\u9996\u9875\u5361\u7247",
+    quietAdd: "\u52A0\u4E00\u5F20\u5361\u7247",
+    emptyRooms: "\u8FD8\u6CA1\u6709\u623F\u95F4\u3002\u70B9\u5927\u6807\u9898\u4E0B\u9762\u90A3\u884C\u5C0F\u5B57\u52A0\u4E00\u5F20\uFF0C\u6216\u6253\u5F00\u8BBE\u7F6E\u3002",
+    searchPlaceholder: "\u641C\u4E00\u4E0B\u2026",
+    searchClear: "\u6E05\u9664\u641C\u7D22",
+    searchNone: "\u6CA1\u627E\u5230\u3002\u6362\u4E2A\u8BCD\u8BD5\u8BD5\u3002",
+    searchHead: (n) => n + " \u6761\u7ED3\u679C",
+    searchMore: (n) => "\u8FD8\u6709 " + n + " \u6761\uFF0C\u628A\u8BCD\u518D\u6536\u7A84\u4E00\u70B9\u3002",
+    searchOther: "\u5E93\u5185\u5176\u4ED6",
     fromVault: "\u6309\u5E93\u6839\u76EE\u5F55\u751F\u6210",
     fromVaultNotice: "\u5DF2\u6309\u6587\u4EF6\u5939\u66F4\u65B0\u623F\u95F4\u3002\u5DF2\u6709\u540D\u79F0\u3001\u8BF4\u660E\u548C\u5F00\u5173\u6CA1\u52A8\u3002",
     roomId: "\u7F16\u53F7",
@@ -133,7 +143,6 @@ var COPY = {
     maxNotesBad: "\u53EA\u80FD\u586B\u5927\u4E8E 0 \u7684\u6574\u6570\uFF0C\u7559\u7A7A\u5C31\u81EA\u52A8\u51B3\u5B9A\u3002",
     nameRequired: "\u5148\u7ED9\u8FD9\u4E2A\u623F\u95F4\u8D77\u4E2A\u540D\u5B57\u3002",
     recent: "\u6700\u8FD1",
-    emptyRooms: "\u8FD8\u6CA1\u6709\u623F\u95F4\u3002\u70B9\u53F3\u4E0A\u89D2\u52A0\u53F7\u52A0\u4E00\u5F20\uFF0C\u6216\u6253\u5F00\u8BBE\u7F6E\u3002",
     noMoreNotes: "\u6CA1\u6709\u66F4\u591A\u7B14\u8BB0\u3002",
     emptyFolder: "\u8FD9\u4E00\u683C\u8FD8\u6CA1\u6709\u7B14\u8BB0\u3002",
     newNote: "\u65B0\u7B14\u8BB0",
@@ -141,6 +150,16 @@ var COPY = {
     createFailed: "\u6CA1\u5199\u6210\u3002",
     folderGone: "\u6587\u4EF6\u5939\u4E0D\u5728\u3002",
     untitled: "\u672A\u547D\u540D",
+    copyLink: "\u590D\u5236\u8FD9\u7BC7\u7684\u94FE\u63A5",
+    copied: "\u94FE\u63A5\u5DF2\u590D\u5236\uFF0C\u70B9\u5B83\u5C31\u80FD\u56DE\u5230\u8FD9\u7BC7",
+    copyFailed: "\u6CA1\u590D\u5236\u4E0A\u3002",
+    linkMissing: "\u6CA1\u627E\u5230\u8FD9\u7BC7\u7B14\u8BB0\u3002",
+    capture: "\u8BB0\u4E00\u6761",
+    captureHint: (folder) => "\u4F1A\u653E\u8FDB " + folder,
+    noCaptureFolder: "\u8FD8\u6CA1\u6709\u80FD\u653E\u7684\u5730\u65B9\u3002\u53BB\u8BBE\u7F6E\u91CC\u7ED9\u4EFB\u610F\u4E00\u5F20\u5361\u7247\u914D\u4E0A\u6587\u4EF6\u5939\u3002",
+    captureDest: "\u8BB0\u4E00\u6761\u653E\u54EA",
+    captureDestDesc: "\u81EA\u52A8\uFF1A\u5148\u627E\u6536\u4EF6\u7BB1\u7C7B\u7684\u5361\u7247\uFF0C\u6CA1\u6709\u5C31\u7528\u9996\u9875\u7B2C\u4E00\u5F20\u6709\u6587\u4EF6\u5939\u7684\u3002",
+    captureAuto: "\u81EA\u52A8",
     more: (n) => "\u5176\u4F59 " + n + " \u6761",
     noteCount: (n) => n + " \u7BC7\u7B14\u8BB0",
     welcomeTitle: "\u4E66\u684C\u51C6\u5907\u597D\u4E86",
@@ -183,6 +202,14 @@ var COPY = {
     roomsDesc: "The picture below is a desk card. Fill the fields to match.",
     addRoom: "Add room",
     addHomeCard: "Add a home card",
+    quietAdd: "Add a card",
+    emptyRooms: "No rooms yet. Use the small line under the big title to add one, or open settings.",
+    searchPlaceholder: "Search\u2026",
+    searchClear: "Clear search",
+    searchNone: "Nothing found. Try another word.",
+    searchHead: (n) => n + (n === 1 ? " result" : " results"),
+    searchMore: (n) => n + " more \u2014 narrow your words.",
+    searchOther: "Elsewhere in the vault",
     fromVault: "Build from top-level folders",
     fromVaultNotice: "Rooms updated from folders. Names, captions, and toggles were kept.",
     roomId: "Id",
@@ -241,7 +268,6 @@ var COPY = {
     maxNotesBad: "Whole number above zero, or leave it empty.",
     nameRequired: "Give the room a name first.",
     recent: "Recent",
-    emptyRooms: "No rooms yet. Use the plus to add a card, or open settings.",
     noMoreNotes: "No more notes.",
     emptyFolder: "No notes in this room yet.",
     newNote: "New note",
@@ -249,6 +275,16 @@ var COPY = {
     createFailed: "Could not create the note.",
     folderGone: "That folder is gone.",
     untitled: "Untitled",
+    copyLink: "Copy link to this note",
+    copied: "Link copied \u2014 it opens this note again",
+    copyFailed: "Could not copy.",
+    linkMissing: "That note is gone.",
+    capture: "Jot a note",
+    captureHint: (folder) => "Goes into " + folder,
+    noCaptureFolder: "No room to put it in yet. Give one of the cards a folder in settings.",
+    captureDest: "Where jotted notes go",
+    captureDestDesc: "Auto: an inbox-like card first, else the first home card with a folder.",
+    captureAuto: "Auto",
     more: (n) => n + " more",
     noteCount: (n) => n + " notes",
     welcomeTitle: "Your desk is ready",
@@ -425,9 +461,18 @@ async function noteCardCopy(app, file) {
   const line = sentence && sentence !== title ? sentence : "";
   return { title, line };
 }
-function todayLabel(uiLang) {
-  const tag = uiLang === "en" ? "en-US" : "zh-CN";
-  return new Date().toLocaleDateString(tag, { month: "long", day: "numeric" });
+function noteUri(app, file) {
+  const vault = encodeURIComponent(app.vault.getName());
+  const note = encodeURIComponent(file.path);
+  return "obsidian://quiet-desk?vault=" + vault + "&note=" + note;
+}
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 function twoDigits(n) {
   return (n < 10 ? "0" : "") + String(n);
@@ -440,7 +485,7 @@ function safeName(name, copy) {
   return name.replace(/[\\/:*?"<>|]/g, "").replace(/\s+/g, " ").trim() || copy.untitled;
 }
 function isInboxFolder(folder) {
-  return /inbox/i.test(folder);
+  return /inbox|收件|收集/i.test(folder);
 }
 function folderKey(path) {
   return path.toLowerCase().replace(/[\d\-_.\/\s]+/g, "");
@@ -471,14 +516,17 @@ function closestFolder(query, folders) {
   return "";
 }
 var NameModal = class extends import_obsidian.Modal {
-  constructor(app, preset, t, onSubmit) {
+  constructor(app, preset, t, onSubmit, hint = "") {
     super(app);
     this.preset = preset || "";
+    this.hint = hint;
     this.t = t;
     this.onSubmit = onSubmit;
   }
   onOpen() {
     this.titleEl.setText(this.t.newNote);
+    if (this.hint)
+      this.contentEl.createEl("p", { cls: "an-tou-modal-hint", text: this.hint });
     const input = this.contentEl.createEl("input", { type: "text", cls: "prompt-input" });
     input.value = this.preset;
     input.placeholder = this.t.newNotePlaceholder;
@@ -614,6 +662,8 @@ var DeskView = class extends import_obsidian.ItemView {
     this.renderSeq = 0;
     this.dirty = false;
     this.renderFiles = null;
+    this.searchIndex = /* @__PURE__ */ new Map();
+    this.searchEls = null;
     this.plugin = plugin;
   }
   getViewType() {
@@ -631,14 +681,27 @@ var DeskView = class extends import_obsidian.ItemView {
   async onOpen() {
     this.contentEl.addClass("an-tou-view");
     this.registerEvent(this.app.vault.on("create", () => this.safeRender()));
-    this.registerEvent(this.app.vault.on("delete", () => this.safeRender()));
-    this.registerEvent(this.app.vault.on("rename", () => this.safeRender()));
+    this.registerEvent(
+      this.app.vault.on("delete", (file) => {
+        this.searchIndex.delete(file.path);
+        this.safeRender();
+      })
+    );
+    this.registerEvent(
+      this.app.vault.on("rename", (file, oldPath) => {
+        this.searchIndex.delete(oldPath);
+        this.safeRender();
+      })
+    );
     this.registerEvent(
       this.app.vault.on("modify", (file) => {
+        if (file instanceof import_obsidian.TFile)
+          this.searchIndex.delete(file.path);
         if (this.modifyAffectsPage(file))
           this.safeRender();
       })
     );
+    this.registerDomEvent(window, "resize", () => this.fitSearchWidthNow());
     this.registerEvent(
       this.app.workspace.on("active-leaf-change", () => {
         if (this.dirty && this.isShownNow()) {
@@ -818,6 +881,24 @@ var DeskView = class extends import_obsidian.ItemView {
   async openNote(file) {
     await this.app.workspace.getLeaf("tab").openFile(file);
   }
+  async copyNoteLink(file) {
+    const t = this.copy();
+    const ok = await copyText(noteUri(this.app, file));
+    new import_obsidian.Notice(ok ? t.copied : t.copyFailed);
+  }
+  goToNote(file) {
+    const title = this.plugin.settings.title || DEFAULT_TITLE;
+    this.stack = [{ type: "home" }];
+    const owner = this.ownerOf(file, this.liveFolders());
+    const room = owner ? this.plugin.settings.rooms.find((r) => r.id === owner.id) : void 0;
+    if (room) {
+      const parent = room.parent ? this.plugin.settings.rooms.find((r) => r.id === room.parent) : void 0;
+      if (parent)
+        this.openRoom(parent, title);
+      this.openRoom(room, parent ? parent.name : title);
+    }
+    void this.render();
+  }
   async createNamedNote(folder, raw) {
     const t = this.copy();
     const base = safeName(raw || (isInboxFolder(folder) ? inboxStamp() : t.untitled), t);
@@ -862,6 +943,19 @@ var DeskView = class extends import_obsidian.ItemView {
       el.createEl("span", { cls: "desk-line", text: spec.line });
     else if (!spec.note)
       el.createEl("span", { cls: "desk-line", text: "\xA0" });
+    if (spec.onCopy) {
+      const cp = el.createEl("button", {
+        cls: "desk-copy",
+        attr: { type: "button", "aria-label": this.copy().copyLink }
+      });
+      (0, import_obsidian.setIcon)(cp, "link");
+      cp.addEventListener("click", (e) => {
+        var _a;
+        e.preventDefault();
+        e.stopPropagation();
+        (_a = spec.onCopy) == null ? void 0 : _a.call(spec);
+      });
+    }
     if (onClick) {
       el.addEventListener("click", onClick);
       el.addEventListener("keydown", (e) => {
@@ -975,17 +1069,44 @@ var DeskView = class extends import_obsidian.ItemView {
     await plugin.saveSettings();
     await this.resetHome();
   }
-  addHomeButton(inner) {
+  homeActions(inner) {
+    const t = this.copy();
     const add = inner.createEl("button", {
       cls: "an-tou-add",
       text: "+",
-      attr: { type: "button", "aria-label": this.copy().addHomeCard }
+      attr: { type: "button", "aria-label": t.capture }
     });
     add.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      this.addHomeRoom();
+      this.captureNote();
     });
+  }
+  captureFolder() {
+    const rooms = this.plugin.settings.rooms.filter((r) => !r.draft);
+    const chosen = this.plugin.settings.captureRoom;
+    if (chosen) {
+      const room = rooms.find((r) => r.id === chosen);
+      const folder = room ? this.noteFolder(room) : void 0;
+      if (folder)
+        return folder;
+    }
+    const home = this.homeRooms();
+    const inbox = home.find((r) => r.folder && isInboxFolder(r.folder + " " + r.name));
+    const pick = inbox != null ? inbox : home.find((r) => this.noteFolder(r));
+    return pick ? this.noteFolder(pick) : void 0;
+  }
+  captureNote(name = "") {
+    const t = this.copy();
+    const folder = this.captureFolder();
+    if (!folder) {
+      new import_obsidian.Notice(t.noCaptureFolder);
+      return;
+    }
+    const preset = name || (isInboxFolder(folder) ? inboxStamp() : "");
+    new NameModal(this.app, preset, t, (raw) => {
+      void this.createNamedNote(folder, raw);
+    }, t.captureHint(folder)).open();
   }
   addHomeRoom() {
     const t = this.copy();
@@ -1013,18 +1134,74 @@ var DeskView = class extends import_obsidian.ItemView {
   async renderHome(inner, seq) {
     const t = this.copy();
     const title = this.plugin.settings.title || DEFAULT_TITLE;
-    this.addHomeButton(inner);
-    inner.createEl("h1", { text: title });
-    inner.createEl("span", { cls: "an-tou-date", text: todayLabel(this.plugin.settings.uiLang) });
+    this.homeActions(inner);
+    const heading = inner.createEl("h1", { text: title });
+    const quietRow = inner.createDiv({ cls: "an-tou-quiet-row" });
+    const quiet = quietRow.createEl("button", {
+      cls: "desk-quiet-add",
+      attr: { type: "button", "aria-label": t.quietAdd }
+    });
+    quiet.createEl("span", { cls: "desk-quiet-plus", text: "+" });
+    quiet.createEl("span", { text: t.quietAdd });
+    quiet.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.addHomeRoom();
+    });
+    const searchRow = inner.createDiv({ cls: "an-tou-search-row" });
+    const glyph = searchRow.createSpan({ cls: "desk-search-glyph" });
+    (0, import_obsidian.setIcon)(glyph, "search");
+    const input = searchRow.createEl("input", {
+      cls: "desk-search",
+      type: "text",
+      attr: {
+        placeholder: t.searchPlaceholder,
+        autocomplete: "off",
+        spellcheck: "false"
+      }
+    });
+    const clearBtn = searchRow.createEl("button", {
+      cls: "desk-search-clear",
+      text: "\xD7",
+      attr: { type: "button", "aria-label": t.searchClear }
+    });
+    const homeBody = inner.createDiv({ cls: "desk-home-body" });
+    const searchBody = inner.createDiv({ cls: "desk-search-body hidden" });
+    this.searchEls = {
+      row: searchRow,
+      input,
+      clearBtn,
+      home: homeBody,
+      body: searchBody,
+      title: heading
+    };
+    let searchTimer = 0;
+    input.addEventListener("input", () => {
+      window.clearTimeout(searchTimer);
+      searchTimer = window.setTimeout(() => void this.applySearch(), 150);
+    });
+    input.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape")
+        return;
+      e.preventDefault();
+      this.clearSearch();
+    });
+    clearBtn.addEventListener("click", () => {
+      this.clearSearch();
+      input.focus();
+    });
+    this.fitSearchWidthNow();
+    if (document.fonts)
+      void document.fonts.ready.then(() => this.fitSearchWidthNow());
+    window.setTimeout(() => this.fitSearchWidthNow(), 120);
     const rooms = this.homeRooms();
     if (rooms.length === 0) {
-      inner.createEl("p", {
+      homeBody.createEl("p", {
         cls: "an-tou-lede",
         text: t.emptyRooms
       });
-      return;
     }
-    const grid = inner.createDiv({ cls: "an-tou-grid" });
+    const grid = homeBody.createDiv({ cls: "an-tou-grid" });
     for (const room of rooms) {
       const n = this.roomCount(room);
       this.card(
@@ -1039,8 +1216,8 @@ var DeskView = class extends import_obsidian.ItemView {
         () => this.openRoom(room, title)
       );
     }
-    inner.createEl("h2", { text: t.recent });
-    const recentGrid = inner.createDiv({ cls: "an-tou-grid" });
+    homeBody.createEl("h2", { text: t.recent });
+    const recentGrid = homeBody.createDiv({ cls: "an-tou-grid" });
     const recent = this.recentNotes();
     const recentCopies = await Promise.all(recent.map((e) => noteCardCopy(this.app, e.file)));
     if (seq !== this.renderSeq)
@@ -1055,12 +1232,138 @@ var DeskView = class extends import_obsidian.ItemView {
           kicker: entry.owner.kicker || "Note",
           title: copy.title,
           line: copy.line,
-          note: true
+          note: true,
+          onCopy: () => {
+            void this.copyNoteLink(file);
+          }
         },
         () => {
           void this.openNote(file);
         }
       );
+    }
+  }
+  async searchEntry(file) {
+    const hit = this.searchIndex.get(file.path);
+    if (hit)
+      return hit;
+    const entry = await noteCardCopy(this.app, file);
+    this.searchIndex.set(file.path, entry);
+    return entry;
+  }
+  fitSearchWidthNow() {
+    const els = this.searchEls;
+    if (!els || !els.row.isConnected)
+      return;
+    const range = document.createRange();
+    range.selectNodeContents(els.title);
+    const w = Math.max(range.getBoundingClientRect().width, 160);
+    els.row.style.width = w + "px";
+  }
+  clearSearch() {
+    const els = this.searchEls;
+    if (!els)
+      return;
+    els.input.value = "";
+    void this.applySearch();
+    els.input.blur();
+  }
+  async applySearch() {
+    var _a, _b, _c;
+    const els = this.searchEls;
+    if (!els)
+      return;
+    const q = els.input.value.trim();
+    const ql = q.toLowerCase();
+    els.input.classList.toggle("has-q", ql.length > 0);
+    els.clearBtn.classList.toggle("show", ql.length > 0);
+    els.row.classList.toggle("is-live", ql.length > 0);
+    if (!ql) {
+      els.home.removeClass("hidden");
+      els.body.addClass("hidden");
+      els.body.empty();
+      return;
+    }
+    const stale = () => this.searchEls !== els || els.input.value.trim().toLowerCase() !== ql;
+    const skip = this.plugin.settings.skipPaths;
+    const rooms = this.plugin.settings.rooms.filter((r) => !r.draft && r.folder);
+    const hits = [];
+    for (const file of this.app.vault.getMarkdownFiles()) {
+      if (skipped(file.path, skip))
+        continue;
+      const entry = await this.searchEntry(file);
+      const matched = entry.title.toLowerCase().includes(ql) || entry.line.toLowerCase().includes(ql) || file.basename.toLowerCase().includes(ql) || file.path.toLowerCase().includes(ql);
+      if (!matched)
+        continue;
+      let owner;
+      for (const room of rooms) {
+        if (!inFolder(file, (_a = room.folder) != null ? _a : ""))
+          continue;
+        if (!owner || ((_b = room.folder) != null ? _b : "").length > ((_c = owner.folder) != null ? _c : "").length) {
+          owner = room;
+        }
+      }
+      hits.push({ file, room: owner });
+    }
+    if (stale())
+      return;
+    els.home.addClass("hidden");
+    els.body.removeClass("hidden");
+    els.body.empty();
+    const t = this.copy();
+    if (hits.length === 0) {
+      els.body.createEl("p", { cls: "an-tou-lede desk-search-none", text: t.searchNone });
+      return;
+    }
+    const head = els.body.createEl("h2", {
+      cls: "desk-search-head",
+      text: t.searchHead(hits.length) + " \xB7 "
+    });
+    head.createEl("span", { cls: "q", text: "\u201C" + q + "\u201D" });
+    const shown = hits.slice(0, SEARCH_CAP);
+    const groups = [];
+    for (const room of rooms) {
+      const items = shown.filter((h) => h.room === room);
+      if (items.length)
+        groups.push({ room, items });
+    }
+    const others = shown.filter((h) => !h.room);
+    if (others.length)
+      groups.push({ items: others });
+    for (const group of groups) {
+      els.body.createEl("p", {
+        cls: "desk-search-group",
+        text: group.room ? group.room.name : t.searchOther
+      });
+      const grid = els.body.createDiv({ cls: "an-tou-grid" });
+      const copies = await Promise.all(group.items.map((h) => this.searchEntry(h.file)));
+      if (stale())
+        return;
+      group.items.forEach((h, i) => {
+        var _a2;
+        const file = h.file;
+        this.card(
+          grid,
+          {
+            kicker: (_a2 = group.room) == null ? void 0 : _a2.kicker,
+            title: copies[i].title,
+            line: copies[i].line,
+            note: true,
+            onCopy: () => {
+              void this.copyNoteLink(file);
+            }
+          },
+          () => {
+            void this.openNote(file);
+          }
+        );
+      });
+    }
+    if (hits.length > SEARCH_CAP) {
+      els.body.createEl("p", {
+        cls: "desk-search-more",
+        text: t.searchMore(hits.length - SEARCH_CAP)
+      });
     }
   }
   recentNotes() {
@@ -1170,7 +1473,15 @@ var DeskView = class extends import_obsidian.ItemView {
       const copy = copies[i];
       this.card(
         grid,
-        { kicker: page.kicker, title: copy.title, line: copy.line, note: true },
+        {
+          kicker: page.kicker,
+          title: copy.title,
+          line: copy.line,
+          note: true,
+          onCopy: () => {
+            void this.copyNoteLink(file);
+          }
+        },
         () => {
           void this.openNote(file);
         }
@@ -1223,7 +1534,15 @@ var DeskView = class extends import_obsidian.ItemView {
       const copy = copies[i];
       this.card(
         grid,
-        { kicker: page.kicker, title: copy.title, line: copy.line, note: true },
+        {
+          kicker: page.kicker,
+          title: copy.title,
+          line: copy.line,
+          note: true,
+          onCopy: () => {
+            void this.copyNoteLink(file);
+          }
+        },
         () => {
           void this.openNote(file);
         }
@@ -1300,6 +1619,18 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
         void this.plugin.saveSettings();
       })
     );
+    new import_obsidian.Setting(containerEl).setName(t.captureDest).setDesc(t.captureDestDesc).addDropdown((box) => {
+      box.addOption("", t.captureAuto);
+      for (const room of this.plugin.settings.rooms) {
+        if (room.draft || !room.folder)
+          continue;
+        box.addOption(room.id, room.name);
+      }
+      box.setValue(this.plugin.settings.captureRoom || "").onChange((v) => {
+        this.plugin.settings.captureRoom = v;
+        void this.plugin.saveSettings();
+      });
+    });
     new import_obsidian.Setting(containerEl).setName(t.skip).setDesc(t.skipDesc).addText(
       (box) => box.setValue(this.plugin.settings.skipPaths.join(", ")).onChange((v) => {
         this.plugin.settings.skipPaths = v.split(",").map((s) => s.trim()).filter(Boolean);
@@ -1741,6 +2072,32 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
         void this.activateView();
       }
     });
+    this.addCommand({
+      id: "copy-desk-link",
+      name: "Copy link to current note",
+      checkCallback: (checking) => {
+        const file = this.app.workspace.getActiveFile();
+        if (!file || file.extension !== "md")
+          return false;
+        if (!checking)
+          void this.copyActiveLink(file);
+        return true;
+      }
+    });
+    this.addCommand({
+      id: "capture-note",
+      name: "Jot a note",
+      callback: () => {
+        void this.activateView().then(() => {
+          const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE)[0];
+          if ((leaf == null ? void 0 : leaf.view) instanceof DeskView)
+            leaf.view.captureNote();
+        });
+      }
+    });
+    this.registerObsidianProtocolHandler("quiet-desk", (data) => {
+      void this.openFromLink(data);
+    });
     this.addSettingTab(new AnTouSettingTab(this.app, this));
     this.applyLook();
     this.app.workspace.onLayoutReady(async () => {
@@ -1978,6 +2335,56 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
   }
   async saveSettings() {
     await this.saveData(this.settings);
+  }
+  async copyActiveLink(file) {
+    const t = this.settings.uiLang === "en" ? COPY.en : COPY.zh;
+    const ok = await copyText(noteUri(this.app, file));
+    new import_obsidian.Notice(ok ? t.copied : t.copyFailed);
+  }
+  async openFromLink(params) {
+    const t = this.settings.uiLang === "en" ? COPY.en : COPY.zh;
+    if (params.new === "1") {
+      await this.activateView();
+      const leaf2 = this.app.workspace.getLeavesOfType(VIEW_TYPE)[0];
+      const view = leaf2 == null ? void 0 : leaf2.view;
+      if (!(view instanceof DeskView))
+        return;
+      const folder = view.captureFolder();
+      if (!folder) {
+        new import_obsidian.Notice(t.noCaptureFolder);
+        return;
+      }
+      if (params.name)
+        await view.createNamedNote(folder, params.name);
+      else
+        view.captureNote();
+      return;
+    }
+    const raw = (params.note || params.file || "").trim();
+    if (!raw)
+      return;
+    const files = this.app.vault.getMarkdownFiles();
+    let file = files.find((f) => f.path === raw || f.path === raw + ".md");
+    if (!file) {
+      const lower = raw.toLowerCase();
+      file = files.find(
+        (f) => f.path.toLowerCase() === lower || f.basename.toLowerCase() === lower
+      );
+    }
+    if (!file) {
+      new import_obsidian.Notice(t.linkMissing);
+      return;
+    }
+    if (params.copy === "1") {
+      await this.copyActiveLink(file);
+      return;
+    }
+    await this.activateView();
+    const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE)[0];
+    if ((leaf == null ? void 0 : leaf.view) instanceof DeskView) {
+      leaf.view.goToNote(file);
+      await leaf.view.openNote(file);
+    }
   }
   refreshDesks() {
     for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE)) {
