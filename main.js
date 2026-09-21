@@ -30,7 +30,7 @@ module.exports = __toCommonJS(main_exports);
 var import_obsidian = require("obsidian");
 var VIEW_TYPE = "an-tou-desk";
 var DEFAULT_TITLE = "\u683C\u7269\u6210\u6816";
-var RECENT_CAP = 3;
+var RECENT_CAP = 6;
 var SEARCH_CAP = 30;
 var DEFAULT_SETTINGS = {
   title: DEFAULT_TITLE,
@@ -75,10 +75,10 @@ var COPY = {
     skipDesc: "\u7528\u9017\u53F7\u5206\u9694\u3002\u8FD9\u4E9B\u6587\u4EF6\u5939\u4E0D\u4F1A\u51FA\u73B0\u5728\u5361\u7247\u548C\u300C\u6700\u8FD1\u300D\u91CC\u3002",
     rooms: "\u623F\u95F4",
     roomsDesc: "\u4E0B\u9762\u8FD9\u5F20\u56FE\u5C31\u662F\u4E66\u684C\u5361\u7247\uFF0C\u5BF9\u7167\u7740\u586B\u5C31\u884C\u3002",
-    addRoom: "\u6DFB\u52A0\u623F\u95F4",
+    addRoom: "\u52A0\u4E00\u5F20\u5361\u7247",
     addHomeCard: "\u6DFB\u52A0\u9996\u9875\u5361\u7247",
     quietAdd: "\u52A0\u4E00\u5F20\u5361\u7247",
-    emptyRooms: "\u8FD8\u6CA1\u6709\u623F\u95F4\u3002\u70B9\u5927\u6807\u9898\u4E0B\u9762\u90A3\u884C\u5C0F\u5B57\u52A0\u4E00\u5F20\uFF0C\u6216\u6253\u5F00\u8BBE\u7F6E\u3002",
+    emptyRooms: "\u8FD8\u6CA1\u6709\u623F\u95F4\u3002\u6253\u5F00\u8BBE\u7F6E\u52A0\u4E00\u5F20\u3002",
     searchPlaceholder: "\u641C\u4E00\u4E0B\u2026",
     searchClear: "\u6E05\u9664\u641C\u7D22",
     searchNone: "\u6CA1\u627E\u5230\u3002\u6362\u4E2A\u8BCD\u8BD5\u8BD5\u3002",
@@ -92,7 +92,7 @@ var COPY = {
     name: "\u540D\u79F0",
     nameDesc: "\u5361\u7247\u6B63\u4E2D\u95F4\u6700\u5927\u7684\u90A3\u884C\u5B57\u3002",
     folder: "\u6587\u4EF6\u5939",
-    folderDesc: "\u5E93\u91CC\u7684\u8DEF\u5F84\uFF0C\u6BD4\u5982 00-Inbox\u3002\u6536\u7EB3\u67DC\u8FD9\u79CD\u5206\u7EC4\u8BF7\u7559\u7A7A\u3002",
+    folderDesc: "\u5E93\u91CC\u7684\u8DEF\u5F84\uFF0C\u6BD4\u5982 00-\u6536\u4EF6\u7BB1\u3002\u6536\u7EB3\u67DC\u8FD9\u79CD\u5206\u7EC4\u8BF7\u7559\u7A7A\u3002",
     folderMissing: "\u5E93\u91CC\u6CA1\u6709\u8FD9\u4E2A\u6587\u4EF6\u5939\u3002",
     folderDidYouMean: "\u4F60\u662F\u4E0D\u662F\u60F3\u586B {folder}\uFF1F",
     kicker: "\u5DE6\u4E0A\u89D2\u5C0F\u5B57",
@@ -125,7 +125,7 @@ var COPY = {
     helpNameCap: "\u540D\u79F0",
     helpLineCap: "\u5E95\u4E0B\u90A3\u884C\u8BF4\u660E",
     helpFolderCap: "\u6587\u4EF6\u5939",
-    helpFolderNote: "\u586B 00-Inbox \u8FD9\u7C7B\u8DEF\u5F84\u3002\u7559\u7A7A\u7684\u8BDD\uFF0C\u70B9\u8FDB\u53BB\u770B\u5230\u7684\u662F\u5B50\u623F\u95F4\uFF0C\u4E0D\u662F\u7B14\u8BB0\u3002",
+    helpFolderNote: "\u586B 00-\u6536\u4EF6\u7BB1 \u8FD9\u7C7B\u8DEF\u5F84\u3002\u7559\u7A7A\u7684\u8BDD\uFF0C\u70B9\u8FDB\u53BB\u770B\u5230\u7684\u662F\u5B50\u623F\u95F4\uFF0C\u4E0D\u662F\u7B14\u8BB0\u3002",
     helpParentCap: "\u653E\u8FDB\u54EA\u4E2A\u623F\u95F4",
     helpParentNote: "\u5728\u300C\u653E\u8FDB\u54EA\u4E2A\u623F\u95F4\u300D\u91CC\u9009\u300C\u6536\u7EB3\u67DC\u300D\uFF0C\u8FD9\u5F20\u5361\u5C31\u4ECE\u9996\u9875\u6536\u8FDB\u67DC\u5B50\u91CC\u3002",
     helpQuietCap: "\u5361\u7247\u53D8\u6DE1",
@@ -143,6 +143,7 @@ var COPY = {
     maxNotesBad: "\u53EA\u80FD\u586B\u5927\u4E8E 0 \u7684\u6574\u6570\uFF0C\u7559\u7A7A\u5C31\u81EA\u52A8\u51B3\u5B9A\u3002",
     nameRequired: "\u5148\u7ED9\u8FD9\u4E2A\u623F\u95F4\u8D77\u4E2A\u540D\u5B57\u3002",
     recent: "\u6700\u8FD1",
+    recentRootKicker: "\u5E93\u6839",
     noMoreNotes: "\u6CA1\u6709\u66F4\u591A\u7B14\u8BB0\u3002",
     emptyFolder: "\u8FD9\u4E00\u683C\u8FD8\u6CA1\u6709\u7B14\u8BB0\u3002",
     newNote: "\u65B0\u7B14\u8BB0",
@@ -151,7 +152,7 @@ var COPY = {
     folderGone: "\u6587\u4EF6\u5939\u4E0D\u5728\u3002",
     untitled: "\u672A\u547D\u540D",
     copyLink: "\u590D\u5236\u8FD9\u7BC7\u7684\u94FE\u63A5",
-    copied: "\u94FE\u63A5\u5DF2\u590D\u5236\uFF0C\u70B9\u5B83\u5C31\u80FD\u56DE\u5230\u8FD9\u7BC7",
+    copied: "\u94FE\u63A5\u5DF2\u590D\u5236\u3002\u8D34\u56DE\u4E66\u684C\u641C\u7D22\uFF0C\u6216\u70B9\u5B83\uFF0C\u5C31\u80FD\u6253\u5F00\u8FD9\u7BC7",
     copyFailed: "\u6CA1\u590D\u5236\u4E0A\u3002",
     linkMissing: "\u6CA1\u627E\u5230\u8FD9\u7BC7\u7B14\u8BB0\u3002",
     capture: "\u8BB0\u4E00\u6761",
@@ -200,10 +201,10 @@ var COPY = {
     skipDesc: "Comma-separated folder prefixes hidden from cards and recents.",
     rooms: "Rooms",
     roomsDesc: "The picture below is a desk card. Fill the fields to match.",
-    addRoom: "Add room",
+    addRoom: "Add a card",
     addHomeCard: "Add a home card",
     quietAdd: "Add a card",
-    emptyRooms: "No rooms yet. Use the small line under the big title to add one, or open settings.",
+    emptyRooms: "No rooms yet. Add one in settings.",
     searchPlaceholder: "Search\u2026",
     searchClear: "Clear search",
     searchNone: "Nothing found. Try another word.",
@@ -268,6 +269,7 @@ var COPY = {
     maxNotesBad: "Whole number above zero, or leave it empty.",
     nameRequired: "Give the room a name first.",
     recent: "Recent",
+    recentRootKicker: "Vault root",
     noMoreNotes: "No more notes.",
     emptyFolder: "No notes in this room yet.",
     newNote: "New note",
@@ -276,7 +278,7 @@ var COPY = {
     folderGone: "That folder is gone.",
     untitled: "Untitled",
     copyLink: "Copy link to this note",
-    copied: "Link copied \u2014 it opens this note again",
+    copied: "Link copied. Paste it in desk search, or open it, to get back.",
     copyFailed: "Could not copy.",
     linkMissing: "That note is gone.",
     capture: "Jot a note",
@@ -400,17 +402,19 @@ function frontmatterTitle(app, file) {
     return String(raw[0]).trim();
   return "";
 }
-function firstH1(app, file, body) {
-  var _a, _b, _c;
-  const heading = (_b = (_a = app.metadataCache.getFileCache(file)) == null ? void 0 : _a.headings) == null ? void 0 : _b.find((h) => h.level === 1);
-  if ((_c = heading == null ? void 0 : heading.heading) == null ? void 0 : _c.trim())
-    return heading.heading.trim();
-  for (const raw of body.split("\n")) {
-    const m = raw.trim().match(/^#\s+(.+)$/);
-    if (m)
-      return m[1].replace(/\s+#+\s*$/, "").trim();
+var SENTENCE_MAX = 60;
+var SENTENCE_END = /[。！？!?]/;
+function sentenceCut(ln) {
+  if (ln.length <= SENTENCE_MAX)
+    return ln;
+  let cut = -1;
+  for (let i = 20; i < SENTENCE_MAX; i++) {
+    if (SENTENCE_END.test(ln[i]))
+      cut = i;
   }
-  return "";
+  if (cut > 0)
+    return ln.slice(0, cut + 1);
+  return ln.slice(0, SENTENCE_MAX).replace(/\s+$/, "") + "\u2026";
 }
 function firstReadableFrom(body) {
   for (const raw of body.split("\n")) {
@@ -427,10 +431,10 @@ function firstReadableFrom(body) {
       continue;
     if (ln.startsWith(">"))
       continue;
-    ln = ln.replace(/^[-*+]\s+\[[ xX]\]\s*/, "").replace(/^[-*+]\s+/, "").replace(/^\d+\.\s+/, "").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").replace(/\[\[([^\]|]+)(\|[^\]]*)?\]\]/g, (_m, p1, p2) => p2 ? String(p2).slice(1) : p1).replace(/`[^`]+`/g, "").replace(/[*_]/g, "").replace(/\s+/g, " ").trim();
+    ln = ln.replace(/^[-*+]\s+\[[ xX]\]\s*/, "").replace(/^[-*+]\s+/, "").replace(/^\d+\.\s+/, "").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").replace(/\[\[([^\]|]+)(\|[^\]]*)?\]\]/g, (_m, p1, p2) => p2 ? String(p2).slice(1) : p1).replace(/`[^`]+`/g, "").replace(/[*_]/g, "").replace(/\s*\^[A-Za-z0-9-]+/g, "").replace(/[\u200b-\u200d\ufeff]/g, "").replace(/\s+/g, " ").trim();
     if (ln.length < 2)
       continue;
-    return ln.slice(0, 48);
+    return sentenceCut(ln);
   }
   return "";
 }
@@ -454,17 +458,70 @@ async function noteCardCopy(app, file) {
   } catch (e) {
   }
   const yaml = frontmatterTitle(app, file);
-  const h1 = firstH1(app, file, body);
   const sentence = firstReadableFrom(body);
-  const base = file.basename;
-  const title = yaml || h1 || sentence || (weakBasename(file) ? "" : titleOf(file)) || base;
+  const title = yaml || file.basename;
   const line = sentence && sentence !== title ? sentence : "";
-  return { title, line };
+  const hay = [title, line, file.basename, file.path, body].join("\n").toLowerCase();
+  return { title, line, hay };
 }
 function noteUri(app, file) {
   const vault = encodeURIComponent(app.vault.getName());
   const note = encodeURIComponent(file.path);
   return "obsidian://quiet-desk?vault=" + vault + "&note=" + note;
+}
+function parseDeskQuery(q) {
+  const raw = q.trim();
+  if (!raw)
+    return null;
+  const wiki = raw.match(/^\[\[([^\]|#]+)(?:\|[^\]]*)?(?:#[^\]]*)?\]\]$/);
+  if (wiki)
+    return wiki[1].trim();
+  if (/^obsidian:\/\//i.test(raw)) {
+    const qMark = raw.indexOf("?");
+    if (qMark < 0)
+      return null;
+    const params = new URLSearchParams(raw.slice(qMark + 1));
+    const note = params.get("note") || params.get("file") || params.get("path");
+    return (note == null ? void 0 : note.trim()) || null;
+  }
+  if (raw.endsWith(".md") || raw.includes("/"))
+    return raw;
+  return null;
+}
+function resolveNote(app, raw) {
+  const files = app.vault.getMarkdownFiles();
+  const tryPath = (p) => {
+    var _a;
+    return (_a = files.find((f) => f.path === p || f.path === p + ".md")) != null ? _a : null;
+  };
+  let file = tryPath(raw);
+  if (file)
+    return file;
+  try {
+    file = tryPath(decodeURIComponent(raw));
+    if (file)
+      return file;
+  } catch (e) {
+  }
+  const lower = raw.replace(/\.md$/i, "").toLowerCase();
+  const hits = files.filter(
+    (f) => f.path.toLowerCase() === lower || f.path.toLowerCase() === lower + ".md" || f.basename.toLowerCase() === lower
+  );
+  if (hits.length === 1)
+    return hits[0];
+  const dest = app.metadataCache.getFirstLinkpathDest(raw.replace(/\.md$/i, ""), "");
+  if (dest instanceof import_obsidian.TFile && dest.extension === "md")
+    return dest;
+  return null;
+}
+function parentFolder(path) {
+  const i = path.lastIndexOf("/");
+  return i === -1 ? "" : path.slice(0, i);
+}
+function roomCaption(room, countShown) {
+  if (countShown && isAutoLine(room.line))
+    return void 0;
+  return room.line;
 }
 async function copyText(text) {
   try {
@@ -566,63 +623,6 @@ var FolderSuggest = class extends import_obsidian.AbstractInputSuggest {
     this.close();
   }
 };
-var RoomModal = class extends import_obsidian.Modal {
-  constructor(app, t, onSubmit) {
-    super(app);
-    this.t = t;
-    this.onSubmit = onSubmit;
-  }
-  onOpen() {
-    const t = this.t;
-    this.titleEl.setText(t.addRoom);
-    this.contentEl.addClass("an-tou-room-modal");
-    let name = "";
-    let folder = "";
-    let folderEl = null;
-    const submit = () => {
-      const n = name.trim();
-      if (!n) {
-        new import_obsidian.Notice(t.nameRequired);
-        return;
-      }
-      this.close();
-      this.onSubmit(n, folder.trim());
-    };
-    new import_obsidian.Setting(this.contentEl).setName(t.name).addText((box) => {
-      box.setPlaceholder(t.name);
-      box.onChange((v) => {
-        name = v;
-      });
-      box.inputEl.addEventListener("keydown", (e) => {
-        if (e.key !== "Enter")
-          return;
-        e.preventDefault();
-        folderEl == null ? void 0 : folderEl.focus();
-      });
-      box.inputEl.focus();
-    });
-    new import_obsidian.Setting(this.contentEl).setName(t.folder).setDesc(t.folderDesc).addText((box) => {
-      folderEl = box.inputEl;
-      box.setPlaceholder("00-Inbox");
-      box.onChange((v) => {
-        folder = v;
-      });
-      new FolderSuggest(this.app, box.inputEl, (picked) => {
-        box.setValue(picked);
-        folder = picked;
-      });
-      box.inputEl.addEventListener("keydown", (e) => {
-        if (e.key !== "Enter")
-          return;
-        e.preventDefault();
-        submit();
-      });
-    });
-    new import_obsidian.Setting(this.contentEl).addButton((b) => {
-      b.setButtonText(t.saveRoom).setCta().onClick(submit);
-    });
-  }
-};
 var ConfirmModal = class extends import_obsidian.Modal {
   constructor(app, opts) {
     super(app);
@@ -701,7 +701,6 @@ var DeskView = class extends import_obsidian.ItemView {
           this.safeRender();
       })
     );
-    this.registerDomEvent(window, "resize", () => this.fitSearchWidthNow());
     this.registerEvent(
       this.app.workspace.on("active-leaf-change", () => {
         if (this.dirty && this.isShownNow()) {
@@ -784,6 +783,9 @@ var DeskView = class extends import_obsidian.ItemView {
       return !extraSkip.some((s) => f.path.endsWith(s) || f.basename === s);
     });
   }
+  mdHere(folder) {
+    return this.mdIn(folder).filter((f) => parentFolder(f.path) === folder);
+  }
   subfolders(folder) {
     const af = this.app.vault.getAbstractFileByPath(folder);
     if (!(af instanceof import_obsidian.TFolder))
@@ -853,13 +855,17 @@ var DeskView = class extends import_obsidian.ItemView {
     }
     return best;
   }
-  roomCount(room) {
-    const kids = this.childrenOf(room.id);
-    if (kids.length)
-      return kids.length;
+  roomCount(room, seen) {
+    const visited = seen != null ? seen : /* @__PURE__ */ new Set();
+    if (visited.has(room.id))
+      return 0;
+    visited.add(room.id);
     if (room.folder)
       return this.mdIn(room.folder).length;
-    return 0;
+    let n = 0;
+    for (const kid of this.childrenOf(room.id))
+      n += this.roomCount(kid, visited);
+    return n;
   }
   openRoom(room, parentLabel) {
     const kids = this.childrenOf(room.id);
@@ -879,7 +885,14 @@ var DeskView = class extends import_obsidian.ItemView {
     }
   }
   async openNote(file) {
-    await this.app.workspace.getLeaf("tab").openFile(file);
+    const ws = this.app.workspace;
+    const remembered = this.plugin.readingLeaf;
+    let leaf = remembered && ws.getLeavesOfType("markdown").includes(remembered) ? remembered : null;
+    if (!leaf) {
+      leaf = ws.getLeaf("tab");
+      this.plugin.readingLeaf = leaf;
+    }
+    await leaf.openFile(file);
   }
   async copyNoteLink(file) {
     const t = this.copy();
@@ -1004,7 +1017,7 @@ var DeskView = class extends import_obsidian.ItemView {
       else if (page.type === "home")
         await this.renderHome(inner, seq);
       else if (page.type === "group")
-        this.renderGroup(inner, page.room);
+        await this.renderGroup(inner, page.room, seq);
       else if (page.type === "more")
         await this.renderMore(inner, page, seq);
       else
@@ -1104,50 +1117,55 @@ var DeskView = class extends import_obsidian.ItemView {
       return;
     }
     const preset = name || (isInboxFolder(folder) ? inboxStamp() : "");
+    if (!name && isInboxFolder(folder)) {
+      void this.createNamedNote(folder, preset);
+      return;
+    }
     new NameModal(this.app, preset, t, (raw) => {
       void this.createNamedNote(folder, raw);
     }, t.captureHint(folder)).open();
-  }
-  addHomeRoom() {
-    const t = this.copy();
-    new RoomModal(this.app, t, (name, folder) => {
-      void this.createHomeRoom(name, folder);
-    }).open();
-  }
-  async createHomeRoom(name, folder) {
-    const used = new Set(this.plugin.settings.rooms.map((r) => r.id));
-    const room = {
-      id: uniqueId(slug(name), used),
-      name
-    };
-    if (folder) {
-      room.folder = folder;
-      room.kicker = kickerOf(folder.slice(folder.lastIndexOf("/") + 1));
-      if (!(this.app.vault.getAbstractFileByPath(folder) instanceof import_obsidian.TFolder)) {
-        room.stale = true;
-      }
-    }
-    this.plugin.settings.rooms.push(room);
-    await this.plugin.saveSettings();
-    this.plugin.refreshDesks();
   }
   async renderHome(inner, seq) {
     const t = this.copy();
     const title = this.plugin.settings.title || DEFAULT_TITLE;
     this.homeActions(inner);
-    const heading = inner.createEl("h1", { text: title });
-    const quietRow = inner.createDiv({ cls: "an-tou-quiet-row" });
-    const quiet = quietRow.createEl("button", {
-      cls: "desk-quiet-add",
-      attr: { type: "button", "aria-label": t.quietAdd }
-    });
-    quiet.createEl("span", { cls: "desk-quiet-plus", text: "+" });
-    quiet.createEl("span", { text: t.quietAdd });
-    quiet.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      this.addHomeRoom();
-    });
+    inner.createEl("h1", { text: title });
+    const homeBody = this.mountSearch(inner);
+    const rooms = this.homeRooms();
+    if (rooms.length === 0) {
+      homeBody.createEl("p", {
+        cls: "an-tou-lede",
+        text: t.emptyRooms
+      });
+    }
+    const grid = homeBody.createDiv({ cls: "an-tou-grid" });
+    for (const room of rooms) {
+      const n = this.roomCount(room);
+      const count = room.quiet ? void 0 : n;
+      this.card(
+        grid,
+        {
+          kicker: room.kicker,
+          count,
+          title: room.name,
+          line: roomCaption(room, count !== void 0),
+          quiet: room.quiet
+        },
+        () => this.openRoom(room, title)
+      );
+    }
+    homeBody.createEl("h2", { text: t.recent });
+    const recentGrid = homeBody.createDiv({ cls: "an-tou-grid" });
+    const recent = this.recentNotes();
+    await this.paintNotes(
+      recentGrid,
+      recent.map((e) => e.file),
+      seq,
+      (file, i) => recent[i].kicker
+    );
+  }
+  mountSearch(inner) {
+    const t = this.copy();
     const searchRow = inner.createDiv({ cls: "an-tou-search-row" });
     const glyph = searchRow.createSpan({ cls: "desk-search-glyph" });
     (0, import_obsidian.setIcon)(glyph, "search");
@@ -1165,15 +1183,14 @@ var DeskView = class extends import_obsidian.ItemView {
       text: "\xD7",
       attr: { type: "button", "aria-label": t.searchClear }
     });
-    const homeBody = inner.createDiv({ cls: "desk-home-body" });
+    const pageBody = inner.createDiv({ cls: "desk-home-body" });
     const searchBody = inner.createDiv({ cls: "desk-search-body hidden" });
     this.searchEls = {
       row: searchRow,
       input,
       clearBtn,
-      home: homeBody,
-      body: searchBody,
-      title: heading
+      home: pageBody,
+      body: searchBody
     };
     let searchTimer = 0;
     input.addEventListener("input", () => {
@@ -1190,48 +1207,32 @@ var DeskView = class extends import_obsidian.ItemView {
       this.clearSearch();
       input.focus();
     });
-    this.fitSearchWidthNow();
-    if (document.fonts)
-      void document.fonts.ready.then(() => this.fitSearchWidthNow());
-    window.setTimeout(() => this.fitSearchWidthNow(), 120);
-    const rooms = this.homeRooms();
-    if (rooms.length === 0) {
-      homeBody.createEl("p", {
-        cls: "an-tou-lede",
-        text: t.emptyRooms
-      });
-    }
-    const grid = homeBody.createDiv({ cls: "an-tou-grid" });
-    for (const room of rooms) {
-      const n = this.roomCount(room);
+    return pageBody;
+  }
+  focusSearch() {
+    var _a;
+    (_a = this.searchEls) == null ? void 0 : _a.input.focus();
+  }
+  async searchEntry(file) {
+    const hit = this.searchIndex.get(file.path);
+    if (hit)
+      return hit;
+    const entry = await noteCardCopy(this.app, file);
+    this.searchIndex.set(file.path, entry);
+    return entry;
+  }
+  async paintNotes(grid, files, seq, kickerOfFile) {
+    const copies = await Promise.all(files.map((f) => noteCardCopy(this.app, f)));
+    if (seq !== this.renderSeq)
+      return false;
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
       this.card(
         grid,
         {
-          kicker: room.kicker,
-          count: room.quiet ? void 0 : n,
-          title: room.name,
-          line: room.line,
-          quiet: room.quiet
-        },
-        () => this.openRoom(room, title)
-      );
-    }
-    homeBody.createEl("h2", { text: t.recent });
-    const recentGrid = homeBody.createDiv({ cls: "an-tou-grid" });
-    const recent = this.recentNotes();
-    const recentCopies = await Promise.all(recent.map((e) => noteCardCopy(this.app, e.file)));
-    if (seq !== this.renderSeq)
-      return;
-    for (let i = 0; i < recent.length; i++) {
-      const entry = recent[i];
-      const file = entry.file;
-      const copy = recentCopies[i];
-      this.card(
-        recentGrid,
-        {
-          kicker: entry.owner.kicker || "Note",
-          title: copy.title,
-          line: copy.line,
+          kicker: kickerOfFile(file, i),
+          title: copies[i].title,
+          line: copies[i].line,
           note: true,
           onCopy: () => {
             void this.copyNoteLink(file);
@@ -1242,23 +1243,7 @@ var DeskView = class extends import_obsidian.ItemView {
         }
       );
     }
-  }
-  async searchEntry(file) {
-    const hit = this.searchIndex.get(file.path);
-    if (hit)
-      return hit;
-    const entry = await noteCardCopy(this.app, file);
-    this.searchIndex.set(file.path, entry);
-    return entry;
-  }
-  fitSearchWidthNow() {
-    const els = this.searchEls;
-    if (!els || !els.row.isConnected)
-      return;
-    const range = document.createRange();
-    range.selectNodeContents(els.title);
-    const w = Math.max(range.getBoundingClientRect().width, 160);
-    els.row.style.width = w + "px";
+    return true;
   }
   clearSearch() {
     const els = this.searchEls;
@@ -1284,19 +1269,39 @@ var DeskView = class extends import_obsidian.ItemView {
       els.body.empty();
       return;
     }
+    const linked = parseDeskQuery(q);
+    if (linked) {
+      const file = resolveNote(this.app, linked);
+      if (file) {
+        els.input.value = "";
+        els.input.classList.remove("has-q");
+        els.clearBtn.classList.remove("show");
+        els.row.classList.remove("is-live");
+        els.home.removeClass("hidden");
+        els.body.addClass("hidden");
+        els.body.empty();
+        await this.plugin.openFromLink({ note: file.path });
+        return;
+      }
+    }
     const stale = () => this.searchEls !== els || els.input.value.trim().toLowerCase() !== ql;
     const skip = this.plugin.settings.skipPaths;
-    const rooms = this.plugin.settings.rooms.filter((r) => !r.draft && r.folder);
+    const rooms = this.plugin.settings.rooms.filter((r) => !r.draft);
+    const folderRooms = rooms.filter((r) => r.folder);
+    const roomHits = rooms.filter((r) => {
+      var _a2, _b2, _c2;
+      const blob = [r.name, (_a2 = r.kicker) != null ? _a2 : "", (_b2 = r.folder) != null ? _b2 : "", (_c2 = r.line) != null ? _c2 : ""].join("\n").toLowerCase();
+      return blob.includes(ql);
+    });
     const hits = [];
     for (const file of this.app.vault.getMarkdownFiles()) {
       if (skipped(file.path, skip))
         continue;
       const entry = await this.searchEntry(file);
-      const matched = entry.title.toLowerCase().includes(ql) || entry.line.toLowerCase().includes(ql) || file.basename.toLowerCase().includes(ql) || file.path.toLowerCase().includes(ql);
-      if (!matched)
+      if (!entry.hay.includes(ql))
         continue;
       let owner;
-      for (const room of rooms) {
+      for (const room of folderRooms) {
         if (!inFolder(file, (_a = room.folder) != null ? _a : ""))
           continue;
         if (!owner || ((_b = room.folder) != null ? _b : "").length > ((_c = owner.folder) != null ? _c : "").length) {
@@ -1311,18 +1316,41 @@ var DeskView = class extends import_obsidian.ItemView {
     els.body.removeClass("hidden");
     els.body.empty();
     const t = this.copy();
-    if (hits.length === 0) {
+    const total = roomHits.length + hits.length;
+    if (total === 0) {
       els.body.createEl("p", { cls: "an-tou-lede desk-search-none", text: t.searchNone });
       return;
     }
     const head = els.body.createEl("h2", {
       cls: "desk-search-head",
-      text: t.searchHead(hits.length) + " \xB7 "
+      text: t.searchHead(total) + " \xB7 "
     });
     head.createEl("span", { cls: "q", text: "\u201C" + q + "\u201D" });
+    if (roomHits.length) {
+      const grid = els.body.createDiv({ cls: "an-tou-grid" });
+      const deskTitle = this.plugin.settings.title || DEFAULT_TITLE;
+      for (const room of roomHits) {
+        const n = this.roomCount(room);
+        const count = room.quiet ? void 0 : n;
+        this.card(
+          grid,
+          {
+            kicker: room.kicker,
+            count,
+            title: room.name,
+            line: roomCaption(room, count !== void 0),
+            quiet: room.quiet
+          },
+          () => {
+            this.clearSearch();
+            this.openRoom(room, deskTitle);
+          }
+        );
+      }
+    }
     const shown = hits.slice(0, SEARCH_CAP);
     const groups = [];
-    for (const room of rooms) {
+    for (const room of folderRooms) {
       const items = shown.filter((h) => h.room === room);
       if (items.length)
         groups.push({ room, items });
@@ -1366,69 +1394,62 @@ var DeskView = class extends import_obsidian.ItemView {
       });
     }
   }
+  quietFolders() {
+    return this.plugin.settings.rooms.filter((r) => !r.draft && r.folder && this.isQuietLine(r)).map((r) => r.folder);
+  }
   recentNotes() {
     var _a;
     const live = this.liveFolders();
+    const quiet = this.quietFolders();
     const skip = this.plugin.settings.skipPaths;
+    const t = this.copy();
     const all = (_a = this.renderFiles) != null ? _a : this.app.vault.getMarkdownFiles();
-    const owned = [];
+    const entries = [];
     for (const file of all) {
       if (skipped(file.path, skip))
         continue;
-      const owner = this.ownerOf(file, live);
-      if (!owner)
+      if (quiet.some((f) => inFolder(file, f)))
         continue;
-      owned.push({ file, owner });
-    }
-    const buckets = /* @__PURE__ */ new Map();
-    for (const entry of owned) {
-      const list = buckets.get(entry.owner.id) || [];
-      list.push(entry);
-      buckets.set(entry.owner.id, list);
-    }
-    for (const list of buckets.values()) {
-      list.sort((a, b) => b.file.stat.mtime - a.file.stat.mtime);
-    }
-    const rooms = Array.from(buckets.values()).filter((list) => list.length).sort((a, b) => b[0].file.stat.mtime - a[0].file.stat.mtime);
-    const picked = [];
-    const seen = /* @__PURE__ */ new Set();
-    for (const list of rooms) {
-      if (picked.length >= RECENT_CAP)
-        break;
-      picked.push(list[0]);
-      seen.add(list[0].file.path);
-    }
-    if (picked.length < RECENT_CAP) {
-      const rest = owned.filter((e) => !seen.has(e.file.path)).sort((a, b) => b.file.stat.mtime - a.file.stat.mtime);
-      for (const entry of rest) {
-        if (picked.length >= RECENT_CAP)
-          break;
-        picked.push(entry);
+      const owner = this.ownerOf(file, live);
+      if (owner) {
+        entries.push({ file, kicker: owner.kicker });
+        continue;
       }
+      const slash = file.path.indexOf("/");
+      const top = slash === -1 ? "" : file.path.slice(0, slash);
+      entries.push({ file, kicker: top ? kickerOf(top) : t.recentRootKicker });
     }
-    return picked;
+    entries.sort((a, b) => b.file.stat.mtime - a.file.stat.mtime);
+    return entries.slice(0, RECENT_CAP);
   }
-  renderGroup(inner, room) {
+  async renderGroup(inner, room, seq) {
     const title = this.plugin.settings.title || DEFAULT_TITLE;
     this.nav(inner, [{ label: "\u2190 " + title, go: () => this.back() }], this.noteFolder(room));
     inner.createEl("h1", { text: room.name });
-    if (room.line)
+    if (room.line && !isAutoLine(room.line)) {
       inner.createEl("p", { cls: "an-tou-lede", text: room.line });
-    const grid = inner.createDiv({ cls: "an-tou-grid" });
+    }
+    const pageBody = this.mountSearch(inner);
+    const grid = pageBody.createDiv({ cls: "an-tou-grid" });
     for (const child of this.childrenOf(room.id)) {
-      const files = child.folder ? this.mdIn(child.folder) : [];
+      const files = child.folder ? this.mdHere(child.folder) : [];
       const n = this.roomCount(child);
+      const quiet = this.isQuietLine(child);
       this.card(
         grid,
         {
-          count: n,
+          count: quiet ? void 0 : n,
           title: child.name,
-          line: child.line || (n === 1 && files[0] ? titleOf(files[0]) : ""),
-          quiet: this.isQuietLine(child)
+          line: roomCaption(child, !quiet) || (n === 1 && files[0] ? titleOf(files[0]) : ""),
+          quiet
         },
         () => this.openRoom(child, room.name)
       );
     }
+    if (!room.folder)
+      return;
+    const leftover = this.mdHere(room.folder).sort((a, b) => b.stat.mtime - a.stat.mtime);
+    await this.paintNotes(grid, leftover, seq, () => room.kicker || room.name);
   }
   async renderFolder(inner, page, seq) {
     const t = this.copy();
@@ -1442,10 +1463,10 @@ var DeskView = class extends import_obsidian.ItemView {
       crumbs.push({ label: title, go: goHome });
     this.nav(inner, crumbs, page.folder);
     inner.createEl("h1", { text: page.title });
-    const all = this.mdIn(page.folder);
+    const pageBody = this.mountSearch(inner);
     const subs = this.subfolders(page.folder);
     if (subs.length) {
-      const grid2 = inner.createDiv({ cls: "an-tou-grid" });
+      const grid2 = pageBody.createDiv({ cls: "an-tou-grid" });
       for (const folder of subs) {
         const n = this.mdIn(folder.path).length;
         this.card(grid2, { count: n, title: folder.name }, () => {
@@ -1459,34 +1480,15 @@ var DeskView = class extends import_obsidian.ItemView {
         });
       }
     }
-    let notes = all.sort((a, b) => b.stat.mtime - a.stat.mtime);
+    let notes = this.mdHere(page.folder).sort((a, b) => b.stat.mtime - a.stat.mtime);
     const cap = page.maxNotes || (notes.length > 40 ? 24 : notes.length);
     const rest = Math.max(0, notes.length - cap);
     if (rest)
       notes = notes.slice(0, cap);
-    const grid = inner.createDiv({ cls: "an-tou-grid" });
-    const copies = await Promise.all(notes.map((f) => noteCardCopy(this.app, f)));
-    if (seq !== this.renderSeq)
+    const grid = pageBody.createDiv({ cls: "an-tou-grid" });
+    const ok = await this.paintNotes(grid, notes, seq, () => page.kicker);
+    if (!ok)
       return;
-    for (let i = 0; i < notes.length; i++) {
-      const file = notes[i];
-      const copy = copies[i];
-      this.card(
-        grid,
-        {
-          kicker: page.kicker,
-          title: copy.title,
-          line: copy.line,
-          note: true,
-          onCopy: () => {
-            void this.copyNoteLink(file);
-          }
-        },
-        () => {
-          void this.openNote(file);
-        }
-      );
-    }
     if (rest > 0) {
       this.card(
         grid,
@@ -1509,7 +1511,7 @@ var DeskView = class extends import_obsidian.ItemView {
       );
     }
     if (!notes.length && !subs.length) {
-      inner.createEl("p", { cls: "an-tou-lede", text: t.emptyFolder });
+      pageBody.createEl("p", { cls: "an-tou-lede", text: t.emptyFolder });
     }
   }
   async renderMore(inner, page, seq) {
@@ -1520,34 +1522,14 @@ var DeskView = class extends import_obsidian.ItemView {
       page.folder
     );
     inner.createEl("h1", { text: page.title });
-    const notes = this.mdIn(page.folder).sort((a, b) => b.stat.mtime - a.stat.mtime).slice(page.skip);
-    inner.createEl("p", {
+    const pageBody = this.mountSearch(inner);
+    const notes = this.mdHere(page.folder).sort((a, b) => b.stat.mtime - a.stat.mtime).slice(page.skip);
+    pageBody.createEl("p", {
       cls: "an-tou-lede",
       text: notes.length ? t.more(notes.length) : t.noMoreNotes
     });
-    const grid = inner.createDiv({ cls: "an-tou-grid" });
-    const copies = await Promise.all(notes.map((f) => noteCardCopy(this.app, f)));
-    if (seq !== this.renderSeq)
-      return;
-    for (let i = 0; i < notes.length; i++) {
-      const file = notes[i];
-      const copy = copies[i];
-      this.card(
-        grid,
-        {
-          kicker: page.kicker,
-          title: copy.title,
-          line: copy.line,
-          note: true,
-          onCopy: () => {
-            void this.copyNoteLink(file);
-          }
-        },
-        () => {
-          void this.openNote(file);
-        }
-      );
-    }
+    const grid = pageBody.createDiv({ cls: "an-tou-grid" });
+    await this.paintNotes(grid, notes, seq, () => page.kicker);
   }
 };
 var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
@@ -2031,6 +2013,7 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
     super(...arguments);
     this.settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
     this.ribbonChrome = [];
+    this.readingLeaf = null;
   }
   async onload() {
     const saved = await this.loadData();
@@ -2069,7 +2052,22 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
       id: "open-desk",
       name: "Open desk",
       callback: () => {
-        void this.activateView();
+        void this.activateView().then(() => {
+          const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE)[0];
+          if ((leaf == null ? void 0 : leaf.view) instanceof DeskView)
+            void leaf.view.resetHome();
+        });
+      }
+    });
+    this.addCommand({
+      id: "search-desk",
+      name: "Search the desk",
+      callback: () => {
+        void this.activateView().then(() => {
+          const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE)[0];
+          if ((leaf == null ? void 0 : leaf.view) instanceof DeskView)
+            leaf.view.focusSearch();
+        });
       }
     });
     this.addCommand({
@@ -2411,7 +2409,7 @@ var AnTouPlugin = class extends import_obsidian.Plugin {
         void view.render();
       }
     }
-    await workspace.revealLeaf(leaf);
+    workspace.setActiveLeaf(leaf, { focus: true });
     this.applyExplorer();
   }
   applyExplorer() {

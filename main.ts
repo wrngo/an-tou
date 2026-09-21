@@ -16,7 +16,7 @@ import {
 
 const VIEW_TYPE = "an-tou-desk";
 const DEFAULT_TITLE = "格物成栖";
-const RECENT_CAP = 3;
+const RECENT_CAP = 6;
 const SEARCH_CAP = 30;
 
 interface Room {
@@ -93,10 +93,10 @@ const COPY = {
 		skipDesc: "用逗号分隔。这些文件夹不会出现在卡片和「最近」里。",
 		rooms: "房间",
 		roomsDesc: "下面这张图就是书桌卡片，对照着填就行。",
-		addRoom: "添加房间",
+		addRoom: "加一张卡片",
 		addHomeCard: "添加首页卡片",
 		quietAdd: "加一张卡片",
-		emptyRooms: "还没有房间。点大标题下面那行小字加一张，或打开设置。",
+		emptyRooms: "还没有房间。打开设置加一张。",
 		searchPlaceholder: "搜一下…",
 		searchClear: "清除搜索",
 		searchNone: "没找到。换个词试试。",
@@ -110,7 +110,7 @@ const COPY = {
 		name: "名称",
 		nameDesc: "卡片正中间最大的那行字。",
 		folder: "文件夹",
-		folderDesc: "库里的路径，比如 00-Inbox。收纳柜这种分组请留空。",
+		folderDesc: "库里的路径，比如 00-收件箱。收纳柜这种分组请留空。",
 		folderMissing: "库里没有这个文件夹。",
 		folderDidYouMean: "你是不是想填 {folder}？",
 		kicker: "左上角小字",
@@ -143,7 +143,7 @@ const COPY = {
 		helpNameCap: "名称",
 		helpLineCap: "底下那行说明",
 		helpFolderCap: "文件夹",
-		helpFolderNote: "填 00-Inbox 这类路径。留空的话，点进去看到的是子房间，不是笔记。",
+		helpFolderNote: "填 00-收件箱 这类路径。留空的话，点进去看到的是子房间，不是笔记。",
 		helpParentCap: "放进哪个房间",
 		helpParentNote: "在「放进哪个房间」里选「收纳柜」，这张卡就从首页收进柜子里。",
 		helpQuietCap: "卡片变淡",
@@ -161,6 +161,7 @@ const COPY = {
 		maxNotesBad: "只能填大于 0 的整数，留空就自动决定。",
 		nameRequired: "先给这个房间起个名字。",
 		recent: "最近",
+		recentRootKicker: "库根",
 		noMoreNotes: "没有更多笔记。",
 		emptyFolder: "这一格还没有笔记。",
 		newNote: "新笔记",
@@ -169,7 +170,7 @@ const COPY = {
 		folderGone: "文件夹不在。",
 		untitled: "未命名",
 		copyLink: "复制这篇的链接",
-		copied: "链接已复制，点它就能回到这篇",
+		copied: "链接已复制。贴回书桌搜索，或点它，就能打开这篇",
 		copyFailed: "没复制上。",
 		linkMissing: "没找到这篇笔记。",
 		capture: "记一条",
@@ -218,10 +219,10 @@ const COPY = {
 		skipDesc: "Comma-separated folder prefixes hidden from cards and recents.",
 		rooms: "Rooms",
 		roomsDesc: "The picture below is a desk card. Fill the fields to match.",
-		addRoom: "Add room",
+		addRoom: "Add a card",
 		addHomeCard: "Add a home card",
 		quietAdd: "Add a card",
-		emptyRooms: "No rooms yet. Use the small line under the big title to add one, or open settings.",
+		emptyRooms: "No rooms yet. Add one in settings.",
 		searchPlaceholder: "Search…",
 		searchClear: "Clear search",
 		searchNone: "Nothing found. Try another word.",
@@ -286,6 +287,7 @@ const COPY = {
 		maxNotesBad: "Whole number above zero, or leave it empty.",
 		nameRequired: "Give the room a name first.",
 		recent: "Recent",
+		recentRootKicker: "Vault root",
 		noMoreNotes: "No more notes.",
 		emptyFolder: "No notes in this room yet.",
 		newNote: "New note",
@@ -294,7 +296,7 @@ const COPY = {
 		folderGone: "That folder is gone.",
 		untitled: "Untitled",
 		copyLink: "Copy link to this note",
-		copied: "Link copied — it opens this note again",
+		copied: "Link copied. Paste it in desk search, or open it, to get back.",
 		copyFailed: "Could not copy.",
 		linkMissing: "That note is gone.",
 		capture: "Jot a note",
@@ -453,14 +455,17 @@ function frontmatterTitle(app: App, file: TFile): string {
 	return "";
 }
 
-function firstH1(app: App, file: TFile, body: string): string {
-	const heading = app.metadataCache.getFileCache(file)?.headings?.find((h) => h.level === 1);
-	if (heading?.heading?.trim()) return heading.heading.trim();
-	for (const raw of body.split("\n")) {
-		const m = raw.trim().match(/^#\s+(.+)$/);
-		if (m) return m[1].replace(/\s+#+\s*$/, "").trim();
+const SENTENCE_MAX = 60;
+const SENTENCE_END = /[。！？!?]/;
+
+function sentenceCut(ln: string): string {
+	if (ln.length <= SENTENCE_MAX) return ln;
+	let cut = -1;
+	for (let i = 20; i < SENTENCE_MAX; i++) {
+		if (SENTENCE_END.test(ln[i])) cut = i;
 	}
-	return "";
+	if (cut > 0) return ln.slice(0, cut + 1);
+	return ln.slice(0, SENTENCE_MAX).replace(/\s+$/, "") + "…";
 }
 
 function firstReadableFrom(body: string): string {
@@ -480,10 +485,12 @@ function firstReadableFrom(body: string): string {
 			.replace(/\[\[([^\]|]+)(\|[^\]]*)?\]\]/g, (_m, p1, p2) => (p2 ? String(p2).slice(1) : p1))
 			.replace(/`[^`]+`/g, "")
 			.replace(/[*_]/g, "")
+			.replace(/\s*\^[A-Za-z0-9-]+/g, "")
+			.replace(/[\u200b-\u200d\ufeff]/g, "")
 			.replace(/\s+/g, " ")
 			.trim();
 		if (ln.length < 2) continue;
-		return ln.slice(0, 48);
+		return sentenceCut(ln);
 	}
 	return "";
 }
@@ -499,7 +506,9 @@ function stripFrontmatter(app: App, file: TFile, text: string): string {
 	return text.slice(end + 4);
 }
 
-async function noteCardCopy(app: App, file: TFile): Promise<{ title: string; line: string }> {
+type NoteCopy = { title: string; line: string; hay: string };
+
+async function noteCardCopy(app: App, file: TFile): Promise<NoteCopy> {
 	let body = "";
 	try {
 		body = stripFrontmatter(app, file, await app.vault.cachedRead(file));
@@ -507,18 +516,68 @@ async function noteCardCopy(app: App, file: TFile): Promise<{ title: string; lin
 		/* ignore */
 	}
 	const yaml = frontmatterTitle(app, file);
-	const h1 = firstH1(app, file, body);
 	const sentence = firstReadableFrom(body);
-	const base = file.basename;
-	const title = yaml || h1 || sentence || (weakBasename(file) ? "" : titleOf(file)) || base;
+	const title = yaml || file.basename;
 	const line = sentence && sentence !== title ? sentence : "";
-	return { title, line };
+	const hay = [title, line, file.basename, file.path, body].join("\n").toLowerCase();
+	return { title, line, hay };
 }
 
 function noteUri(app: App, file: TFile): string {
 	const vault = encodeURIComponent(app.vault.getName());
 	const note = encodeURIComponent(file.path);
 	return "obsidian://quiet-desk?vault=" + vault + "&note=" + note;
+}
+
+function parseDeskQuery(q: string): string | null {
+	const raw = q.trim();
+	if (!raw) return null;
+	const wiki = raw.match(/^\[\[([^\]|#]+)(?:\|[^\]]*)?(?:#[^\]]*)?\]\]$/);
+	if (wiki) return wiki[1].trim();
+	if (/^obsidian:\/\//i.test(raw)) {
+		const qMark = raw.indexOf("?");
+		if (qMark < 0) return null;
+		const params = new URLSearchParams(raw.slice(qMark + 1));
+		const note = params.get("note") || params.get("file") || params.get("path");
+		return note?.trim() || null;
+	}
+	if (raw.endsWith(".md") || raw.includes("/")) return raw;
+	return null;
+}
+
+function resolveNote(app: App, raw: string): TFile | null {
+	const files = app.vault.getMarkdownFiles();
+	const tryPath = (p: string) =>
+		files.find((f) => f.path === p || f.path === p + ".md") ?? null;
+	let file = tryPath(raw);
+	if (file) return file;
+	try {
+		file = tryPath(decodeURIComponent(raw));
+		if (file) return file;
+	} catch {
+		/* ignore */
+	}
+	const lower = raw.replace(/\.md$/i, "").toLowerCase();
+	const hits = files.filter(
+		(f) =>
+			f.path.toLowerCase() === lower ||
+			f.path.toLowerCase() === lower + ".md" ||
+			f.basename.toLowerCase() === lower
+	);
+	if (hits.length === 1) return hits[0];
+	const dest = app.metadataCache.getFirstLinkpathDest(raw.replace(/\.md$/i, ""), "");
+	if (dest instanceof TFile && dest.extension === "md") return dest;
+	return null;
+}
+
+function parentFolder(path: string): string {
+	const i = path.lastIndexOf("/");
+	return i === -1 ? "" : path.slice(0, i);
+}
+
+function roomCaption(room: Room, countShown: boolean): string | undefined {
+	if (countShown && isAutoLine(room.line)) return undefined;
+	return room.line;
 }
 
 async function copyText(text: string): Promise<boolean> {
@@ -651,7 +710,7 @@ class RoomModal extends Modal {
 
 	onOpen() {
 		const t = this.t;
-		this.titleEl.setText(t.addRoom);
+		this.titleEl.setText(t.quietAdd);
 		this.contentEl.addClass("an-tou-room-modal");
 		let name = "";
 		let folder = "";
@@ -682,7 +741,7 @@ class RoomModal extends Modal {
 			.setDesc(t.folderDesc)
 			.addText((box) => {
 				folderEl = box.inputEl;
-				box.setPlaceholder("00-Inbox");
+				box.setPlaceholder("00-收件箱");
 				box.onChange((v) => {
 					folder = v;
 				});
@@ -757,14 +816,13 @@ class DeskView extends ItemView {
 	renderSeq = 0;
 	dirty = false;
 	renderFiles: TFile[] | null = null;
-	searchIndex = new Map<string, { title: string; line: string }>();
+	searchIndex = new Map<string, NoteCopy>();
 	searchEls: {
 		row: HTMLElement;
 		input: HTMLInputElement;
 		clearBtn: HTMLButtonElement;
 		home: HTMLElement;
 		body: HTMLElement;
-		title: HTMLElement;
 	} | null = null;
 
 	constructor(leaf: WorkspaceLeaf, plugin: AnTouPlugin) {
@@ -807,7 +865,6 @@ class DeskView extends ItemView {
 				if (this.modifyAffectsPage(file)) this.safeRender();
 			})
 		);
-		this.registerDomEvent(window, "resize", () => this.fitSearchWidthNow());
 		this.registerEvent(
 			this.app.workspace.on("active-leaf-change", () => {
 				if (this.dirty && this.isShownNow()) {
@@ -891,6 +948,10 @@ class DeskView extends ItemView {
 		});
 	}
 
+	mdHere(folder: string): TFile[] {
+		return this.mdIn(folder).filter((f) => parentFolder(f.path) === folder);
+	}
+
 	subfolders(folder: string): TFolder[] {
 		const af = this.app.vault.getAbstractFileByPath(folder);
 		if (!(af instanceof TFolder)) return [];
@@ -952,11 +1013,14 @@ class DeskView extends ItemView {
 		return best;
 	}
 
-	roomCount(room: Room): number {
-		const kids = this.childrenOf(room.id);
-		if (kids.length) return kids.length;
+	roomCount(room: Room, seen?: Set<string>): number {
+		const visited = seen ?? new Set<string>();
+		if (visited.has(room.id)) return 0;
+		visited.add(room.id);
 		if (room.folder) return this.mdIn(room.folder).length;
-		return 0;
+		let n = 0;
+		for (const kid of this.childrenOf(room.id)) n += this.roomCount(kid, visited);
+		return n;
 	}
 
 	openRoom(room: Room, parentLabel: string) {
@@ -978,7 +1042,17 @@ class DeskView extends ItemView {
 	}
 
 	async openNote(file: TFile) {
-		await this.app.workspace.getLeaf("tab").openFile(file);
+		const ws = this.app.workspace;
+		const remembered = this.plugin.readingLeaf;
+		let leaf =
+			remembered && ws.getLeavesOfType("markdown").includes(remembered)
+				? remembered
+				: null;
+		if (!leaf) {
+			leaf = ws.getLeaf("tab");
+			this.plugin.readingLeaf = leaf;
+		}
+		await leaf.openFile(file);
 	}
 
 	async copyNoteLink(file: TFile) {
@@ -1119,7 +1193,7 @@ class DeskView extends ItemView {
 			const page = this.current();
 			if (page.type === "welcome") this.renderWelcome(inner);
 			else if (page.type === "home") await this.renderHome(inner, seq);
-			else if (page.type === "group") this.renderGroup(inner, page.room);
+			else if (page.type === "group") await this.renderGroup(inner, page.room, seq);
 			else if (page.type === "more") await this.renderMore(inner, page, seq);
 			else await this.renderFolder(inner, page, seq);
 		} finally {
@@ -1224,55 +1298,60 @@ class DeskView extends ItemView {
 			return;
 		}
 		const preset = name || (isInboxFolder(folder) ? inboxStamp() : "");
+		if (!name && isInboxFolder(folder)) {
+			void this.createNamedNote(folder, preset);
+			return;
+		}
 		new NameModal(this.app, preset, t, (raw: string) => {
 			void this.createNamedNote(folder, raw);
 		}, t.captureHint(folder)).open();
-	}
-
-	addHomeRoom() {
-		const t = this.copy();
-		new RoomModal(this.app, t, (name, folder) => {
-			void this.createHomeRoom(name, folder);
-		}).open();
-	}
-
-	async createHomeRoom(name: string, folder: string) {
-		const used = new Set(this.plugin.settings.rooms.map((r) => r.id));
-		const room: Room = {
-			id: uniqueId(slug(name), used),
-			name,
-		};
-		if (folder) {
-			room.folder = folder;
-			room.kicker = kickerOf(folder.slice(folder.lastIndexOf("/") + 1));
-			if (!(this.app.vault.getAbstractFileByPath(folder) instanceof TFolder)) {
-				room.stale = true;
-			}
-		}
-		this.plugin.settings.rooms.push(room);
-		await this.plugin.saveSettings();
-		this.plugin.refreshDesks();
 	}
 
 	async renderHome(inner: HTMLElement, seq: number) {
 		const t = this.copy();
 		const title = this.plugin.settings.title || DEFAULT_TITLE;
 		this.homeActions(inner);
-		const heading = inner.createEl("h1", { text: title });
+		inner.createEl("h1", { text: title });
+		const homeBody = this.mountSearch(inner);
 
-		const quietRow = inner.createDiv({ cls: "an-tou-quiet-row" });
-		const quiet = quietRow.createEl("button", {
-			cls: "desk-quiet-add",
-			attr: { type: "button", "aria-label": t.quietAdd },
-		});
-		quiet.createEl("span", { cls: "desk-quiet-plus", text: "+" });
-		quiet.createEl("span", { text: t.quietAdd });
-		quiet.addEventListener("click", (e) => {
-			e.preventDefault();
-			e.stopPropagation();
-			this.addHomeRoom();
-		});
+		const rooms = this.homeRooms();
+		if (rooms.length === 0) {
+			homeBody.createEl("p", {
+				cls: "an-tou-lede",
+				text: t.emptyRooms,
+			});
+		}
 
+		const grid = homeBody.createDiv({ cls: "an-tou-grid" });
+		for (const room of rooms) {
+			const n = this.roomCount(room);
+			const count = room.quiet ? undefined : n;
+			this.card(
+				grid,
+				{
+					kicker: room.kicker,
+					count,
+					title: room.name,
+					line: roomCaption(room, count !== undefined),
+					quiet: room.quiet,
+				},
+				() => this.openRoom(room, title)
+			);
+		}
+
+		homeBody.createEl("h2", { text: t.recent });
+		const recentGrid = homeBody.createDiv({ cls: "an-tou-grid" });
+		const recent = this.recentNotes();
+		await this.paintNotes(
+			recentGrid,
+			recent.map((e) => e.file),
+			seq,
+			(file, i) => recent[i].kicker
+		);
+	}
+
+	mountSearch(inner: HTMLElement): HTMLElement {
+		const t = this.copy();
 		const searchRow = inner.createDiv({ cls: "an-tou-search-row" });
 		const glyph = searchRow.createSpan({ cls: "desk-search-glyph" });
 		setIcon(glyph, "search");
@@ -1290,15 +1369,14 @@ class DeskView extends ItemView {
 			text: "×",
 			attr: { type: "button", "aria-label": t.searchClear },
 		});
-		const homeBody = inner.createDiv({ cls: "desk-home-body" });
+		const pageBody = inner.createDiv({ cls: "desk-home-body" });
 		const searchBody = inner.createDiv({ cls: "desk-search-body hidden" });
 		this.searchEls = {
 			row: searchRow,
 			input,
 			clearBtn,
-			home: homeBody,
+			home: pageBody,
 			body: searchBody,
-			title: heading,
 		};
 
 		let searchTimer = 0;
@@ -1315,49 +1393,37 @@ class DeskView extends ItemView {
 			this.clearSearch();
 			input.focus();
 		});
-		this.fitSearchWidthNow();
-		if (document.fonts) void document.fonts.ready.then(() => this.fitSearchWidthNow());
-		window.setTimeout(() => this.fitSearchWidthNow(), 120);
+		return pageBody;
+	}
 
-		const rooms = this.homeRooms();
-		if (rooms.length === 0) {
-			homeBody.createEl("p", {
-				cls: "an-tou-lede",
-				text: t.emptyRooms,
-			});
-		}
+	focusSearch() {
+		this.searchEls?.input.focus();
+	}
 
-		const grid = homeBody.createDiv({ cls: "an-tou-grid" });
-		for (const room of rooms) {
-			const n = this.roomCount(room);
+	async searchEntry(file: TFile): Promise<NoteCopy> {
+		const hit = this.searchIndex.get(file.path);
+		if (hit) return hit;
+		const entry = await noteCardCopy(this.app, file);
+		this.searchIndex.set(file.path, entry);
+		return entry;
+	}
+
+	async paintNotes(
+		grid: HTMLElement,
+		files: TFile[],
+		seq: number,
+		kickerOfFile: (file: TFile, i: number) => string | undefined
+	): Promise<boolean> {
+		const copies = await Promise.all(files.map((f) => noteCardCopy(this.app, f)));
+		if (seq !== this.renderSeq) return false;
+		for (let i = 0; i < files.length; i++) {
+			const file = files[i];
 			this.card(
 				grid,
 				{
-					kicker: room.kicker,
-					count: room.quiet ? undefined : n,
-					title: room.name,
-					line: room.line,
-					quiet: room.quiet,
-				},
-				() => this.openRoom(room, title)
-			);
-		}
-
-		homeBody.createEl("h2", { text: t.recent });
-		const recentGrid = homeBody.createDiv({ cls: "an-tou-grid" });
-		const recent = this.recentNotes();
-		const recentCopies = await Promise.all(recent.map((e) => noteCardCopy(this.app, e.file)));
-		if (seq !== this.renderSeq) return;
-		for (let i = 0; i < recent.length; i++) {
-			const entry = recent[i];
-			const file = entry.file;
-			const copy = recentCopies[i];
-			this.card(
-				recentGrid,
-				{
-					kicker: entry.owner.kicker || "Note",
-					title: copy.title,
-					line: copy.line,
+					kicker: kickerOfFile(file, i),
+					title: copies[i].title,
+					line: copies[i].line,
 					note: true,
 					onCopy: () => {
 						void this.copyNoteLink(file);
@@ -1368,23 +1434,7 @@ class DeskView extends ItemView {
 				}
 			);
 		}
-	}
-
-	async searchEntry(file: TFile): Promise<{ title: string; line: string }> {
-		const hit = this.searchIndex.get(file.path);
-		if (hit) return hit;
-		const entry = await noteCardCopy(this.app, file);
-		this.searchIndex.set(file.path, entry);
-		return entry;
-	}
-
-	fitSearchWidthNow() {
-		const els = this.searchEls;
-		if (!els || !els.row.isConnected) return;
-		const range = document.createRange();
-		range.selectNodeContents(els.title);
-		const w = Math.max(range.getBoundingClientRect().width, 160);
-		els.row.style.width = w + "px";
+		return true;
 	}
 
 	clearSearch() {
@@ -1409,22 +1459,39 @@ class DeskView extends ItemView {
 			els.body.empty();
 			return;
 		}
+		const linked = parseDeskQuery(q);
+		if (linked) {
+			const file = resolveNote(this.app, linked);
+			if (file) {
+				els.input.value = "";
+				els.input.classList.remove("has-q");
+				els.clearBtn.classList.remove("show");
+				els.row.classList.remove("is-live");
+				els.home.removeClass("hidden");
+				els.body.addClass("hidden");
+				els.body.empty();
+				await this.plugin.openFromLink({ note: file.path });
+				return;
+			}
+		}
 		const stale = () =>
 			this.searchEls !== els || els.input.value.trim().toLowerCase() !== ql;
 		const skip = this.plugin.settings.skipPaths;
-		const rooms = this.plugin.settings.rooms.filter((r) => !r.draft && r.folder);
+		const rooms = this.plugin.settings.rooms.filter((r) => !r.draft);
+		const folderRooms = rooms.filter((r) => r.folder);
+		const roomHits = rooms.filter((r) => {
+			const blob = [r.name, r.kicker ?? "", r.folder ?? "", r.line ?? ""]
+				.join("\n")
+				.toLowerCase();
+			return blob.includes(ql);
+		});
 		const hits: { file: TFile; room?: Room }[] = [];
 		for (const file of this.app.vault.getMarkdownFiles()) {
 			if (skipped(file.path, skip)) continue;
 			const entry = await this.searchEntry(file);
-			const matched =
-				entry.title.toLowerCase().includes(ql) ||
-				entry.line.toLowerCase().includes(ql) ||
-				file.basename.toLowerCase().includes(ql) ||
-				file.path.toLowerCase().includes(ql);
-			if (!matched) continue;
+			if (!entry.hay.includes(ql)) continue;
 			let owner: Room | undefined;
-			for (const room of rooms) {
+			for (const room of folderRooms) {
 				if (!inFolder(file, room.folder ?? "")) continue;
 				if (!owner || (room.folder ?? "").length > (owner.folder ?? "").length) {
 					owner = room;
@@ -1437,18 +1504,41 @@ class DeskView extends ItemView {
 		els.body.removeClass("hidden");
 		els.body.empty();
 		const t = this.copy();
-		if (hits.length === 0) {
+		const total = roomHits.length + hits.length;
+		if (total === 0) {
 			els.body.createEl("p", { cls: "an-tou-lede desk-search-none", text: t.searchNone });
 			return;
 		}
 		const head = els.body.createEl("h2", {
 			cls: "desk-search-head",
-			text: t.searchHead(hits.length) + " · ",
+			text: t.searchHead(total) + " · ",
 		});
 		head.createEl("span", { cls: "q", text: "“" + q + "”" });
+		if (roomHits.length) {
+			const grid = els.body.createDiv({ cls: "an-tou-grid" });
+			const deskTitle = this.plugin.settings.title || DEFAULT_TITLE;
+			for (const room of roomHits) {
+				const n = this.roomCount(room);
+				const count = room.quiet ? undefined : n;
+				this.card(
+					grid,
+					{
+						kicker: room.kicker,
+						count,
+						title: room.name,
+						line: roomCaption(room, count !== undefined),
+						quiet: room.quiet,
+					},
+					() => {
+						this.clearSearch();
+						this.openRoom(room, deskTitle);
+					}
+				);
+			}
+		}
 		const shown = hits.slice(0, SEARCH_CAP);
 		const groups: { room?: Room; items: { file: TFile; room?: Room }[] }[] = [];
-		for (const room of rooms) {
+		for (const room of folderRooms) {
 			const items = shown.filter((h) => h.room === room);
 			if (items.length) groups.push({ room, items });
 		}
@@ -1489,68 +1579,64 @@ class DeskView extends ItemView {
 		}
 	}
 
-	recentNotes(): { file: TFile; owner: LiveFolder }[] {
-		const live = this.liveFolders();
-		const skip = this.plugin.settings.skipPaths;
-		const all = this.renderFiles ?? this.app.vault.getMarkdownFiles();
-		const owned: { file: TFile; owner: LiveFolder }[] = [];
-		for (const file of all) {
-			if (skipped(file.path, skip)) continue;
-			const owner = this.ownerOf(file, live);
-			if (!owner) continue;
-			owned.push({ file, owner });
-		}
-		const buckets = new Map<string, { file: TFile; owner: LiveFolder }[]>();
-		for (const entry of owned) {
-			const list = buckets.get(entry.owner.id) || [];
-			list.push(entry);
-			buckets.set(entry.owner.id, list);
-		}
-		for (const list of buckets.values()) {
-			list.sort((a, b) => b.file.stat.mtime - a.file.stat.mtime);
-		}
-		const rooms = Array.from(buckets.values())
-			.filter((list) => list.length)
-			.sort((a, b) => b[0].file.stat.mtime - a[0].file.stat.mtime);
-		const picked: { file: TFile; owner: LiveFolder }[] = [];
-		const seen = new Set<string>();
-		for (const list of rooms) {
-			if (picked.length >= RECENT_CAP) break;
-			picked.push(list[0]);
-			seen.add(list[0].file.path);
-		}
-		if (picked.length < RECENT_CAP) {
-			const rest = owned
-				.filter((e) => !seen.has(e.file.path))
-				.sort((a, b) => b.file.stat.mtime - a.file.stat.mtime);
-			for (const entry of rest) {
-				if (picked.length >= RECENT_CAP) break;
-				picked.push(entry);
-			}
-		}
-		return picked;
+	quietFolders(): string[] {
+		return this.plugin.settings.rooms
+			.filter((r) => !r.draft && r.folder && this.isQuietLine(r))
+			.map((r) => r.folder as string);
 	}
 
-	renderGroup(inner: HTMLElement, room: Room) {
+	recentNotes(): { file: TFile; kicker: string }[] {
+		const live = this.liveFolders();
+		const quiet = this.quietFolders();
+		const skip = this.plugin.settings.skipPaths;
+		const t = this.copy();
+		const all = this.renderFiles ?? this.app.vault.getMarkdownFiles();
+		const entries: { file: TFile; kicker: string }[] = [];
+		for (const file of all) {
+			if (skipped(file.path, skip)) continue;
+			if (quiet.some((f) => inFolder(file, f))) continue;
+			const owner = this.ownerOf(file, live);
+			if (owner) {
+				entries.push({ file, kicker: owner.kicker });
+				continue;
+			}
+			const slash = file.path.indexOf("/");
+			const top = slash === -1 ? "" : file.path.slice(0, slash);
+			entries.push({ file, kicker: top ? kickerOf(top) : t.recentRootKicker });
+		}
+		entries.sort((a, b) => b.file.stat.mtime - a.file.stat.mtime);
+		return entries.slice(0, RECENT_CAP);
+	}
+
+	async renderGroup(inner: HTMLElement, room: Room, seq: number) {
 		const title = this.plugin.settings.title || DEFAULT_TITLE;
 		this.nav(inner, [{ label: "← " + title, go: () => this.back() }], this.noteFolder(room));
 		inner.createEl("h1", { text: room.name });
-		if (room.line) inner.createEl("p", { cls: "an-tou-lede", text: room.line });
-		const grid = inner.createDiv({ cls: "an-tou-grid" });
+		if (room.line && !isAutoLine(room.line)) {
+			inner.createEl("p", { cls: "an-tou-lede", text: room.line });
+		}
+		const pageBody = this.mountSearch(inner);
+		const grid = pageBody.createDiv({ cls: "an-tou-grid" });
 		for (const child of this.childrenOf(room.id)) {
-			const files = child.folder ? this.mdIn(child.folder) : [];
+			const files = child.folder ? this.mdHere(child.folder) : [];
 			const n = this.roomCount(child);
+			const quiet = this.isQuietLine(child);
 			this.card(
 				grid,
 				{
-					count: n,
+					count: quiet ? undefined : n,
 					title: child.name,
-					line: child.line || (n === 1 && files[0] ? titleOf(files[0]) : ""),
-					quiet: this.isQuietLine(child),
+					line:
+						roomCaption(child, !quiet) ||
+						(n === 1 && files[0] ? titleOf(files[0]) : ""),
+					quiet,
 				},
 				() => this.openRoom(child, room.name)
 			);
 		}
+		if (!room.folder) return;
+		const leftover = this.mdHere(room.folder).sort((a, b) => b.stat.mtime - a.stat.mtime);
+		await this.paintNotes(grid, leftover, seq, () => room.kicker || room.name);
 	}
 
 	async renderFolder(
@@ -1568,12 +1654,11 @@ class DeskView extends ItemView {
 		if (page.parentLabel !== title) crumbs.push({ label: title, go: goHome });
 		this.nav(inner, crumbs, page.folder);
 		inner.createEl("h1", { text: page.title });
+		const pageBody = this.mountSearch(inner);
 
-		const all = this.mdIn(page.folder);
 		const subs = this.subfolders(page.folder);
-
 		if (subs.length) {
-			const grid = inner.createDiv({ cls: "an-tou-grid" });
+			const grid = pageBody.createDiv({ cls: "an-tou-grid" });
 			for (const folder of subs) {
 				const n = this.mdIn(folder.path).length;
 				this.card(grid, { count: n, title: folder.name }, () => {
@@ -1588,33 +1673,14 @@ class DeskView extends ItemView {
 			}
 		}
 
-		let notes = all.sort((a, b) => b.stat.mtime - a.stat.mtime);
+		let notes = this.mdHere(page.folder).sort((a, b) => b.stat.mtime - a.stat.mtime);
 		const cap = page.maxNotes || (notes.length > 40 ? 24 : notes.length);
 		const rest = Math.max(0, notes.length - cap);
 		if (rest) notes = notes.slice(0, cap);
 
-		const grid = inner.createDiv({ cls: "an-tou-grid" });
-		const copies = await Promise.all(notes.map((f) => noteCardCopy(this.app, f)));
-		if (seq !== this.renderSeq) return;
-		for (let i = 0; i < notes.length; i++) {
-			const file = notes[i];
-			const copy = copies[i];
-			this.card(
-				grid,
-				{
-					kicker: page.kicker,
-					title: copy.title,
-					line: copy.line,
-					note: true,
-					onCopy: () => {
-						void this.copyNoteLink(file);
-					},
-				},
-				() => {
-					void this.openNote(file);
-				}
-			);
-		}
+		const grid = pageBody.createDiv({ cls: "an-tou-grid" });
+		const ok = await this.paintNotes(grid, notes, seq, () => page.kicker);
+		if (!ok) return;
 		if (rest > 0) {
 			this.card(
 				grid,
@@ -1637,7 +1703,7 @@ class DeskView extends ItemView {
 			);
 		}
 		if (!notes.length && !subs.length) {
-			inner.createEl("p", { cls: "an-tou-lede", text: t.emptyFolder });
+			pageBody.createEl("p", { cls: "an-tou-lede", text: t.emptyFolder });
 		}
 	}
 
@@ -1649,35 +1715,16 @@ class DeskView extends ItemView {
 			page.folder
 		);
 		inner.createEl("h1", { text: page.title });
-		const notes = this.mdIn(page.folder)
+		const pageBody = this.mountSearch(inner);
+		const notes = this.mdHere(page.folder)
 			.sort((a, b) => b.stat.mtime - a.stat.mtime)
 			.slice(page.skip);
-		inner.createEl("p", {
+		pageBody.createEl("p", {
 			cls: "an-tou-lede",
 			text: notes.length ? t.more(notes.length) : t.noMoreNotes,
 		});
-		const grid = inner.createDiv({ cls: "an-tou-grid" });
-		const copies = await Promise.all(notes.map((f) => noteCardCopy(this.app, f)));
-		if (seq !== this.renderSeq) return;
-		for (let i = 0; i < notes.length; i++) {
-			const file = notes[i];
-			const copy = copies[i];
-			this.card(
-				grid,
-				{
-					kicker: page.kicker,
-					title: copy.title,
-					line: copy.line,
-					note: true,
-					onCopy: () => {
-						void this.copyNoteLink(file);
-					},
-				},
-				() => {
-					void this.openNote(file);
-				}
-			);
-		}
+		const grid = pageBody.createDiv({ cls: "an-tou-grid" });
+		await this.paintNotes(grid, notes, seq, () => page.kicker);
 	}
 }
 
@@ -2242,6 +2289,7 @@ class AnTouSettingTab extends PluginSettingTab {
 export default class AnTouPlugin extends Plugin {
 	settings: AnTouSettings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
 	ribbonChrome: HTMLElement[] = [];
+	readingLeaf: WorkspaceLeaf | null = null;
 
 	async onload() {
 		const saved = (await this.loadData()) as Partial<AnTouSettings> | null;
@@ -2280,7 +2328,20 @@ export default class AnTouPlugin extends Plugin {
 			id: "open-desk",
 			name: "Open desk",
 			callback: () => {
-				void this.activateView();
+				void this.activateView().then(() => {
+					const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE)[0];
+					if (leaf?.view instanceof DeskView) void leaf.view.resetHome();
+				});
+			},
+		});
+		this.addCommand({
+			id: "search-desk",
+			name: "Search the desk",
+			callback: () => {
+				void this.activateView().then(() => {
+					const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE)[0];
+					if (leaf?.view instanceof DeskView) leaf.view.focusSearch();
+				});
 			},
 		});
 		this.addCommand({
@@ -2594,7 +2655,7 @@ export default class AnTouPlugin extends Plugin {
 				void view.render();
 			}
 		}
-		await workspace.revealLeaf(leaf);
+		workspace.setActiveLeaf(leaf, { focus: true });
 		this.applyExplorer();
 	}
 

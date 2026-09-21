@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiet Desk 0.4.0 效果稿</title>
+<style>
+:root {
+  --ink: #1c2a26;
+  --mute: #6b7a76;
+  --accent: #2bbbad;
+  --card-border: rgba(255,255,255,0.72);
+  --card-bg: rgba(255,255,255,0.42);
+  --card-bg-hover: rgba(255,255,255,0.66);
+  --card-inset: rgba(255,255,255,0.8);
+  --card-shadow: 0 18px 40px -24px rgba(28,42,38,0.28);
+  --wash:
+    radial-gradient(ellipse 120% 80% at 50% -8%, rgba(43,187,173,0.22), transparent 64%),
+    linear-gradient(180deg, #d3ebe5 0%, #cce6e0 100%);
+  --glass-border: rgba(255,255,255,0.5);
+  --glass-bg: rgba(255,255,255,0.26);
+  --tab-bg: rgba(255,255,255,0.35);
+  --tab-active: rgba(255,255,255,0.85);
+  --note-bg: #fffbe6;
+  --serif: "Songti SC","Iowan Old Style","New York",Georgia,serif;
+}
+body.dark {
+  --ink: #e4eeea;
+  --mute: #8a9a96;
+  --card-border: rgba(255,255,255,0.14);
+  --card-bg: rgba(255,255,255,0.07);
+  --card-bg-hover: rgba(255,255,255,0.12);
+  --card-inset: rgba(255,255,255,0.08);
+  --card-shadow: 0 18px 40px -24px rgba(0,0,0,0.5);
+  --wash:
+    radial-gradient(ellipse 80% 58% at 12% 0%, rgba(43,187,173,0.22), transparent 68%),
+    radial-gradient(ellipse 55% 48% at 88% 30%, rgba(43,187,173,0.12), transparent 62%),
+    radial-gradient(ellipse 70% 55% at 70% 100%, rgba(210,186,150,0.08), transparent 58%),
+    linear-gradient(180deg,#1a2220 0%,#121918 100%);
+  --glass-border: rgba(255,255,255,0.1);
+  --glass-bg: rgba(255,255,255,0.05);
+  --tab-bg: rgba(255,255,255,0.06);
+  --tab-active: rgba(255,255,255,0.16);
+  --note-bg: #3a3520;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "PingFang SC",-apple-system,sans-serif;
+  color: var(--ink);
+  background: var(--wash);
+  background-attachment: fixed;
+  transition: color .3s ease;
+}
+.page { max-width: 1080px; margin: 0 auto; padding: 28px 32px 80px; }
+.mockhead { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.mockhead h1 { font-family: var(--serif); font-size: 26px; font-weight: 500; margin: 0; }
+.mockhead p { color: var(--mute); font-size: 13px; margin: 6px 0 0; max-width: 640px; line-height: 1.7; }
+.btnrow { display: flex; gap: 8px; }
+button.toggle {
+  border: 1px solid var(--glass-border); background: var(--glass-bg); color: var(--ink);
+  border-radius: 10px; padding: 7px 14px; font-size: 13px; cursor: pointer; font-family: inherit;
+}
+button.toggle:hover { background: var(--card-bg-hover); }
+
+h2.sec { font-family: var(--serif); font-size: 22px; font-weight: 500; letter-spacing: -0.02em; margin: 56px 0 4px; }
+p.secdesc { color: var(--mute); font-size: 13px; margin: 0 0 8px; line-height: 1.7; }
+
+/* ---- 书桌首页仿真 ---- */
+.desk { position: relative; }
+.desk .desk-title { font-family: var(--serif); font-size: clamp(28px,3.2vw,42px); font-weight: 500; letter-spacing: -0.02em; margin: 8px 0 10px; }
+.quiet-add { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--mute); opacity: .75; margin: 0 0 2px; }
+.quiet-add .plus { color: var(--accent); font-family: var(--serif); font-size: 15px; }
+.search-row {
+  display: inline-flex; align-items: center; gap: 8px; margin: 10px 0 0; padding: 8px 12px;
+  border-radius: 14px; border: 1px solid var(--glass-border); background: var(--glass-bg);
+  color: var(--mute); font-size: 13px; min-width: 260px;
+}
+.search-row .mag { color: var(--accent); opacity: .7; }
+.untouched { font-size: 11px; color: var(--mute); opacity: .8; margin-left: 10px; }
+
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px 18px; margin: 22px 0 8px; }
+@media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+
+.card {
+  position: relative; display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start;
+  gap: 8px; min-height: 168px; padding: 22px 44px 18px 22px; border-radius: 22px;
+  border: 1px solid var(--card-border); background: var(--card-bg);
+  box-shadow: var(--card-inset) 0 1px 0 inset, var(--card-shadow);
+  backdrop-filter: blur(28px) saturate(1.35); -webkit-backdrop-filter: blur(28px) saturate(1.35);
+  cursor: pointer; transition: background .25s ease, transform .25s ease, box-shadow .25s ease, opacity .25s ease;
+}
+.card:hover { background: var(--card-bg-hover); transform: translateY(-3px); }
+.card.is-note { min-height: 132px; justify-content: flex-start; padding-top: 20px; }
+.card.is-quiet { opacity: .5; }
+.kicker { font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--mute); min-height: 1.2em; }
+.count { position: absolute; top: 16px; right: 18px; font-family: var(--serif); font-size: 22px; font-weight: 500; opacity: .4; }
+.card strong {
+  font-family: var(--serif); font-size: 26px; font-weight: 500; letter-spacing: -0.01em; line-height: 1.2;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  word-break: break-word; overflow-wrap: anywhere; max-width: 100%;
+}
+.card.is-note strong { font-size: 20px; }
+.line {
+  font-size: 13px; line-height: 1.5; color: var(--mute); min-height: 2.6em;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  word-break: break-word; overflow-wrap: anywhere; max-width: 100%;
+}
+.card.is-note .line { min-height: 0; }
+.copybtn {
+  position: absolute; right: 14px; bottom: 14px; width: 26px; height: 26px; border-radius: 8px;
+  border: none; background: transparent; color: var(--mute); cursor: pointer; display: grid; place-items: center;
+}
+.copybtn:hover { background: rgba(0,0,0,.06); color: var(--ink); }
+body.dark .copybtn:hover { background: rgba(255,255,255,.12); }
+.copybtn svg { width: 14px; height: 14px; }
+h2.recent { font-family: var(--serif); font-size: 22px; font-weight: 500; letter-spacing: -0.02em; margin: 36px 0 0; }
+
+/* ---- 改动定位：默认无标记，悬停说明条目时目标亮一圈 ---- */
+.spot {
+  outline: 2px dashed var(--accent);
+  outline-offset: 5px;
+  border-radius: 22px;
+  background: rgba(43,187,173,0.07);
+}
+.legend { margin: 18px 0 0; padding: 8px 10px; border-radius: 14px; border: 1px solid var(--glass-border); background: var(--glass-bg); font-size: 13px; color: var(--ink); }
+.legend-row { display: flex; gap: 10px; padding: 7px 10px; border-radius: 10px; line-height: 1.75; cursor: default; transition: background .18s ease; }
+.legend-row[data-spot] { cursor: pointer; }
+.legend-row[data-spot]:hover { background: rgba(43,187,173,0.12); }
+.legend-row b { color: var(--accent); font-weight: 600; flex: none; }
+.legend-row.is-pin { background: rgba(43,187,173,0.16); }
+
+/* ---- 前后对比 ---- */
+.vs { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 14px; }
+@media (max-width: 760px) { .vs { grid-template-columns: 1fr; } }
+.vcol h3 { font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--mute); margin: 0 0 10px; font-weight: 500; }
+.vcol h3 .tag { display: inline-block; border-radius: 6px; padding: 1px 8px; font-size: 11px; margin-left: 8px; letter-spacing: 0; }
+.tag.old { background: rgba(232,86,79,.15); color: #e8564f; }
+.tag.new { background: rgba(43,187,173,.18); color: #178a7f; }
+body.dark .tag.new { color: #4fd6c8; }
+.strange { background: #ffe3e0; color: #b03a33; border-radius: 4px; padding: 0 3px; }
+body.dark .strange { background: rgba(232,86,79,.3); color: #ffc9c4; }
+
+/* ---- 标签栏仿真 ---- */
+.tabstrip { display: flex; gap: 4px; align-items: flex-end; padding: 8px 10px; border-radius: 12px 12px 0 0; background: var(--tab-bg); overflow-x: auto; }
+.tab {
+  flex: none; max-width: 190px; display: flex; align-items: center; gap: 7px; padding: 8px 12px;
+  border-radius: 9px 9px 0 0; font-size: 12.5px; color: var(--mute); background: transparent;
+  border: 1px solid transparent; border-bottom: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;
+}
+.tab .x { opacity: .5; font-size: 11px; }
+.tab.active { background: var(--tab-active); color: var(--ink); border-color: var(--glass-border); }
+.tabbody { border: 1px solid var(--glass-border); border-top: none; border-radius: 0 0 12px 12px; padding: 18px 20px; min-height: 74px; background: var(--tab-active); font-size: 13px; color: var(--mute); line-height: 1.8; }
+.tabbody b { color: var(--ink); font-weight: 500; }
+.overflow-note { font-size: 12px; color: var(--mute); margin-top: 8px; line-height: 1.7; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="mockhead">
+    <div>
+      <h1>Quiet Desk 0.4.0 效果稿</h1>
+      <p>下面全部用你测试库的真实房间和笔记内容排版。画面上默认干干净净，改动说明收在下面的清单里：鼠标放到带编号的条目上，对应位置才亮一圈。看完回我「可以」或说要改哪里，我才动插件代码。</p>
+    </div>
+    <div class="btnrow">
+      <button class="toggle" id="themeBtn">切到深色</button>
+      <button class="toggle" id="annoBtn">隐藏说明清单</button>
+    </div>
+  </div>
+
+  <!-- ================= 书桌首页 ================= -->
+  <h2 class="sec">一、首页整体（改完后的样子）</h2>
+  <p class="secdesc">上面房间区基本不动，只有卡片右上角的数字换了含义；下面「最近」从 3 张变 6 张。</p>
+
+  <div class="desk">
+    <div class="desk-title">格物成栖</div>
+    <div class="quiet-add"><span class="plus">＋</span>加一张卡片</div>
+    <div>
+      <span class="search-row"><span class="mag">⌕</span>搜一下…</span>
+      <span class="untouched">← 搜索框是 0.3.8 的功能，一个字不动</span>
+    </div>
+
+    <div class="grid">
+      <div class="card"><span class="kicker">收件箱</span><span class="count">3</span><strong>00-收件箱</strong><span class="line">3 篇笔记</span></div>
+      <div class="card"><span class="kicker">写作</span><span class="count" id="countWriting">4</span><strong>01-写作</strong><span class="line">4 篇笔记</span></div>
+      <div class="card"><span class="kicker">项目</span><span class="count">3</span><strong>02-项目</strong><span class="line">3 篇笔记</span></div>
+      <div class="card"><span class="kicker">知识库</span><span class="count">8</span><strong>03-知识库</strong><span class="line">8 篇笔记</span></div>
+      <div class="card"><span class="kicker">日记</span><span class="count">3</span><strong>04-日记</strong><span class="line">3 篇笔记</span></div>
+      <div class="card is-quiet"><span class="kicker">归档</span><strong>05-归档</strong><span class="line">2 篇笔记</span></div>
+    </div>
+
+    <h2 class="recent">最近</h2>
+    <div class="grid" id="recentGrid">
+      <div class="card is-note" data-note="随手记"><span class="kicker">库根</span><strong>随手记</strong><span class="line">放在库根目录、不属于任何房间的笔记，以前在书桌上完全隐形，现在按时间正常进「最近」。</span><button class="copybtn" title="复制这篇的链接"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button></div>
+      <div class="card is-note" data-note="2026-09-12"><span class="kicker">日记</span><strong>今天把书桌插件装上了，第一次打开的时候愣了一下——原来我的库里有这么多东西是我忘了的。</strong><button class="copybtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button></div>
+      <div class="card is-note" data-note="播客里提到的那本书"><span class="kicker">收件箱</span><strong>播客里提到的那本书</strong><span class="line">《如何阅读一本书》里说检视阅读和分析阅读是两件事，我一直混着做，所以读得慢。</span><button class="copybtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button></div>
+      <div class="card is-note" data-note="2026-09-12 0830"><span class="kicker">收件箱</span><strong>刚在地铁上想到的：笔记软件真正的入口不该是文件夹，而是「我上次停在哪」。</strong><button class="copybtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button></div>
+      <div class="card is-note" data-note="为什么文件夹是个坏的入口"><span class="kicker">草稿</span><strong>为什么文件夹是个坏的入口</strong><span class="line">文件夹要求你在打开之前就知道自己要找什么。可大多数时候，我们打开笔记软件是因为不知道。</span><button class="copybtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button></div>
+      <div class="card is-note" data-note="开头写不出来怎么办"><span class="kicker">写作</span><strong>开头写不出来怎么办</strong><span class="line">先写第二段。开头是写给读者的，而你还没想清楚要带他去哪。</span><button class="copybtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button></div>
+    </div>
+
+    <div class="legend" id="legend">
+      <div class="legend-row" data-spot="#recentGrid"><b>①</b><span>「最近」3 张 → 6 张，两行整，纯按修改时间新在前。不加组标题，哪间房看左上角小字就知道，页面还是极简的。</span></div>
+      <div class="legend-row" data-spot='[data-note="随手记"]'><b>②</b><span>不属于任何房间的笔记（比如库根散文件）不再隐形：照常参与时间排序，左上角标「库根」或所在文件夹名。这张「随手记」是模拟的——你测试库根目录现在没有散文件。</span></div>
+      <div class="legend-row" data-spot="#countWriting"><b>③</b><span>卡片右上角数字统一成一个含义：里面有几篇笔记。01-写作 以前显示 2（数的是子房间「草稿」「已发布」两个），现在显示 4（里面的笔记总数）。分组卡会递归加总所有子房间的笔记。</span></div>
+      <div class="legend-row"><b>　</b><span>05-归档 是淡化房间，照旧：卡片变淡、没有数字、里面的笔记不进「最近」。搜索框不动。</span></div>
+      <div class="legend-row"><b>↖</b><span style="color:var(--mute)">把鼠标放到带 ①②③ 的条目上，画面上对应的位置会亮一圈；点一下可以固定住，再点取消。</span></div>
+    </div>
+  </div>
+
+  <!-- ================= 预览前后对比 ================= -->
+  <h2 class="sec">二、卡片预览断句（前后对比）</h2>
+  <p class="secdesc">用你主库里真实出问题的两篇笔记对比。新规则：凑完整句子、最多 60 字；一句话就超 60 才硬切并加省略号；行尾的块引用编号（怪空格的来源）删掉。</p>
+  <div class="vs">
+    <div class="vcol">
+      <h3>现在<span class="tag old">48 字硬切</span></h3>
+      <div class="card is-note"><span class="kicker">收件</span><strong>Untitled 1</strong><span class="line">Tao，不用“买 OSS 套餐”。先开通 OSS，默认按量付费：创建 Bucket 免费，有文件</span></div>
+      <div style="height:14px"></div>
+      <div class="card is-note"><span class="kicker">文学</span><strong>我在岛屿读书</strong><span class="line">读书的启蒙之作<span class="strange"> ^409636739-7Z3P7UW9S</span></span></div>
+    </div>
+    <div class="vcol">
+      <h3>改后<span class="tag new">整句截断</span></h3>
+      <div class="card is-note"><span class="kicker">收件</span><strong>Untitled 1</strong><span class="line">Tao，不用“买 OSS 套餐”。先开通 OSS，默认按量付费：创建 Bucket 免费，有文件才收钱。</span></div>
+      <div style="height:14px"></div>
+      <div class="card is-note"><span class="kicker">文学</span><strong>我在岛屿读书</strong><span class="line">读书的启蒙之作</span></div>
+    </div>
+  </div>
+  <p class="overflow-note">左边第一张断在“有文件”半截话上；左边第二张尾巴上那串 <span class="strange">^编号</span> 就是怪空格的真实来源——Obsidian 的块引用编号被当成正文带进了预览。我扫了你的主库：362 篇会被切半截，块引用编号这种至少 1 篇，改完都干净。</p>
+
+  <!-- ================= 标签栏前后对比 ================= -->
+  <h2 class="sec">三、打开笔记不堆标签（前后对比）</h2>
+  <p class="secdesc">在上面的「最近」里点任意一张笔记卡，看右边标签栏怎么变。</p>
+  <div class="vs">
+    <div class="vcol">
+      <h3>现在<span class="tag old">每篇一个新标签</span></h3>
+      <div class="tabstrip">
+        <div class="tab">格物成栖 <span class="x">✕</span></div>
+        <div class="tab">播客里提到的那本书 <span class="x">✕</span></div>
+        <div class="tab">2026-09-12 <span class="x">✕</span></div>
+        <div class="tab">为什么文件夹是个坏… <span class="x">✕</span></div>
+        <div class="tab">开头写不出来怎么办 <span class="x">✕</span></div>
+        <div class="tab">随手记 <span class="x">✕</span></div>
+      </div>
+      <div class="tabbody">点一篇多一个标签，越堆越多，书桌被挤到后面，回书桌要在标签堆里找。</div>
+    </div>
+    <div class="vcol">
+      <h3>改后<span class="tag new">固定一个阅读标签</span></h3>
+      <div class="tabstrip">
+        <div class="tab" id="deskTab">格物成栖 <span class="x">✕</span></div>
+        <div class="tab active" id="readTab">播客里提到的那本书 <span class="x">✕</span></div>
+      </div>
+      <div class="tabbody" id="readBody"><b>播客里提到的那本书</b><br>书桌上点的笔记都在这一个标签里换着开。点左边「格物成栖」标签，一下就回书桌。</div>
+    </div>
+  </div>
+  <p class="overflow-note">代价说清楚：开第二篇会顶掉第一篇（旧的在标签内的后退箭头里还能找回）；想两篇并排看要自己手动拖分屏。另外原有的「Open desk」命令本来就能一键聚焦书桌标签，想绑快捷键随时可绑，这次不加新按钮、不钉标签。</p>
+
+</div>
+
+<script>
+const themeBtn = document.getElementById('themeBtn');
+themeBtn.addEventListener('click', () => {
+  const dark = document.body.classList.toggle('dark');
+  themeBtn.textContent = dark ? '切到浅色' : '切到深色';
+});
+const annoBtn = document.getElementById('annoBtn');
+annoBtn.addEventListener('click', () => {
+  const off = document.getElementById('legend').style.display === 'none';
+  document.getElementById('legend').style.display = off ? '' : 'none';
+  annoBtn.textContent = off ? '隐藏说明清单' : '显示说明清单';
+});
+const pinned = new Set();
+document.querySelectorAll('.legend-row[data-spot]').forEach(row => {
+  const target = () => document.querySelector(row.dataset.spot);
+  row.addEventListener('mouseenter', () => { const t = target(); if (t) t.classList.add('spot'); });
+  row.addEventListener('mouseleave', () => {
+    const t = target();
+    if (t && !pinned.has(row)) t.classList.remove('spot');
+  });
+  row.addEventListener('click', () => {
+    const t = target();
+    if (!t) return;
+    if (pinned.has(row)) { pinned.delete(row); row.classList.remove('is-pin'); t.classList.remove('spot'); }
+    else { pinned.add(row); row.classList.add('is-pin'); t.classList.add('spot'); }
+  });
+});
+const readTab = document.getElementById('readTab');
+const readBody = document.getElementById('readBody');
+document.querySelectorAll('#recentGrid .card').forEach(c => {
+  c.addEventListener('click', () => {
+    const name = c.dataset.note;
+    readTab.innerHTML = name + ' <span class="x">✕</span>';
+    readTab.classList.add('active');
+    document.getElementById('deskTab').classList.remove('active');
+    const line = c.querySelector('.line');
+    readBody.innerHTML = '<b>' + name + '</b><br>' + (line ? line.textContent : '（这篇没有预览行）') + '<br><span style="opacity:.7">← 标签还是这一个，只是里面的笔记换了。点「格物成栖」回书桌。</span>';
+    readBody.scrollIntoView({behavior:'smooth', block:'nearest'});
+  });
+});
+document.getElementById('deskTab').addEventListener('click', () => {
+  document.getElementById('deskTab').classList.add('active');
+  readTab.classList.remove('active');
+});
+</script>
+</body>
+</html>

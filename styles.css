@@ -168,54 +168,16 @@ body.an-tou-look.theme-dark .an-tou-view .an-tou-add {
     0 10px 26px -12px rgba(28, 42, 38, 0.22);
 }
 
-/* 甲：日期下面那行安静小字（加一张卡片） */
-.an-tou-quiet-row {
-  margin: 0 0 2px;
-}
-
-.an-tou-view .desk-quiet-add {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 2px 0 2px 13px;
-  border: none;
-  background: none;
-  font: inherit;
-  font-size: 13px;
-  letter-spacing: 0.01em;
-  color: var(--desk-mute);
-  opacity: 0.75;
-  cursor: pointer;
-  transition: color 0.2s ease, opacity 0.2s ease;
-}
-
-.an-tou-view .desk-quiet-add:hover,
-.an-tou-view .desk-quiet-add:focus-visible {
-  color: var(--desk-ink);
-  opacity: 1;
-  outline: none;
-}
-
-.an-tou-view .desk-quiet-plus {
-  flex: none;
-  width: 14px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--desk-serif);
-  font-size: 15px;
-  line-height: 1;
-  color: var(--add-accent);
-  opacity: 0.8;
-}
-
-/* 首页搜索行：淡淡的玻璃输入框，宽度由脚本对齐大标题 */
+/* 首页搜索行：玻璃输入框，至少能放下一段链接 */
 .an-tou-view .an-tou-search-row {
   display: flex;
   align-items: center;
   gap: 8px;
   margin: 10px 0 0;
   padding: 8px 12px;
+  box-sizing: border-box;
+  width: min(100%, 480px);
+  min-width: min(100%, 280px);
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.5);
   background: rgba(255, 255, 255, 0.26);
@@ -500,6 +462,7 @@ body.an-tou-look.theme-dark .an-tou-view .desk-card:focus-visible {
   min-height: 132px;
   justify-content: flex-start;
   padding-top: 20px;
+  padding-bottom: 40px;
   transform: none;
 }
 .an-tou-view .desk-card.is-note:hover {
@@ -526,7 +489,8 @@ body.an-tou-look.theme-dark .an-tou-view .desk-card:focus-visible {
 
 .an-tou-view .desk-copy {
   position: absolute;
-  top: 12px;
+  top: auto;
+  bottom: 12px;
   right: 12px;
   display: flex;
   align-items: center;
@@ -538,17 +502,21 @@ body.an-tou-look.theme-dark .an-tou-view .desk-card:focus-visible {
   border-radius: 9px;
   background: transparent;
   color: var(--desk-mute);
-  opacity: 0.4;
+  opacity: 0;
   cursor: pointer;
   transition: opacity 0.2s ease, background 0.2s ease;
 }
 
+.an-tou-view .desk-card:hover .desk-copy,
+.an-tou-view .desk-card:focus-within .desk-copy,
 .an-tou-view .desk-copy:hover,
 .an-tou-view .desk-copy:focus-visible {
   opacity: 1;
   background: rgba(0, 0, 0, 0.06);
 }
 
+body.an-tou-look.theme-dark .an-tou-view .desk-card:hover .desk-copy,
+body.an-tou-look.theme-dark .an-tou-view .desk-card:focus-within .desk-copy,
 body.an-tou-look.theme-dark .an-tou-view .desk-copy:hover,
 body.an-tou-look.theme-dark .an-tou-view .desk-copy:focus-visible {
   background: rgba(255, 255, 255, 0.12);

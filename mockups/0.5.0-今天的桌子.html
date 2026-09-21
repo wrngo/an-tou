@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiet Desk 0.5.0 效果稿 · 今天的桌子</title>
+<style>
+:root {
+  --ink: #1c2a26;
+  --mute: #6b7a76;
+  --accent: #2bbbad;
+  --card-border: rgba(255,255,255,0.72);
+  --card-bg: rgba(255,255,255,0.42);
+  --card-bg-hover: rgba(255,255,255,0.66);
+  --card-inset: rgba(255,255,255,0.8);
+  --card-shadow: 0 18px 40px -24px rgba(28,42,38,0.28);
+  --wash:
+    radial-gradient(ellipse 120% 80% at 50% -8%, rgba(43,187,173,0.22), transparent 64%),
+    linear-gradient(180deg, #d3ebe5 0%, #cce6e0 100%);
+  --glass-border: rgba(255,255,255,0.5);
+  --glass-bg: rgba(255,255,255,0.26);
+  --tab-bg: rgba(255,255,255,0.35);
+  --tab-active: rgba(255,255,255,0.85);
+  --serif: "Songti SC","Iowan Old Style","New York",Georgia,serif;
+}
+body.dark {
+  --ink: #e4eeea;
+  --mute: #8a9a96;
+  --card-border: rgba(255,255,255,0.14);
+  --card-bg: rgba(255,255,255,0.07);
+  --card-bg-hover: rgba(255,255,255,0.12);
+  --card-inset: rgba(255,255,255,0.08);
+  --card-shadow: 0 18px 40px -24px rgba(0,0,0,0.5);
+  --wash:
+    radial-gradient(ellipse 80% 58% at 12% 0%, rgba(43,187,173,0.22), transparent 68%),
+    radial-gradient(ellipse 55% 48% at 88% 30%, rgba(43,187,173,0.12), transparent 62%),
+    radial-gradient(ellipse 70% 55% at 70% 100%, rgba(210,186,150,0.08), transparent 58%),
+    linear-gradient(180deg,#1a2220 0%,#121918 100%);
+  --glass-border: rgba(255,255,255,0.1);
+  --glass-bg: rgba(255,255,255,0.05);
+  --tab-bg: rgba(255,255,255,0.06);
+  --tab-active: rgba(255,255,255,0.16);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "PingFang SC",-apple-system,sans-serif;
+  color: var(--ink);
+  background: var(--wash);
+  background-attachment: fixed;
+  transition: color .3s ease;
+}
+.page { max-width: 1080px; margin: 0 auto; padding: 28px 32px 96px; }
+.mockhead { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.mockhead h1 { font-family: var(--serif); font-size: 26px; font-weight: 500; margin: 0; }
+.mockhead p { color: var(--mute); font-size: 13px; margin: 6px 0 0; max-width: 680px; line-height: 1.7; }
+.btnrow { display: flex; gap: 8px; }
+button.toggle {
+  border: 1px solid var(--glass-border); background: var(--glass-bg); color: var(--ink);
+  border-radius: 10px; padding: 7px 14px; font-size: 13px; cursor: pointer; font-family: inherit;
+}
+button.toggle:hover { background: var(--card-bg-hover); }
+
+h2.sec { font-family: var(--serif); font-size: 22px; font-weight: 500; letter-spacing: -0.02em; margin: 56px 0 4px; }
+p.secdesc { color: var(--mute); font-size: 13px; margin: 0 0 14px; line-height: 1.7; }
+
+.desk { position: relative; }
+.date-line { font-size: 12px; letter-spacing: .18em; color: var(--mute); margin: 0 0 2px; }
+.desk-title { font-family: var(--serif); font-size: clamp(28px,3.2vw,42px); font-weight: 500; letter-spacing: -0.02em; margin: 0 0 10px; }
+.add {
+  position: absolute; top: 28px; right: 0; width: 44px; height: 44px; border-radius: 50%;
+  border: 1px solid var(--glass-border); background: var(--glass-bg); color: var(--accent);
+  font-size: 22px; line-height: 1; cursor: pointer; font-family: var(--serif);
+}
+.add:hover { background: var(--card-bg-hover); }
+.search-row {
+  display: inline-flex; align-items: center; gap: 8px; margin: 4px 0 0; padding: 8px 12px;
+  border-radius: 14px; border: 1px solid var(--glass-border); background: var(--glass-bg);
+  color: var(--mute); font-size: 13px; min-width: 280px; width: min(100%, 480px);
+}
+.search-row .mag { color: var(--accent); opacity: .7; }
+
+.today {
+  display: grid; grid-template-columns: 1.05fr 1fr 1.15fr; gap: 16px 18px; margin: 22px 0 8px;
+}
+@media (max-width: 860px) { .today { grid-template-columns: 1fr; } }
+
+.card {
+  position: relative; display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start;
+  gap: 8px; min-height: 168px; padding: 22px 22px 18px; border-radius: 22px;
+  border: 1px solid var(--card-border); background: var(--card-bg);
+  box-shadow: var(--card-inset) 0 1px 0 inset, var(--card-shadow);
+  backdrop-filter: blur(28px) saturate(1.35); -webkit-backdrop-filter: blur(28px) saturate(1.35);
+  cursor: pointer; transition: background .25s ease, transform .25s ease, box-shadow .25s ease, opacity .25s ease;
+}
+.card:hover { background: var(--card-bg-hover); transform: translateY(-3px); }
+.card.is-note { min-height: 132px; justify-content: flex-start; padding-top: 20px; padding-bottom: 40px; }
+.card.is-empty { min-height: 188px; }
+.card.is-quiet { opacity: .5; }
+.card.is-drop { outline: 2px solid var(--accent); outline-offset: 3px; }
+.kicker { font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--mute); min-height: 1.2em; }
+.count { position: absolute; top: 16px; right: 18px; font-family: var(--serif); font-size: 22px; font-weight: 500; opacity: .4; }
+.card strong {
+  font-family: var(--serif); font-size: 26px; font-weight: 500; letter-spacing: -0.01em; line-height: 1.2;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  word-break: break-word; overflow-wrap: anywhere; max-width: 100%;
+}
+.card.is-note strong, .card.hero-note strong { font-size: 22px; }
+.line {
+  font-size: 13px; line-height: 1.5; color: var(--mute); min-height: 2.6em;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  word-break: break-word; overflow-wrap: anywhere; max-width: 100%;
+}
+.card.is-note .line, .card.hero-note .line { min-height: 0; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.chip {
+  border: 1px solid var(--glass-border); background: var(--glass-bg); color: var(--ink);
+  border-radius: 999px; padding: 5px 12px; font-size: 12px; cursor: pointer; font-family: inherit;
+}
+.chip:hover { background: var(--card-bg-hover); color: var(--accent); }
+
+.rooms-label, .recent-label {
+  font-family: var(--serif); font-size: 18px; font-weight: 500; letter-spacing: -0.02em; margin: 28px 0 10px;
+}
+.rooms {
+  display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 10px 12px;
+}
+@media (max-width: 860px) { .rooms { grid-template-columns: repeat(3, minmax(0,1fr)); } }
+.card.mini {
+  min-height: 92px; padding: 14px 14px 12px; justify-content: flex-end; cursor: grab;
+}
+.card.mini strong { font-size: 16px; }
+.card.mini .line { min-height: 0; font-size: 12px; -webkit-line-clamp: 1; }
+.card.mini .count { font-size: 16px; top: 10px; right: 12px; }
+.card.mini.renaming { cursor: text; }
+.card.mini input.rename {
+  font-family: var(--serif); font-size: 16px; font-weight: 500; width: 100%;
+  border: 0; background: transparent; color: var(--ink); outline: none; padding: 0;
+}
+
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px 18px; margin: 0 0 8px; }
+@media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+
+.copybtn {
+  position: absolute; right: 12px; bottom: 12px; width: 26px; height: 26px; border-radius: 8px;
+  border: none; background: transparent; color: var(--mute); cursor: pointer; display: grid; place-items: center;
+  opacity: 0; transition: opacity .2s ease, background .2s ease;
+}
+.card:hover .copybtn, .copybtn:focus-visible, .copybtn.is-open { opacity: 1; }
+.copybtn:hover, .copybtn.is-open { background: rgba(0,0,0,.06); color: var(--ink); }
+body.dark .copybtn:hover, body.dark .copybtn.is-open { background: rgba(255,255,255,.12); }
+.copybtn svg { width: 14px; height: 14px; }
+.card.hero-note { overflow: visible; }
+.copymenu {
+  display: none; position: absolute; right: 8px; top: calc(100% + 6px); bottom: auto; min-width: 148px;
+  padding: 6px; border-radius: 12px; border: 1px solid var(--glass-border);
+  background: var(--card-bg-hover); box-shadow: var(--card-shadow); z-index: 6;
+}
+.copymenu.show { display: grid; gap: 2px; }
+.copymenu button {
+  border: 0; background: transparent; color: var(--ink); text-align: left;
+  padding: 7px 10px; border-radius: 8px; font: inherit; font-size: 12px; cursor: pointer;
+}
+.copymenu button:hover { background: rgba(43,187,173,.16); }
+
+.inbox-list { display: none; width: 100%; margin-top: 4px; }
+.inbox-list.show { display: grid; gap: 6px; }
+.inbox-list div {
+  font-size: 12px; color: var(--ink); padding: 6px 8px; border-radius: 10px;
+  background: rgba(255,255,255,.28); line-height: 1.45;
+}
+body.dark .inbox-list div { background: rgba(255,255,255,.06); }
+
+.toast {
+  position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(12px);
+  opacity: 0; pointer-events: none; padding: 10px 16px; border-radius: 12px;
+  background: var(--ink); color: #f3faf8; font-size: 13px; max-width: min(520px, 90vw);
+  transition: opacity .2s ease, transform .2s ease; z-index: 20;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.spot {
+  outline: 2px dashed var(--accent);
+  outline-offset: 5px;
+  border-radius: 22px;
+  background: rgba(43,187,173,0.07);
+}
+.legend { margin: 18px 0 0; padding: 8px 10px; border-radius: 14px; border: 1px solid var(--glass-border); background: var(--glass-bg); font-size: 13px; color: var(--ink); }
+.legend-row { display: flex; gap: 10px; padding: 7px 10px; border-radius: 10px; line-height: 1.75; cursor: default; transition: background .18s ease; }
+.legend-row[data-spot] { cursor: pointer; }
+.legend-row[data-spot]:hover { background: rgba(43,187,173,0.12); }
+.legend-row b { color: var(--accent); font-weight: 600; flex: none; }
+.legend-row.is-pin { background: rgba(43,187,173,0.16); }
+
+.vs { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 14px; }
+@media (max-width: 760px) { .vs { grid-template-columns: 1fr; } }
+.vcol h3 { font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--mute); margin: 0 0 10px; font-weight: 500; }
+.tag { display: inline-block; border-radius: 6px; padding: 1px 8px; font-size: 11px; margin-left: 8px; letter-spacing: 0; }
+.tag.old { background: rgba(232,86,79,.15); color: #e8564f; }
+.tag.new { background: rgba(43,187,173,.18); color: #178a7f; }
+body.dark .tag.new { color: #4fd6c8; }
+.overflow-note { font-size: 12px; color: var(--mute); margin-top: 8px; line-height: 1.7; }
+.ghost {
+  position: fixed; pointer-events: none; z-index: 30; opacity: .85;
+  width: 140px; padding: 10px 12px; border-radius: 14px;
+  background: var(--card-bg-hover); border: 1px solid var(--card-border);
+  font-family: var(--serif); font-size: 14px;
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="mockhead">
+    <div>
+      <h1>Quiet Desk 0.5.0 效果稿</h1>
+      <p>首页从「六张房间卡」改成「今天从哪开始」。下面用测试库的真实笔记排。画面默认干净，改动说明在清单里：鼠标放到带编号的条目上，对应位置才亮一圈。这页只是效果稿，你回「可以」我才改插件代码。</p>
+    </div>
+    <div class="btnrow">
+      <button class="toggle" id="themeBtn">切到深色</button>
+      <button class="toggle" id="annoBtn">隐藏说明清单</button>
+    </div>
+  </div>
+
+  <h2 class="sec">一、今天的桌子（改完后的首页）</h2>
+  <p class="secdesc">上面三张是今天要用的：日记、还没处理的收件箱、上次读到一半的那篇。六个房间还在，缩成一排，不再占英雄区。归档继续淡，不进最近。</p>
+
+  <div class="desk" id="desk">
+    <div class="date-line">2026 年 9 月 21 日 · 星期一</div>
+    <div class="desk-title">格物成栖</div>
+    <button class="add" id="jotBtn" type="button" aria-label="记一条">+</button>
+    <div class="search-row"><span class="mag">⌕</span>搜一下…</div>
+
+    <div class="today">
+      <div class="card is-empty" id="todayCard">
+        <span class="kicker">今天</span>
+        <strong>2026-09-21</strong>
+        <span class="line">还没写。点这里从空白页开始，文件名就是今天的日期。</span>
+      </div>
+      <div class="card" id="inboxCard">
+        <span class="kicker">未处理</span>
+        <span class="count">3</span>
+        <strong>收件箱</strong>
+        <span class="line" id="inboxLine">播客里提到的那本书 · 地铁上那条 · 卡片笔记的一个疑问</span>
+        <div class="inbox-list" id="inboxList">
+          <div>播客里提到的那本书<br><span style="color:var(--mute)">下次试试先花十分钟只看目录和小标题。</span></div>
+          <div>2026-09-12 0830<br><span style="color:var(--mute)">笔记软件真正的入口不该是文件夹，而是「我上次停在哪」。</span></div>
+          <div>关于卡片笔记的一个疑问<br><span style="color:var(--mute)">一个跨越三个领域的想法该放在哪里？</span></div>
+        </div>
+      </div>
+      <div class="card hero-note" id="continueCard">
+        <span class="kicker" id="continueKicker">上次停在</span>
+        <strong id="continueTitle">为什么文件夹是个坏的入口</strong>
+        <span class="line" id="continueLine">文件夹要求你在打开之前就知道自己要找什么。可大多数时候，我们打开笔记软件是因为不知道。</span>
+        <div class="actions">
+          <button class="chip" id="resumeBtn" type="button">继续上次</button>
+          <button class="chip" id="drawBtn" type="button">抽一张</button>
+        </div>
+        <button class="copybtn" id="continueCopy" type="button" title="复制这篇的链接">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        </button>
+        <div class="copymenu" id="copyMenu">
+          <button type="button" data-kind="desk">书桌链接</button>
+          <button type="button" data-kind="wiki">库内 [[wikilink]]</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="rooms-label">房间</div>
+    <div class="rooms" id="rooms">
+      <div class="card mini" data-room="00-收件箱"><span class="kicker">收件箱</span><span class="count">3</span><strong>00-收件箱</strong></div>
+      <div class="card mini" data-room="01-写作"><span class="kicker">写作</span><span class="count">4</span><strong>01-写作</strong></div>
+      <div class="card mini" data-room="02-项目"><span class="kicker">项目</span><span class="count">3</span><strong>02-项目</strong></div>
+      <div class="card mini" data-room="03-知识库"><span class="kicker">知识库</span><span class="count">8</span><strong>03-知识库</strong></div>
+      <div class="card mini" data-room="04-日记"><span class="kicker">日记</span><span class="count">3</span><strong>04-日记</strong></div>
+      <div class="card mini is-quiet" data-room="05-归档"><span class="kicker">归档</span><strong>05-归档</strong></div>
+    </div>
+
+    <div class="recent-label">最近</div>
+    <div class="grid" id="recentGrid">
+      <div class="card is-note" data-note="随手记"><span class="kicker">库根</span><strong>随手记</strong><span class="line">放在库根目录、不属于任何房间的笔记。</span><button class="copybtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button></div>
+      <div class="card is-note" data-note="2026-09-12"><span class="kicker">日记</span><strong>2026-09-12</strong><span class="line">今天把书桌插件装上了，第一次打开的时候愣了一下。</span><button class="copybtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button></div>
+      <div class="card is-note" data-note="开头写不出来怎么办"><span class="kicker">写作</span><strong>开头写不出来怎么办</strong><span class="line">先写第二段。开头是写给读者的，而你还没想清楚要带他去哪。</span><button class="copybtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button></div>
+    </div>
+
+    <div class="legend" id="legend">
+      <div class="legend-row" data-spot="#todayCard"><b>①</b><span>今天的日记永远在第一张。有就打开，没有就新建日期文件。不再让你先点进「04-日记」再找今天。</span></div>
+      <div class="legend-row" data-spot="#inboxCard"><b>②</b><span>收件箱只报「还没处理的」。点开能看见那几篇。处理完的不再占这张卡。</span></div>
+      <div class="legend-row" data-spot="#continueCard"><b>③</b><span>上次读到一半的那篇。知识库这类房间不把八张卡片全摊开，改成「继续上次」或「抽一张」。</span></div>
+      <div class="legend-row" data-spot="#rooms"><b>④</b><span>六个房间还在，缩成一排。双击名称可以改显示名；按住一张拖到另一张上，表示收进那个房间。这两项这版只在效果稿里，代码先不动。</span></div>
+      <div class="legend-row" data-spot="#recentGrid"><b>⑤</b><span>最近还在，但不再是首页主角。归档里的笔记照旧不出现。</span></div>
+      <div class="legend-row" data-spot="#copyMenu"><b>⑥</b><span>复制按钮悬停才出现。点开有两样：书桌链接（带着房间打开）和库内 [[wikilink]]。</span></div>
+      <div class="legend-row"><b>↖</b><span style="color:var(--mute)">把鼠标放到带编号的条目上，画面上对应位置会亮一圈；点一下可以固定住。</span></div>
+    </div>
+  </div>
+
+  <h2 class="sec">二、和现在的首页比</h2>
+  <p class="secdesc">左边是 0.4.0：一打开就是文件夹墙。右边是这张效果稿要变成的入口。</p>
+  <div class="vs">
+    <div class="vcol">
+      <h3>现在<span class="tag old">房间当首页</span></h3>
+      <div class="grid" style="grid-template-columns:1fr 1fr; gap:10px;">
+        <div class="card mini"><span class="kicker">收件箱</span><span class="count">3</span><strong>00-收件箱</strong></div>
+        <div class="card mini"><span class="kicker">写作</span><span class="count">4</span><strong>01-写作</strong></div>
+        <div class="card mini"><span class="kicker">项目</span><span class="count">3</span><strong>02-项目</strong></div>
+        <div class="card mini"><span class="kicker">知识库</span><span class="count">8</span><strong>03-知识库</strong></div>
+        <div class="card mini"><span class="kicker">日记</span><span class="count">3</span><strong>04-日记</strong></div>
+        <div class="card mini is-quiet"><span class="kicker">归档</span><strong>05-归档</strong></div>
+      </div>
+    </div>
+    <div class="vcol">
+      <h3>改后<span class="tag new">今天从哪开始</span></h3>
+      <div class="card is-note" style="min-height:auto;margin-bottom:10px;"><span class="kicker">今天</span><strong>2026-09-21</strong><span class="line">还没写。</span></div>
+      <div class="card is-note" style="min-height:auto;margin-bottom:10px;"><span class="kicker">未处理</span><strong>收件箱 3 条</strong><span class="line">播客那本 · 地铁上那条 · 卡片笔记疑问</span></div>
+      <div class="card is-note" style="min-height:auto;"><span class="kicker">上次停在</span><strong>为什么文件夹是个坏的入口</strong><span class="line">继续上次 · 抽一张</span></div>
+    </div>
+  </div>
+  <p class="overflow-note">房间没有删，只是不当第一眼。点「01-写作」进去，草稿和《开头写不出来怎么办》还是 0.4.0 已经修好的那一层。状态栏、ribbon、把「00-」从显示名里砍掉，这版仍不做。</p>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const draws = [
+  { kicker: "知识库 · 抽到", title: "卡片盒笔记法", line: "卢曼的卡片盒不是分类系统，是一台对话机器。每张新卡片都要接到已有的某张上。" },
+  { kicker: "知识库 · 抽到", title: "费曼学习法", line: "检验你懂不懂一件事的唯一办法，是把它讲给一个完全不懂的人听，中途不许用行话。" },
+  { kicker: "知识库 · 抽到", title: "心流", line: "心流出现在能力和挑战刚好匹配的那条窄缝里。太难了焦虑，太简单了无聊。" },
+  { kicker: "上次停在", title: "为什么文件夹是个坏的入口", line: "文件夹要求你在打开之前就知道自己要找什么。可大多数时候，我们打开笔记软件是因为不知道。" }
+];
+let drawI = 3;
+function toast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => el.classList.remove("show"), 2200);
+}
+
+document.getElementById("themeBtn").addEventListener("click", () => {
+  const dark = document.body.classList.toggle("dark");
+  document.getElementById("themeBtn").textContent = dark ? "切到浅色" : "切到深色";
+});
+document.getElementById("annoBtn").addEventListener("click", () => {
+  const legend = document.getElementById("legend");
+  const off = legend.style.display === "none";
+  legend.style.display = off ? "" : "none";
+  document.getElementById("annoBtn").textContent = off ? "隐藏说明清单" : "显示说明清单";
+});
+
+document.getElementById("jotBtn").addEventListener("click", () => {
+  toast("效果稿：会直接在收件箱写下一条带时间戳的笔记，不弹命名框。这是 0.4.0 已经做完的。");
+});
+document.getElementById("todayCard").addEventListener("click", () => {
+  toast("效果稿：打开今天的日记。没有就新建 2026-09-21.md。");
+});
+document.getElementById("inboxCard").addEventListener("click", (e) => {
+  if (e.target.closest(".chip")) return;
+  document.getElementById("inboxList").classList.toggle("show");
+});
+document.getElementById("resumeBtn").addEventListener("click", (e) => {
+  e.stopPropagation();
+  toast("效果稿：接着打开「" + document.getElementById("continueTitle").textContent + "」");
+});
+document.getElementById("drawBtn").addEventListener("click", (e) => {
+  e.stopPropagation();
+  drawI = (drawI + 1) % draws.length;
+  const item = draws[drawI];
+  document.getElementById("continueKicker").textContent = item.kicker;
+  document.getElementById("continueTitle").textContent = item.title;
+  document.getElementById("continueLine").textContent = item.line;
+  toast("抽到「" + item.title + "」。知识库不再把八张卡一次性摊在首页。");
+});
+
+const copyMenu = document.getElementById("copyMenu");
+const continueCopy = document.getElementById("continueCopy");
+continueCopy.addEventListener("click", (e) => {
+  e.stopPropagation();
+  continueCopy.classList.toggle("is-open");
+  copyMenu.classList.toggle("show");
+});
+copyMenu.addEventListener("click", (e) => {
+  e.stopPropagation();
+  const kind = e.target.dataset.kind;
+  if (!kind) return;
+  const title = document.getElementById("continueTitle").textContent;
+  toast(kind === "wiki"
+    ? "效果稿：复制 [[" + title + "]]"
+    : "效果稿：复制 obsidian://quiet-desk?vault=test&note=…（带着房间打开）");
+  copyMenu.classList.remove("show");
+  continueCopy.classList.remove("is-open");
+});
+document.querySelectorAll("#recentGrid .copybtn").forEach((btn) => {
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const card = btn.closest(".card");
+    copyMenu.classList.add("show");
+    continueCopy.classList.add("is-open");
+    const title = card.querySelector("strong").textContent;
+    document.getElementById("continueTitle").textContent = title;
+    toast("点右上那张「继续」卡的链接按钮，选书桌链接或 [[wikilink]]。");
+  });
+});
+
+const pinned = new Set();
+document.querySelectorAll(".legend-row[data-spot]").forEach((row) => {
+  const target = () => document.querySelector(row.dataset.spot);
+  row.addEventListener("mouseenter", () => { const t = target(); if (t) t.classList.add("spot"); });
+  row.addEventListener("mouseleave", () => {
+    const t = target();
+    if (t && !pinned.has(row)) t.classList.remove("spot");
+  });
+  row.addEventListener("click", () => {
+    const t = target();
+    if (!t) return;
+    if (pinned.has(row)) { pinned.delete(row); row.classList.remove("is-pin"); t.classList.remove("spot"); }
+    else { pinned.add(row); row.classList.add("is-pin"); t.classList.add("spot"); }
+  });
+});
+
+document.querySelectorAll("#rooms .card.mini").forEach((card) => {
+  card.addEventListener("dblclick", (e) => {
+    e.preventDefault();
+    const strong = card.querySelector("strong");
+    if (!strong || card.querySelector("input.rename")) return;
+    const input = document.createElement("input");
+    input.className = "rename";
+    input.value = strong.textContent;
+    card.classList.add("renaming");
+    strong.replaceWith(input);
+    input.focus();
+    input.select();
+    const done = () => {
+      const next = document.createElement("strong");
+      next.textContent = input.value.trim() || input.value;
+      input.replaceWith(next);
+      card.classList.remove("renaming");
+      toast("效果稿：显示名改成「" + next.textContent + "」。文件夹路径不动。代码这版不做。");
+    };
+    input.addEventListener("blur", done);
+    input.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter") input.blur();
+      if (ev.key === "Escape") { input.value = strong.textContent; input.blur(); }
+    });
+  });
+});
+
+let drag = null;
+document.querySelectorAll("#rooms .card.mini").forEach((card) => {
+  card.addEventListener("pointerdown", (e) => {
+    if (e.target.closest("input") || e.detail === 2) return;
+    drag = { card, x: e.clientX, y: e.clientY, ghost: null, started: false };
+  });
+});
+window.addEventListener("pointermove", (e) => {
+  if (!drag) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (!drag.started && dx * dx + dy * dy < 64) return;
+  if (!drag.started) {
+    drag.started = true;
+    drag.ghost = document.createElement("div");
+    drag.ghost.className = "ghost";
+    drag.ghost.textContent = drag.card.querySelector("strong").textContent;
+    document.body.appendChild(drag.ghost);
+  }
+  drag.ghost.style.left = e.clientX + 8 + "px";
+  drag.ghost.style.top = e.clientY + 8 + "px";
+  document.querySelectorAll("#rooms .card.mini").forEach((c) => c.classList.remove("is-drop"));
+  const over = document.elementFromPoint(e.clientX, e.clientY)?.closest("#rooms .card.mini");
+  if (over && over !== drag.card) over.classList.add("is-drop");
+});
+window.addEventListener("pointerup", (e) => {
+  if (!drag) return;
+  const over = document.elementFromPoint(e.clientX, e.clientY)?.closest("#rooms .card.mini");
+  if (drag.started && over && over !== drag.card) {
+    toast("效果稿：把「" + drag.card.querySelector("strong").textContent + "」收进「" + over.querySelector("strong").textContent + "」。代码这版不做。");
+  }
+  document.querySelectorAll("#rooms .card.mini").forEach((c) => c.classList.remove("is-drop"));
+  drag.ghost?.remove();
+  drag = null;
+});
+</script>
+</body>
+</html>
