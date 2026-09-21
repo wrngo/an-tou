@@ -534,7 +534,8 @@ function parseDeskQuery(q: string): string | null {
 	if (!raw) return null;
 	const wiki = raw.match(/^\[\[([^\]|#]+)(?:\|[^\]]*)?(?:#[^\]]*)?\]\]$/);
 	if (wiki) return wiki[1].trim();
-	if (/^obsidian:\/\//i.test(raw)) {
+	if (/^[a-z][a-z0-9+.-]*:\/\//i.test(raw)) {
+		if (!/^obsidian:\/\//i.test(raw)) return null;
 		const qMark = raw.indexOf("?");
 		if (qMark < 0) return null;
 		const params = new URLSearchParams(raw.slice(qMark + 1));
@@ -901,6 +902,10 @@ class DeskView extends ItemView {
 
 	safeRender() {
 		if (this.current().type === "welcome") return;
+		if (this.searchEls && document.activeElement === this.searchEls.input) {
+			this.dirty = true;
+			return;
+		}
 		if (!this.isShownNow()) {
 			this.dirty = true;
 			if (this._tid) {
@@ -1362,6 +1367,7 @@ class DeskView extends ItemView {
 				placeholder: t.searchPlaceholder,
 				autocomplete: "off",
 				spellcheck: "false",
+				enterkeyhint: "search",
 			},
 		});
 		const clearBtn = searchRow.createEl("button", {
@@ -1379,25 +1385,53 @@ class DeskView extends ItemView {
 			body: searchBody,
 		};
 
-		let searchTimer = 0;
-		input.addEventListener("input", () => {
-			window.clearTimeout(searchTimer);
-			searchTimer = window.setTimeout(() => void this.applySearch(), 150);
+		const grab = () => {
+			this.app.workspace.setActiveLeaf(this.leaf, { focus: true });
+			input.focus();
+		};
+		searchRow.addEventListener("pointerdown", (e) => {
+			if (e.target === clearBtn) return;
+			if (e.target !== input) e.preventDefault();
+			grab();
 		});
+
+		let searchTimer = 0;
+		const schedule = (jump: boolean) => {
+			window.clearTimeout(searchTimer);
+			searchTimer = window.setTimeout(() => void this.applySearch(jump), jump ? 0 : 150);
+		};
+		input.addEventListener("input", (e) => {
+			if ((e as InputEvent).isComposing) return;
+			const kind = (e as InputEvent).inputType || "";
+			schedule(kind === "insertFromPaste" || kind === "insertFromDrop");
+		});
+		input.addEventListener("compositionend", () => schedule(false));
 		input.addEventListener("keydown", (e) => {
-			if (e.key !== "Escape") return;
-			e.preventDefault();
-			this.clearSearch();
+			e.stopPropagation();
+			if (e.isComposing) return;
+			if (e.key === "Escape") {
+				e.preventDefault();
+				this.clearSearch();
+				return;
+			}
+			if (e.key === "Enter") {
+				e.preventDefault();
+				window.clearTimeout(searchTimer);
+				void this.applySearch(true);
+			}
 		});
 		clearBtn.addEventListener("click", () => {
 			this.clearSearch();
-			input.focus();
+			grab();
 		});
 		return pageBody;
 	}
 
 	focusSearch() {
-		this.searchEls?.input.focus();
+		const input = this.searchEls?.input;
+		if (!input) return;
+		this.app.workspace.setActiveLeaf(this.leaf, { focus: true });
+		input.focus();
 	}
 
 	async searchEntry(file: TFile): Promise<NoteCopy> {
@@ -1445,7 +1479,7 @@ class DeskView extends ItemView {
 		els.input.blur();
 	}
 
-	async applySearch() {
+	async applySearch(jump = false) {
 		const els = this.searchEls;
 		if (!els) return;
 		const q = els.input.value.trim();
@@ -1463,14 +1497,42 @@ class DeskView extends ItemView {
 		if (linked) {
 			const file = resolveNote(this.app, linked);
 			if (file) {
-				els.input.value = "";
-				els.input.classList.remove("has-q");
-				els.clearBtn.classList.remove("show");
-				els.row.classList.remove("is-live");
-				els.home.removeClass("hidden");
-				els.body.addClass("hidden");
+				if (jump) {
+					els.input.value = "";
+					els.input.classList.remove("has-q");
+					els.clearBtn.classList.remove("show");
+					els.row.classList.remove("is-live");
+					els.home.removeClass("hidden");
+					els.body.addClass("hidden");
+					els.body.empty();
+					await this.plugin.openFromLink({ note: file.path });
+					return;
+				}
+				els.home.addClass("hidden");
+				els.body.removeClass("hidden");
 				els.body.empty();
-				await this.plugin.openFromLink({ note: file.path });
+				const t = this.copy();
+				const head = els.body.createEl("h2", {
+					cls: "desk-search-head",
+					text: t.searchHead(1) + " · ",
+				});
+				head.createEl("span", { cls: "q", text: "“" + q + "”" });
+				const grid = els.body.createDiv({ cls: "an-tou-grid" });
+				const copy = await this.searchEntry(file);
+				this.card(
+					grid,
+					{
+						title: copy.title,
+						line: copy.line,
+						note: true,
+						onCopy: () => {
+							void this.copyNoteLink(file);
+						},
+					},
+					() => {
+						void this.openNote(file);
+					}
+				);
 				return;
 			}
 		}
@@ -1487,6 +1549,7 @@ class DeskView extends ItemView {
 		});
 		const hits: { file: TFile; room?: Room }[] = [];
 		for (const file of this.app.vault.getMarkdownFiles()) {
+			if (stale()) return;
 			if (skipped(file.path, skip)) continue;
 			const entry = await this.searchEntry(file);
 			if (!entry.hay.includes(ql)) continue;
