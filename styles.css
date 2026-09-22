@@ -84,7 +84,7 @@ body.an-tou-serif .an-tou-view {
 
 .an-tou-view .an-tou-add {
   position: absolute;
-  top: calc(4px + clamp(28px, 3.2vw, 42px) * 0.625);
+  top: 2px;
   right: 0;
   z-index: 5;
   margin: 0;
@@ -347,11 +347,11 @@ body.theme-dark .an-tou-view .desk-search-clear:hover {
 
 .an-tou-view h1 {
   font-family: var(--desk-serif);
-  font-size: clamp(28px, 3.2vw, 42px);
+  font-size: 32px;
   font-weight: 500;
   letter-spacing: -0.02em;
   line-height: 1.25;
-  margin: 8px 0 10px;
+  margin: 2px 0 14px;
 }
 
 .an-tou-view h2 {
@@ -369,55 +369,24 @@ body.theme-dark .an-tou-view .desk-search-clear:hover {
 }
 
 .an-tou-view .an-tou-inner:has(.desk-date) .an-tou-add {
-  top: calc(28px + clamp(28px, 3.2vw, 42px) * 0.625);
+  top: 16px;
 }
 
 .an-tou-view .desk-date {
   margin: 0;
-  font-size: 12px;
-  letter-spacing: 0.18em;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
   color: var(--desk-mute);
 }
 
 .an-tou-view h2.desk-section {
-  font-size: 18px;
-  margin: 28px 0 10px;
-}
-
-.an-tou-today {
-  display: grid;
-  grid-template-columns: 1.05fr 1fr 1.15fr;
-  gap: 16px 18px;
-  margin: 22px 0 8px;
-}
-
-.an-tou-rooms {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 10px 12px;
-  margin: 0 0 8px;
-}
-
-.an-tou-today > *,
-.an-tou-rooms > * {
-  min-width: 0;
-}
-
-.an-tou-view .desk-card.is-mini {
-  min-height: 92px;
-  padding: 14px 12px 12px;
-  justify-content: flex-end;
-  cursor: grab;
-}
-
-.an-tou-view .desk-card.is-mini strong {
-  font-size: 16px;
-}
-
-.an-tou-view .desk-card.is-mini .desk-count {
-  font-size: 16px;
-  top: 10px;
-  right: 12px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--desk-mute);
+  margin: 28px 0 0;
 }
 
 .an-tou-view .desk-card.is-drop {
@@ -460,7 +429,7 @@ body.an-tou-look .an-tou-view .desk-chip {
   background: transparent;
   color: var(--desk-ink);
   font-family: var(--desk-serif);
-  font-size: 16px;
+  font-size: 22px;
   font-weight: 500;
   outline: none;
 }
@@ -503,8 +472,8 @@ body.an-tou-look .an-tou-view .desk-copy-menu {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: stretch;
-  gap: 16px 18px;
-  margin: 22px 0 8px;
+  gap: 14px;
+  margin: 14px 0 0;
 }
 
 .an-tou-grid > * {
@@ -521,11 +490,11 @@ body.an-tou-look .an-tou-view .desk-copy-menu {
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: flex-start;
   align-items: flex-start;
-  gap: 8px;
-  min-height: 168px;
-  padding: 22px 44px 18px 22px;
+  gap: 6px;
+  min-height: 156px;
+  padding: 18px 18px 16px;
   border-radius: 22px;
   border: 1px solid var(--background-modifier-border);
   background: var(--background-secondary);
@@ -593,10 +562,9 @@ body.an-tou-look.theme-dark .an-tou-view .desk-card:focus-visible {
 .an-tou-view .desk-card.is-still:hover { transform: none; }
 
 .an-tou-view .desk-card.is-note {
-  min-height: 132px;
+  min-height: 156px;
   justify-content: flex-start;
-  padding-top: 20px;
-  padding-bottom: 40px;
+  padding: 18px 18px 36px;
   transform: none;
 }
 .an-tou-view .desk-card.is-note:hover {
@@ -614,9 +582,9 @@ body.an-tou-look.theme-dark .an-tou-view .desk-card:focus-visible {
 .an-tou-view .desk-count {
   position: absolute;
   top: 16px;
-  right: 18px;
+  right: 16px;
   font-family: var(--desk-serif);
-  font-size: 22px;
+  font-size: 15px;
   font-weight: 500;
   opacity: 0.4;
 }
@@ -663,7 +631,7 @@ body.an-tou-look.theme-dark .an-tou-view .desk-copy:focus-visible {
 
 .an-tou-view .desk-card strong {
   font-family: var(--desk-serif);
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 500;
   letter-spacing: -0.02em;
   line-height: 1.2;
@@ -676,7 +644,7 @@ body.an-tou-look.theme-dark .an-tou-view .desk-copy:focus-visible {
   max-width: 100%;
 }
 
-.an-tou-view .desk-card.is-note strong { font-size: 20px; }
+.an-tou-view .desk-card.is-note strong { font-size: 22px; }
 
 .an-tou-view .desk-line {
   font-size: 13px;
@@ -887,8 +855,6 @@ body.an-tou-look.theme-dark .an-tou-view .desk-copy:focus-visible {
 @media (max-width: 880px) {
   .an-tou-view { padding: 20px 20px 40px; }
   .an-tou-grid { grid-template-columns: 1fr; }
-  .an-tou-today { grid-template-columns: 1fr; }
-  .an-tou-rooms { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .an-tou-view .desk-card.span-2 { grid-column: auto; }
 }
 

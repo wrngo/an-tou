@@ -1676,7 +1676,7 @@ class DeskView extends ItemView {
 		inner.createEl("h1", { text: title });
 		const homeBody = this.mountSearch(inner);
 
-		const todayGrid = homeBody.createDiv({ cls: "an-tou-today" });
+		const todayGrid = homeBody.createDiv({ cls: "an-tou-grid" });
 		const todayExisting = this.todayFile();
 		let todayCopy: NoteCopy | null = null;
 		if (todayExisting) {
@@ -1757,7 +1757,7 @@ class DeskView extends ItemView {
 			homeBody.createEl("p", { cls: "an-tou-lede", text: t.emptyRooms });
 		} else {
 			homeBody.createEl("h2", { cls: "desk-section", text: t.rooms });
-			const grid = homeBody.createDiv({ cls: "an-tou-rooms" });
+			const grid = homeBody.createDiv({ cls: "an-tou-grid" });
 			for (const room of rooms) {
 				const n = this.roomCount(room);
 				const count = room.quiet ? undefined : n;
@@ -1766,7 +1766,6 @@ class DeskView extends ItemView {
 					count,
 					title: room.name,
 					quiet: room.quiet,
-					mini: true,
 					live: true,
 				});
 				this.bindHomeRoom(el, room, () => this.openRoom(room, title));

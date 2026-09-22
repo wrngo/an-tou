@@ -1494,7 +1494,7 @@ var DeskView = class extends import_obsidian.ItemView {
     inner.createEl("p", { cls: "desk-date", text: deskDateLine(this.plugin.settings.uiLang) });
     inner.createEl("h1", { text: title });
     const homeBody = this.mountSearch(inner);
-    const todayGrid = homeBody.createDiv({ cls: "an-tou-today" });
+    const todayGrid = homeBody.createDiv({ cls: "an-tou-grid" });
     const todayExisting = this.todayFile();
     let todayCopy = null;
     if (todayExisting) {
@@ -1570,7 +1570,7 @@ var DeskView = class extends import_obsidian.ItemView {
       homeBody.createEl("p", { cls: "an-tou-lede", text: t.emptyRooms });
     } else {
       homeBody.createEl("h2", { cls: "desk-section", text: t.rooms });
-      const grid = homeBody.createDiv({ cls: "an-tou-rooms" });
+      const grid = homeBody.createDiv({ cls: "an-tou-grid" });
       for (const room of rooms) {
         const n = this.roomCount(room);
         const count = room.quiet ? void 0 : n;
@@ -1579,7 +1579,6 @@ var DeskView = class extends import_obsidian.ItemView {
           count,
           title: room.name,
           quiet: room.quiet,
-          mini: true,
           live: true
         });
         this.bindHomeRoom(el, room, () => this.openRoom(room, title));
