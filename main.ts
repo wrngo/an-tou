@@ -185,6 +185,14 @@ const COPY = {
 		resumeKicker: "上次停在",
 		resume: "继续上次",
 		draw: "抽一张",
+		drawInbox: "抽一条",
+		openDrawn: "打开",
+		jotToday: "记到今天",
+		jotDone: "已记进今天的日记。",
+		jotAlready: "今天已经记过这篇。",
+		jotNoDiary: "还没有日记那一间，没法记进去。",
+		walkKicker: "顺着链接",
+		linksLabel: "连着",
 		drawEmpty: "这间没有笔记可抽。",
 		drawKicker: (name: string) => name + " · 抽到",
 		drawDest: "抽一张从哪抽",
@@ -330,6 +338,14 @@ const COPY = {
 		resumeKicker: "Left off",
 		resume: "Continue",
 		draw: "Draw one",
+		drawInbox: "Draw from inbox",
+		openDrawn: "Open",
+		jotToday: "Add to today",
+		jotDone: "Added to today's journal.",
+		jotAlready: "Already in today's journal.",
+		jotNoDiary: "No journal room to write into.",
+		walkKicker: "Along a link",
+		linksLabel: "Linked",
 		drawEmpty: "Nothing in that room to draw.",
 		drawKicker: (name: string) => name + " · drawn",
 		drawDest: "Where Draw one picks from",
@@ -659,6 +675,57 @@ function isKnowledgeRoom(room: Room): boolean {
 	);
 }
 
+function dueDate(app: App, file: TFile): string | null {
+	const fm = app.metadataCache.getFileCache(file)?.frontmatter;
+	if (!fm) return null;
+	for (const key of ["due", "sr-due", "review", "next", "复习"]) {
+		const raw = fm[key];
+		if (typeof raw === "string") {
+			const match = raw.match(/\d{4}-\d{2}-\d{2}/);
+			if (match) return match[0];
+		}
+		if (raw instanceof Date && !isNaN(raw.getTime())) {
+			return `${raw.getFullYear()}-${twoDigits(raw.getMonth() + 1)}-${twoDigits(raw.getDate())}`;
+		}
+	}
+	return null;
+}
+
+function pickFromDeck(app: App, files: TFile[], avoid: Set<string>): TFile | undefined {
+	const today = todayName();
+	const due = files.filter((f) => {
+		const date = dueDate(app, f);
+		return date !== null && date <= today && !avoid.has(f.path);
+	});
+	if (due.length) return due[Math.floor(Math.random() * due.length)];
+	const sorted = files.slice().sort((a, b) => a.stat.mtime - b.stat.mtime);
+	const older = sorted.slice(0, Math.max(1, Math.ceil(sorted.length / 2)));
+	let pile = older.filter((f) => !avoid.has(f.path));
+	if (!pile.length) pile = files.filter((f) => !avoid.has(f.path));
+	if (!pile.length) pile = files.slice();
+	return pile[Math.floor(Math.random() * pile.length)];
+}
+
+function linkedNotes(app: App, file: TFile, limit: number): TFile[] {
+	const map =
+		(app.metadataCache as unknown as { resolvedLinks?: Record<string, Record<string, number>> })
+			.resolvedLinks ?? {};
+	const seen = new Set<string>([file.path]);
+	const out: TFile[] = [];
+	const add = (path: string) => {
+		if (seen.has(path) || out.length >= limit) return;
+		const hit = app.vault.getAbstractFileByPath(path);
+		if (!(hit instanceof TFile) || hit.extension !== "md") return;
+		seen.add(path);
+		out.push(hit);
+	};
+	for (const src of Object.keys(map)) {
+		if (map[src]?.[file.path]) add(src);
+	}
+	for (const dest of Object.keys(map[file.path] ?? {})) add(dest);
+	return out;
+}
+
 function todayName(): string {
 	const d = new Date();
 	return `${d.getFullYear()}-${twoDigits(d.getMonth() + 1)}-${twoDigits(d.getDate())}`;
@@ -908,7 +975,8 @@ class DeskView extends ItemView {
 	dirty = false;
 	renderFiles: TFile[] | null = null;
 	searchIndex = new Map<string, NoteCopy>();
-	spotlight: { path: string; kicker: string } | null = null;
+	spotlight: { path: string; kicker: string; deck: "draw" | "inbox" } | null = null;
+	drawnSkip: string[] = [];
 	copyMenu: HTMLElement | null = null;
 	copyCloser: ((ev: PointerEvent) => void) | null = null;
 	searchEls: {
@@ -1542,24 +1610,62 @@ class DeskView extends ItemView {
 		return hit ? { file: hit.file, kicker: t.resumeKicker } : null;
 	}
 
-	drawOne() {
+	drawOne(deck: "draw" | "inbox" = "draw") {
 		const t = this.copy();
-		const room = this.drawSource();
+		const room = deck === "inbox" ? this.inboxRoom() : this.drawSource();
 		const files = room?.folder ? this.mdIn(room.folder) : [];
 		if (!room || files.length === 0) {
 			new Notice(t.drawEmpty);
 			return;
 		}
-		const current = this.spotlight?.path;
-		const pool = files.filter((f) => f.path !== current);
-		const pile = pool.length ? pool : files;
-		const pick = pile[Math.floor(Math.random() * pile.length)];
+		const avoid = new Set(this.drawnSkip);
+		if (this.spotlight?.path) avoid.add(this.spotlight.path);
+		const pick = pickFromDeck(this.app, files, avoid);
 		if (!pick) return;
+		this.drawnSkip = [pick.path, ...this.drawnSkip.filter((p) => p !== pick.path)].slice(0, 8);
 		this.spotlight = {
 			path: pick.path,
 			kicker: t.drawKicker(room.kicker || room.name),
+			deck,
 		};
 		void this.render();
+	}
+
+	walkTo(file: TFile) {
+		this.spotlight = {
+			path: file.path,
+			kicker: this.copy().walkKicker,
+			deck: this.spotlight?.deck ?? "draw",
+		};
+		void this.render();
+	}
+
+	async jotToToday(note: TFile) {
+		const t = this.copy();
+		const path = this.todayPath();
+		if (!path) {
+			new Notice(t.jotNoDiary);
+			return;
+		}
+		const link = wikiLink(this.app, note);
+		const found = this.app.vault.getAbstractFileByPath(path);
+		if (found instanceof TFile) {
+			const text = await this.app.vault.read(found);
+			if (text.includes(link) || text.includes("[[" + note.basename + "]]")) {
+				new Notice(t.jotAlready);
+				return;
+			}
+			const gap = text.length === 0 || text.endsWith("\n") ? "" : "\n";
+			await this.app.vault.append(found, gap + "- " + link + "\n");
+		} else {
+			try {
+				await this.app.vault.create(path, "- " + link + "\n");
+			} catch {
+				new Notice(t.createFailed);
+				return;
+			}
+		}
+		new Notice(t.jotDone);
 	}
 
 	bindHomeRoom(el: HTMLElement, room: Room, open: () => void) {
@@ -1719,22 +1825,36 @@ class DeskView extends ItemView {
 				.slice(0, 3)
 				.map((f) => f.basename)
 				.join(" · ");
-			this.card(
+			const inboxCard = this.card(
 				todayGrid,
 				{
 					kicker: t.inboxWaiting,
 					count: notes.length || undefined,
 					title: inbox.kicker || inbox.name,
 					line: preview || t.inboxEmpty,
+					live: true,
 				},
 				() => this.openRoom(inbox, title)
 			);
+			if (notes.length) {
+				const drawInbox = inboxCard.createDiv({ cls: "desk-actions" }).createEl("button", {
+					cls: "desk-chip",
+					text: t.drawInbox,
+					attr: { type: "button" },
+				});
+				drawInbox.addEventListener("click", (e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					this.drawOne("inbox");
+				});
+			}
 		}
 
 		const left = this.leftOff();
 		if (left) {
 			const copy = await noteCardCopy(this.app, left.file);
 			if (seq !== this.renderSeq) return;
+			const drawn = !!this.spotlight;
 			const card = this.card(
 				todayGrid,
 				{
@@ -1743,13 +1863,13 @@ class DeskView extends ItemView {
 					line: copy.line,
 					note: true,
 					noteFile: left.file,
-				},
-				() => void this.openNote(left.file)
+					live: true,
+				}
 			);
 			const actions = card.createDiv({ cls: "desk-actions" });
 			const resume = actions.createEl("button", {
 				cls: "desk-chip",
-				text: t.resume,
+				text: drawn ? t.openDrawn : t.resume,
 				attr: { type: "button" },
 			});
 			resume.addEventListener("click", (e) => {
@@ -1757,17 +1877,48 @@ class DeskView extends ItemView {
 				e.stopPropagation();
 				void this.openNote(left.file);
 			});
-			if (this.drawSource()) {
+			const redrawLabel =
+				this.spotlight?.deck === "inbox" ? t.drawInbox : this.drawSource() ? t.draw : "";
+			if (redrawLabel) {
 				const draw = actions.createEl("button", {
 					cls: "desk-chip",
-					text: t.draw,
+					text: redrawLabel,
 					attr: { type: "button" },
 				});
 				draw.addEventListener("click", (e) => {
 					e.preventDefault();
 					e.stopPropagation();
-					this.drawOne();
+					this.drawOne(this.spotlight?.deck === "inbox" ? "inbox" : "draw");
 				});
+			}
+			if (this.diaryRoom()?.folder) {
+				const jot = actions.createEl("button", {
+					cls: "desk-chip",
+					text: t.jotToday,
+					attr: { type: "button" },
+				});
+				jot.addEventListener("click", (e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					void this.jotToToday(left.file);
+				});
+			}
+			const links = linkedNotes(this.app, left.file, 4);
+			if (links.length) {
+				const row = card.createDiv({ cls: "desk-links" });
+				row.createSpan({ cls: "desk-links-label", text: t.linksLabel });
+				for (const link of links) {
+					const btn = row.createEl("button", {
+						cls: "desk-chip is-link",
+						text: link.basename,
+						attr: { type: "button" },
+					});
+					btn.addEventListener("click", (e) => {
+						e.preventDefault();
+						e.stopPropagation();
+						this.walkTo(link);
+					});
+				}
 			}
 		}
 

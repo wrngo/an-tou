@@ -166,6 +166,14 @@ var COPY = {
     resumeKicker: "\u4E0A\u6B21\u505C\u5728",
     resume: "\u7EE7\u7EED\u4E0A\u6B21",
     draw: "\u62BD\u4E00\u5F20",
+    drawInbox: "\u62BD\u4E00\u6761",
+    openDrawn: "\u6253\u5F00",
+    jotToday: "\u8BB0\u5230\u4ECA\u5929",
+    jotDone: "\u5DF2\u8BB0\u8FDB\u4ECA\u5929\u7684\u65E5\u8BB0\u3002",
+    jotAlready: "\u4ECA\u5929\u5DF2\u7ECF\u8BB0\u8FC7\u8FD9\u7BC7\u3002",
+    jotNoDiary: "\u8FD8\u6CA1\u6709\u65E5\u8BB0\u90A3\u4E00\u95F4\uFF0C\u6CA1\u6CD5\u8BB0\u8FDB\u53BB\u3002",
+    walkKicker: "\u987A\u7740\u94FE\u63A5",
+    linksLabel: "\u8FDE\u7740",
     drawEmpty: "\u8FD9\u95F4\u6CA1\u6709\u7B14\u8BB0\u53EF\u62BD\u3002",
     drawKicker: (name) => name + " \xB7 \u62BD\u5230",
     drawDest: "\u62BD\u4E00\u5F20\u4ECE\u54EA\u62BD",
@@ -311,6 +319,14 @@ var COPY = {
     resumeKicker: "Left off",
     resume: "Continue",
     draw: "Draw one",
+    drawInbox: "Draw from inbox",
+    openDrawn: "Open",
+    jotToday: "Add to today",
+    jotDone: "Added to today's journal.",
+    jotAlready: "Already in today's journal.",
+    jotNoDiary: "No journal room to write into.",
+    walkKicker: "Along a link",
+    linksLabel: "Linked",
     drawEmpty: "Nothing in that room to draw.",
     drawKicker: (name) => name + " \xB7 drawn",
     drawDest: "Where Draw one picks from",
@@ -597,6 +613,63 @@ function isKnowledgeRoom(room) {
     ((_a = room.folder) != null ? _a : "") + " " + room.name + " " + ((_b = room.kicker) != null ? _b : "")
   );
 }
+function dueDate(app, file) {
+  var _a;
+  const fm = (_a = app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter;
+  if (!fm)
+    return null;
+  for (const key of ["due", "sr-due", "review", "next", "\u590D\u4E60"]) {
+    const raw = fm[key];
+    if (typeof raw === "string") {
+      const match = raw.match(/\d{4}-\d{2}-\d{2}/);
+      if (match)
+        return match[0];
+    }
+    if (raw instanceof Date && !isNaN(raw.getTime())) {
+      return `${raw.getFullYear()}-${twoDigits(raw.getMonth() + 1)}-${twoDigits(raw.getDate())}`;
+    }
+  }
+  return null;
+}
+function pickFromDeck(app, files, avoid) {
+  const today = todayName();
+  const due = files.filter((f) => {
+    const date = dueDate(app, f);
+    return date !== null && date <= today && !avoid.has(f.path);
+  });
+  if (due.length)
+    return due[Math.floor(Math.random() * due.length)];
+  const sorted = files.slice().sort((a, b) => a.stat.mtime - b.stat.mtime);
+  const older = sorted.slice(0, Math.max(1, Math.ceil(sorted.length / 2)));
+  let pile = older.filter((f) => !avoid.has(f.path));
+  if (!pile.length)
+    pile = files.filter((f) => !avoid.has(f.path));
+  if (!pile.length)
+    pile = files.slice();
+  return pile[Math.floor(Math.random() * pile.length)];
+}
+function linkedNotes(app, file, limit) {
+  var _a, _b, _c;
+  const map = (_a = app.metadataCache.resolvedLinks) != null ? _a : {};
+  const seen = /* @__PURE__ */ new Set([file.path]);
+  const out = [];
+  const add = (path) => {
+    if (seen.has(path) || out.length >= limit)
+      return;
+    const hit = app.vault.getAbstractFileByPath(path);
+    if (!(hit instanceof import_obsidian.TFile) || hit.extension !== "md")
+      return;
+    seen.add(path);
+    out.push(hit);
+  };
+  for (const src of Object.keys(map)) {
+    if ((_b = map[src]) == null ? void 0 : _b[file.path])
+      add(src);
+  }
+  for (const dest of Object.keys((_c = map[file.path]) != null ? _c : {}))
+    add(dest);
+  return out;
+}
 function todayName() {
   const d = new Date();
   return `${d.getFullYear()}-${twoDigits(d.getMonth() + 1)}-${twoDigits(d.getDate())}`;
@@ -754,6 +827,7 @@ var DeskView = class extends import_obsidian.ItemView {
     this.renderFiles = null;
     this.searchIndex = /* @__PURE__ */ new Map();
     this.spotlight = null;
+    this.drawnSkip = [];
     this.copyMenu = null;
     this.copyCloser = null;
     this.searchEls = null;
@@ -1347,26 +1421,64 @@ var DeskView = class extends import_obsidian.ItemView {
     const hit = this.recentNotes().find((e) => e.file.path !== today);
     return hit ? { file: hit.file, kicker: t.resumeKicker } : null;
   }
-  drawOne() {
+  drawOne(deck = "draw") {
     var _a;
     const t = this.copy();
-    const room = this.drawSource();
+    const room = deck === "inbox" ? this.inboxRoom() : this.drawSource();
     const files = (room == null ? void 0 : room.folder) ? this.mdIn(room.folder) : [];
     if (!room || files.length === 0) {
       new import_obsidian.Notice(t.drawEmpty);
       return;
     }
-    const current = (_a = this.spotlight) == null ? void 0 : _a.path;
-    const pool = files.filter((f) => f.path !== current);
-    const pile = pool.length ? pool : files;
-    const pick = pile[Math.floor(Math.random() * pile.length)];
+    const avoid = new Set(this.drawnSkip);
+    if ((_a = this.spotlight) == null ? void 0 : _a.path)
+      avoid.add(this.spotlight.path);
+    const pick = pickFromDeck(this.app, files, avoid);
     if (!pick)
       return;
+    this.drawnSkip = [pick.path, ...this.drawnSkip.filter((p) => p !== pick.path)].slice(0, 8);
     this.spotlight = {
       path: pick.path,
-      kicker: t.drawKicker(room.kicker || room.name)
+      kicker: t.drawKicker(room.kicker || room.name),
+      deck
     };
     void this.render();
+  }
+  walkTo(file) {
+    var _a, _b;
+    this.spotlight = {
+      path: file.path,
+      kicker: this.copy().walkKicker,
+      deck: (_b = (_a = this.spotlight) == null ? void 0 : _a.deck) != null ? _b : "draw"
+    };
+    void this.render();
+  }
+  async jotToToday(note) {
+    const t = this.copy();
+    const path = this.todayPath();
+    if (!path) {
+      new import_obsidian.Notice(t.jotNoDiary);
+      return;
+    }
+    const link = wikiLink(this.app, note);
+    const found = this.app.vault.getAbstractFileByPath(path);
+    if (found instanceof import_obsidian.TFile) {
+      const text = await this.app.vault.read(found);
+      if (text.includes(link) || text.includes("[[" + note.basename + "]]")) {
+        new import_obsidian.Notice(t.jotAlready);
+        return;
+      }
+      const gap = text.length === 0 || text.endsWith("\n") ? "" : "\n";
+      await this.app.vault.append(found, gap + "- " + link + "\n");
+    } else {
+      try {
+        await this.app.vault.create(path, "- " + link + "\n");
+      } catch (e) {
+        new import_obsidian.Notice(t.createFailed);
+        return;
+      }
+    }
+    new import_obsidian.Notice(t.jotDone);
   }
   bindHomeRoom(el, room, open) {
     const t = this.copy();
@@ -1506,6 +1618,7 @@ var DeskView = class extends import_obsidian.ItemView {
     });
   }
   async renderHome(inner, seq) {
+    var _a, _b;
     const t = this.copy();
     const title = this.plugin.settings.title || DEFAULT_TITLE;
     this.homeActions(inner);
@@ -1532,22 +1645,36 @@ var DeskView = class extends import_obsidian.ItemView {
     if (inbox == null ? void 0 : inbox.folder) {
       const notes = this.mdIn(inbox.folder).sort((a, b) => b.stat.mtime - a.stat.mtime);
       const preview = notes.slice(0, 3).map((f) => f.basename).join(" \xB7 ");
-      this.card(
+      const inboxCard = this.card(
         todayGrid,
         {
           kicker: t.inboxWaiting,
           count: notes.length || void 0,
           title: inbox.kicker || inbox.name,
-          line: preview || t.inboxEmpty
+          line: preview || t.inboxEmpty,
+          live: true
         },
         () => this.openRoom(inbox, title)
       );
+      if (notes.length) {
+        const drawInbox = inboxCard.createDiv({ cls: "desk-actions" }).createEl("button", {
+          cls: "desk-chip",
+          text: t.drawInbox,
+          attr: { type: "button" }
+        });
+        drawInbox.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.drawOne("inbox");
+        });
+      }
     }
     const left = this.leftOff();
     if (left) {
       const copy = await noteCardCopy(this.app, left.file);
       if (seq !== this.renderSeq)
         return;
+      const drawn = !!this.spotlight;
       const card = this.card(
         todayGrid,
         {
@@ -1555,14 +1682,14 @@ var DeskView = class extends import_obsidian.ItemView {
           title: copy.title,
           line: copy.line,
           note: true,
-          noteFile: left.file
-        },
-        () => void this.openNote(left.file)
+          noteFile: left.file,
+          live: true
+        }
       );
       const actions = card.createDiv({ cls: "desk-actions" });
       const resume = actions.createEl("button", {
         cls: "desk-chip",
-        text: t.resume,
+        text: drawn ? t.openDrawn : t.resume,
         attr: { type: "button" }
       });
       resume.addEventListener("click", (e) => {
@@ -1570,17 +1697,48 @@ var DeskView = class extends import_obsidian.ItemView {
         e.stopPropagation();
         void this.openNote(left.file);
       });
-      if (this.drawSource()) {
+      const redrawLabel = ((_a = this.spotlight) == null ? void 0 : _a.deck) === "inbox" ? t.drawInbox : this.drawSource() ? t.draw : "";
+      if (redrawLabel) {
         const draw = actions.createEl("button", {
           cls: "desk-chip",
-          text: t.draw,
+          text: redrawLabel,
           attr: { type: "button" }
         });
         draw.addEventListener("click", (e) => {
+          var _a2;
           e.preventDefault();
           e.stopPropagation();
-          this.drawOne();
+          this.drawOne(((_a2 = this.spotlight) == null ? void 0 : _a2.deck) === "inbox" ? "inbox" : "draw");
         });
+      }
+      if ((_b = this.diaryRoom()) == null ? void 0 : _b.folder) {
+        const jot = actions.createEl("button", {
+          cls: "desk-chip",
+          text: t.jotToday,
+          attr: { type: "button" }
+        });
+        jot.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          void this.jotToToday(left.file);
+        });
+      }
+      const links = linkedNotes(this.app, left.file, 4);
+      if (links.length) {
+        const row = card.createDiv({ cls: "desk-links" });
+        row.createSpan({ cls: "desk-links-label", text: t.linksLabel });
+        for (const link of links) {
+          const btn = row.createEl("button", {
+            cls: "desk-chip is-link",
+            text: link.basename,
+            attr: { type: "button" }
+          });
+          btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.walkTo(link);
+          });
+        }
       }
     }
     const rooms = this.homeRooms();

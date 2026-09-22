@@ -421,6 +421,26 @@ body.an-tou-look .an-tou-view .desk-chip {
   color: var(--add-accent);
 }
 
+.an-tou-view .desk-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.an-tou-view .desk-links-label {
+  font-size: 12px;
+  color: var(--desk-mute);
+}
+
+.an-tou-view .desk-chip.is-link {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .an-tou-view .desk-rename {
   width: 100%;
   margin: 0;
