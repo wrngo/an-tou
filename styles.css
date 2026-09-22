@@ -16,6 +16,7 @@
   --add-stroke: 2.4px;
   --add-accent: var(--interactive-accent);
   --desk-serif: var(--font-text);
+  position: relative;
   height: 100%;
   overflow: auto;
   padding: 28px 48px 48px;
@@ -365,6 +366,137 @@ body.theme-dark .an-tou-view .desk-search-clear:hover {
   color: var(--desk-mute);
   font-size: 14px;
   margin: 0 0 4px;
+}
+
+.an-tou-view .an-tou-inner:has(.desk-date) .an-tou-add {
+  top: calc(28px + clamp(28px, 3.2vw, 42px) * 0.625);
+}
+
+.an-tou-view .desk-date {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: var(--desk-mute);
+}
+
+.an-tou-view h2.desk-section {
+  font-size: 18px;
+  margin: 28px 0 10px;
+}
+
+.an-tou-today {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr 1.15fr;
+  gap: 16px 18px;
+  margin: 22px 0 8px;
+}
+
+.an-tou-rooms {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px 12px;
+  margin: 0 0 8px;
+}
+
+.an-tou-today > *,
+.an-tou-rooms > * {
+  min-width: 0;
+}
+
+.an-tou-view .desk-card.is-mini {
+  min-height: 92px;
+  padding: 14px 12px 12px;
+  justify-content: flex-end;
+  cursor: grab;
+}
+
+.an-tou-view .desk-card.is-mini strong {
+  font-size: 16px;
+}
+
+.an-tou-view .desk-card.is-mini .desk-count {
+  font-size: 16px;
+  top: 10px;
+  right: 12px;
+}
+
+.an-tou-view .desk-card.is-drop {
+  outline: 2px solid var(--add-accent);
+  outline-offset: 3px;
+}
+
+.an-tou-view .desk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.an-tou-view .desk-chip {
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--desk-ink);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+body.an-tou-look .an-tou-view .desk-chip {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.26);
+}
+
+.an-tou-view .desk-chip:hover {
+  color: var(--add-accent);
+}
+
+.an-tou-view .desk-rename {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--desk-ink);
+  font-family: var(--desk-serif);
+  font-size: 16px;
+  font-weight: 500;
+  outline: none;
+}
+
+.an-tou-view .desk-copy-menu {
+  position: absolute;
+  z-index: 8;
+  min-width: 148px;
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  box-shadow: 0 18px 40px -24px rgba(28, 42, 38, 0.35);
+}
+
+body.an-tou-look .an-tou-view .desk-copy-menu {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.an-tou-view .desk-copy-menu button {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--desk-ink);
+  text-align: left;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.an-tou-view .desk-copy-menu button:hover {
+  background: rgba(43, 187, 173, 0.16);
 }
 
 .an-tou-grid {
@@ -755,6 +887,8 @@ body.an-tou-look.theme-dark .an-tou-view .desk-copy:focus-visible {
 @media (max-width: 880px) {
   .an-tou-view { padding: 20px 20px 40px; }
   .an-tou-grid { grid-template-columns: 1fr; }
+  .an-tou-today { grid-template-columns: 1fr; }
+  .an-tou-rooms { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .an-tou-view .desk-card.span-2 { grid-column: auto; }
 }
 

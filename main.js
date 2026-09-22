@@ -153,7 +153,23 @@ var COPY = {
     untitled: "\u672A\u547D\u540D",
     copyLink: "\u590D\u5236\u8FD9\u7BC7\u7684\u94FE\u63A5",
     copied: "\u94FE\u63A5\u5DF2\u590D\u5236\u3002\u8D34\u56DE\u4E66\u684C\u641C\u7D22\uFF0C\u6216\u70B9\u5B83\uFF0C\u5C31\u80FD\u6253\u5F00\u8FD9\u7BC7",
+    copyDesk: "\u4E66\u684C\u94FE\u63A5",
+    copyWiki: "\u5E93\u5185 [[wikilink]]",
+    copiedWiki: "\u5DF2\u590D\u5236\u5E93\u5185\u94FE\u63A5\u3002\u8D34\u8FDB\u522B\u7684\u7B14\u8BB0\u5C31\u80FD\u94FE\u8FC7\u53BB\u3002",
     copyFailed: "\u6CA1\u590D\u5236\u4E0A\u3002",
+    today: "\u4ECA\u5929",
+    todayEmpty: "\u8FD8\u6CA1\u5199\u3002\u70B9\u8FD9\u91CC\u4ECE\u7A7A\u767D\u9875\u5F00\u59CB\uFF0C\u6587\u4EF6\u540D\u5C31\u662F\u4ECA\u5929\u7684\u65E5\u671F\u3002",
+    todayBlank: "\u8FD8\u662F\u7A7A\u767D\u3002",
+    inboxWaiting: "\u672A\u5904\u7406",
+    inboxEmpty: "\u6536\u4EF6\u7BB1\u662F\u7A7A\u7684\u3002",
+    resumeKicker: "\u4E0A\u6B21\u505C\u5728",
+    resume: "\u7EE7\u7EED\u4E0A\u6B21",
+    draw: "\u62BD\u4E00\u5F20",
+    drawEmpty: "\u8FD9\u95F4\u6CA1\u6709\u7B14\u8BB0\u53EF\u62BD\u3002",
+    drawKicker: (name) => name + " \xB7 \u62BD\u5230",
+    renamed: "\u663E\u793A\u540D\u5DF2\u6539\u3002\u6587\u4EF6\u5939\u6CA1\u52A8\u3002",
+    nested: (name) => "\u5DF2\u6536\u8FDB\u300C" + name + "\u300D\u3002\u7B14\u8BB0\u8FD8\u5728\u539F\u6765\u7684\u6587\u4EF6\u5939\u3002",
+    nestBlocked: "\u4E0D\u80FD\u6536\u8FDB\u5B83\u81EA\u5DF1\u91CC\u9762\u3002",
     linkMissing: "\u6CA1\u627E\u5230\u8FD9\u7BC7\u7B14\u8BB0\u3002",
     capture: "\u8BB0\u4E00\u6761",
     captureHint: (folder) => "\u4F1A\u653E\u8FDB " + folder,
@@ -279,7 +295,23 @@ var COPY = {
     untitled: "Untitled",
     copyLink: "Copy link to this note",
     copied: "Link copied. Paste it in desk search, or open it, to get back.",
+    copyDesk: "Desk link",
+    copyWiki: "Vault [[wikilink]]",
+    copiedWiki: "Vault link copied. Paste it into another note.",
     copyFailed: "Could not copy.",
+    today: "Today",
+    todayEmpty: "Nothing yet. Click to start a blank page named with today's date.",
+    todayBlank: "Still blank.",
+    inboxWaiting: "Waiting",
+    inboxEmpty: "Inbox is empty.",
+    resumeKicker: "Left off",
+    resume: "Continue",
+    draw: "Draw one",
+    drawEmpty: "Nothing in that room to draw.",
+    drawKicker: (name) => name + " \xB7 drawn",
+    renamed: "Display name saved. The folder stayed put.",
+    nested: (name) => 'Tucked into "' + name + '". Notes stay in their folder.',
+    nestBlocked: "A card can't go inside itself.",
     linkMissing: "That note is gone.",
     capture: "Jot a note",
     captureHint: (folder) => "Goes into " + folder,
@@ -546,6 +578,55 @@ function safeName(name, copy) {
 function isInboxFolder(folder) {
   return /inbox|收件|收集/i.test(folder);
 }
+function isDiaryRoom(room) {
+  var _a, _b;
+  return /日记|日志|journal|daily|diary/i.test(
+    ((_a = room.folder) != null ? _a : "") + " " + room.name + " " + ((_b = room.kicker) != null ? _b : "")
+  );
+}
+function isKnowledgeRoom(room) {
+  var _a, _b;
+  return /知识|读书|library|wiki|zettel|卡片/i.test(
+    ((_a = room.folder) != null ? _a : "") + " " + room.name + " " + ((_b = room.kicker) != null ? _b : "")
+  );
+}
+function todayName() {
+  const d = new Date();
+  return `${d.getFullYear()}-${twoDigits(d.getMonth() + 1)}-${twoDigits(d.getDate())}`;
+}
+function deskDateLine(lang) {
+  const d = new Date();
+  if (lang === "en") {
+    return d.toLocaleDateString("en", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric"
+    });
+  }
+  return `${d.getFullYear()} \u5E74 ${d.getMonth() + 1} \u6708 ${d.getDate()} \u65E5 \xB7 \u661F\u671F${"\u65E5\u4E00\u4E8C\u4E09\u56DB\u4E94\u516D"[d.getDay()]}`;
+}
+function blocksNest(rooms, childId, parentId) {
+  if (childId === parentId)
+    return true;
+  const blocked = /* @__PURE__ */ new Set();
+  const walk = (id) => {
+    if (blocked.has(id))
+      return;
+    blocked.add(id);
+    for (const room of rooms) {
+      if (room.parent === id && room.id !== id)
+        walk(room.id);
+    }
+  };
+  walk(childId);
+  return blocked.has(parentId);
+}
+function wikiLink(app, file) {
+  const same = app.vault.getMarkdownFiles().filter((f) => f.basename === file.basename);
+  const target = same.length === 1 ? file.basename : file.path.replace(/\.md$/i, "");
+  return "[[" + target + "]]";
+}
 function folderKey(path) {
   return path.toLowerCase().replace(/[\d\-_.\/\s]+/g, "");
 }
@@ -665,6 +746,9 @@ var DeskView = class extends import_obsidian.ItemView {
     this.dirty = false;
     this.renderFiles = null;
     this.searchIndex = /* @__PURE__ */ new Map();
+    this.spotlight = null;
+    this.copyMenu = null;
+    this.copyCloser = null;
     this.searchEls = null;
     this.plugin = plugin;
   }
@@ -905,6 +989,51 @@ var DeskView = class extends import_obsidian.ItemView {
     const ok = await copyText(noteUri(this.app, file));
     new import_obsidian.Notice(ok ? t.copied : t.copyFailed);
   }
+  async copyWikiLink(file) {
+    const t = this.copy();
+    const ok = await copyText(wikiLink(this.app, file));
+    new import_obsidian.Notice(ok ? t.copiedWiki : t.copyFailed);
+  }
+  closeCopyMenu() {
+    var _a;
+    if (this.copyCloser) {
+      window.removeEventListener("pointerdown", this.copyCloser);
+      this.copyCloser = null;
+    }
+    (_a = this.copyMenu) == null ? void 0 : _a.remove();
+    this.copyMenu = null;
+  }
+  showCopyMenu(anchor, file) {
+    if (this.copyMenu) {
+      this.closeCopyMenu();
+      return;
+    }
+    const t = this.copy();
+    const menu = this.contentEl.createDiv({ cls: "desk-copy-menu" });
+    this.copyMenu = menu;
+    const host = this.contentEl.getBoundingClientRect();
+    const box = anchor.getBoundingClientRect();
+    menu.style.top = box.bottom - host.top + this.contentEl.scrollTop + 6 + "px";
+    menu.style.left = Math.max(8, box.right - host.left - 168) + "px";
+    const add = (label, run) => {
+      const b = menu.createEl("button", { text: label, attr: { type: "button" } });
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        run();
+        this.closeCopyMenu();
+      });
+    };
+    add(t.copyDesk, () => void this.copyNoteLink(file));
+    add(t.copyWiki, () => void this.copyWikiLink(file));
+    const closer = (ev) => {
+      if (menu.contains(ev.target) || anchor.contains(ev.target))
+        return;
+      this.closeCopyMenu();
+    };
+    this.copyCloser = closer;
+    window.setTimeout(() => window.addEventListener("pointerdown", closer), 0);
+  }
   goToNote(file) {
     const title = this.plugin.settings.title || DEFAULT_TITLE;
     this.stack = [{ type: "home" }];
@@ -947,7 +1076,7 @@ var DeskView = class extends import_obsidian.ItemView {
   }
   card(parent, spec, onClick) {
     const el = parent.createEl("div", {
-      cls: "desk-card" + (spec.quiet ? " is-quiet" : "") + (spec.note ? " is-note" : "") + (spec.span2 ? " span-2" : ""),
+      cls: "desk-card" + (spec.quiet ? " is-quiet" : "") + (spec.note ? " is-note" : "") + (spec.mini ? " is-mini" : "") + (spec.span2 ? " span-2" : ""),
       attr: onClick ? { role: "button", tabindex: "0" } : {}
     });
     if (spec.kicker)
@@ -960,19 +1089,18 @@ var DeskView = class extends import_obsidian.ItemView {
     el.createEl("strong", { text: spec.title });
     if (spec.line)
       el.createEl("span", { cls: "desk-line", text: spec.line });
-    else if (!spec.note)
+    else if (!spec.note && !spec.mini)
       el.createEl("span", { cls: "desk-line", text: "\xA0" });
-    if (spec.onCopy) {
+    if (spec.noteFile) {
       const cp = el.createEl("button", {
         cls: "desk-copy",
         attr: { type: "button", "aria-label": this.copy().copyLink }
       });
       (0, import_obsidian.setIcon)(cp, "link");
       cp.addEventListener("click", (e) => {
-        var _a;
         e.preventDefault();
         e.stopPropagation();
-        (_a = spec.onCopy) == null ? void 0 : _a.call(spec);
+        this.showCopyMenu(cp, spec.noteFile);
       });
     }
     if (onClick) {
@@ -983,7 +1111,7 @@ var DeskView = class extends import_obsidian.ItemView {
         e.preventDefault();
         onClick();
       });
-    } else {
+    } else if (!spec.live) {
       el.addClass("is-still");
     }
     return el;
@@ -1011,6 +1139,7 @@ var DeskView = class extends import_obsidian.ItemView {
     }
   }
   async render() {
+    this.closeCopyMenu();
     const seq = ++this.renderSeq;
     this.renderFiles = this.app.vault.getMarkdownFiles();
     try {
@@ -1131,36 +1260,332 @@ var DeskView = class extends import_obsidian.ItemView {
       void this.createNamedNote(folder, raw);
     }, t.captureHint(folder)).open();
   }
+  diaryRoom() {
+    return this.plugin.settings.rooms.find(
+      (r) => !r.draft && !!r.folder && !this.isQuietLine(r) && isDiaryRoom(r)
+    );
+  }
+  inboxRoom() {
+    return this.plugin.settings.rooms.find(
+      (r) => {
+        var _a;
+        return !r.draft && !!r.folder && !this.isQuietLine(r) && isInboxFolder(((_a = r.folder) != null ? _a : "") + " " + r.name);
+      }
+    );
+  }
+  knowledgeRoom() {
+    var _a;
+    const rooms = this.plugin.settings.rooms.filter(
+      (r) => {
+        var _a2;
+        return !r.draft && !!r.folder && !this.isQuietLine(r) && !isInboxFolder(((_a2 = r.folder) != null ? _a2 : "") + " " + r.name) && !isDiaryRoom(r);
+      }
+    );
+    return (_a = rooms.find((r) => isKnowledgeRoom(r))) != null ? _a : rooms.slice().sort((a, b) => this.roomCount(b) - this.roomCount(a))[0];
+  }
+  todayPath() {
+    var _a;
+    const folder = (_a = this.diaryRoom()) == null ? void 0 : _a.folder;
+    return folder ? folder + "/" + todayName() + ".md" : void 0;
+  }
+  todayFile() {
+    const path = this.todayPath();
+    if (!path)
+      return null;
+    const file = this.app.vault.getAbstractFileByPath(path);
+    return file instanceof import_obsidian.TFile ? file : null;
+  }
+  async openToday() {
+    const t = this.copy();
+    const path = this.todayPath();
+    if (!path) {
+      new import_obsidian.Notice(t.noCaptureFolder);
+      return;
+    }
+    const found = this.app.vault.getAbstractFileByPath(path);
+    let file;
+    if (found instanceof import_obsidian.TFile)
+      file = found;
+    else {
+      try {
+        file = await this.app.vault.create(path, "");
+      } catch (e) {
+        new import_obsidian.Notice(t.createFailed);
+        return;
+      }
+    }
+    await this.openNote(file);
+  }
+  leftOff() {
+    var _a;
+    const t = this.copy();
+    if (this.spotlight) {
+      const file = this.app.vault.getAbstractFileByPath(this.spotlight.path);
+      if (file instanceof import_obsidian.TFile)
+        return { file, kicker: this.spotlight.kicker };
+      this.spotlight = null;
+    }
+    const today = (_a = this.todayFile()) == null ? void 0 : _a.path;
+    const hit = this.recentNotes().find((e) => e.file.path !== today);
+    return hit ? { file: hit.file, kicker: t.resumeKicker } : null;
+  }
+  drawOne() {
+    var _a;
+    const t = this.copy();
+    const room = this.knowledgeRoom();
+    const files = (room == null ? void 0 : room.folder) ? this.mdIn(room.folder) : [];
+    if (!room || files.length === 0) {
+      new import_obsidian.Notice(t.drawEmpty);
+      return;
+    }
+    const current = (_a = this.spotlight) == null ? void 0 : _a.path;
+    const pool = files.filter((f) => f.path !== current);
+    const pile = pool.length ? pool : files;
+    const pick = pile[Math.floor(Math.random() * pile.length)];
+    if (!pick)
+      return;
+    this.spotlight = {
+      path: pick.path,
+      kicker: t.drawKicker(room.kicker || room.name)
+    };
+    void this.render();
+  }
+  bindHomeRoom(el, room, open) {
+    const t = this.copy();
+    el.setAttribute("data-room-id", room.id);
+    el.setAttribute("role", "button");
+    el.tabIndex = 0;
+    el.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ")
+        return;
+      if (e.target.closest("input"))
+        return;
+      e.preventDefault();
+      open();
+    });
+    let timer = 0;
+    let clicks = 0;
+    let dragged = false;
+    let sx = 0;
+    let sy = 0;
+    let active = false;
+    const strong = () => el.querySelector("strong");
+    const clearDrop = () => {
+      this.contentEl.querySelectorAll(".desk-card.is-drop").forEach((n) => {
+        n.classList.remove("is-drop");
+      });
+    };
+    const startRename = () => {
+      const title = strong();
+      if (!title || el.querySelector("input.desk-rename"))
+        return;
+      const input = document.createElement("input");
+      input.className = "desk-rename";
+      input.value = room.name;
+      title.replaceWith(input);
+      input.focus();
+      input.select();
+      let done = false;
+      const finish = (save) => {
+        if (done)
+          return;
+        done = true;
+        const next = input.value.trim();
+        const label = document.createElement("strong");
+        label.textContent = save && next ? next : room.name;
+        input.replaceWith(label);
+        if (!save || !next || next === room.name)
+          return;
+        room.name = next;
+        void this.plugin.saveSettings();
+        new import_obsidian.Notice(t.renamed);
+      };
+      input.addEventListener("blur", () => finish(true));
+      input.addEventListener("keydown", (e) => {
+        e.stopPropagation();
+        if (e.key === "Enter")
+          input.blur();
+        if (e.key === "Escape") {
+          e.preventDefault();
+          finish(false);
+        }
+      });
+    };
+    el.addEventListener("dblclick", (e) => {
+      if (e.target.closest("input, button"))
+        return;
+      e.preventDefault();
+      e.stopPropagation();
+      window.clearTimeout(timer);
+      clicks = 0;
+      startRename();
+    });
+    el.addEventListener("click", (e) => {
+      if (e.target.closest("input, button"))
+        return;
+      if (dragged) {
+        dragged = false;
+        return;
+      }
+      clicks++;
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        if (clicks === 1)
+          open();
+        clicks = 0;
+      }, 260);
+    });
+    el.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0)
+        return;
+      if (e.target.closest("input, button"))
+        return;
+      active = true;
+      dragged = false;
+      sx = e.clientX;
+      sy = e.clientY;
+      const move = (ev) => {
+        var _a;
+        if (!active)
+          return;
+        const dx = ev.clientX - sx;
+        const dy = ev.clientY - sy;
+        if (!dragged && dx * dx + dy * dy < 64)
+          return;
+        dragged = true;
+        clearDrop();
+        const hit = (_a = document.elementFromPoint(ev.clientX, ev.clientY)) == null ? void 0 : _a.closest("[data-room-id]");
+        const id = hit == null ? void 0 : hit.getAttribute("data-room-id");
+        if (hit && id && id !== room.id && !blocksNest(this.plugin.settings.rooms, room.id, id)) {
+          hit.classList.add("is-drop");
+        }
+      };
+      const up = (ev) => {
+        var _a;
+        active = false;
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", up);
+        const hit = (_a = document.elementFromPoint(ev.clientX, ev.clientY)) == null ? void 0 : _a.closest("[data-room-id]");
+        const id = hit == null ? void 0 : hit.getAttribute("data-room-id");
+        clearDrop();
+        if (!dragged || !id || id === room.id)
+          return;
+        const parent = this.plugin.settings.rooms.find((r) => r.id === id);
+        if (!parent)
+          return;
+        if (blocksNest(this.plugin.settings.rooms, room.id, id)) {
+          new import_obsidian.Notice(t.nestBlocked);
+          return;
+        }
+        room.parent = parent.id;
+        void this.plugin.saveSettings().then(() => {
+          new import_obsidian.Notice(t.nested(parent.name));
+          void this.render();
+        });
+      };
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", up);
+    });
+  }
   async renderHome(inner, seq) {
     const t = this.copy();
     const title = this.plugin.settings.title || DEFAULT_TITLE;
     this.homeActions(inner);
+    inner.createEl("p", { cls: "desk-date", text: deskDateLine(this.plugin.settings.uiLang) });
     inner.createEl("h1", { text: title });
     const homeBody = this.mountSearch(inner);
+    const todayGrid = homeBody.createDiv({ cls: "an-tou-today" });
+    const todayExisting = this.todayFile();
+    let todayCopy = null;
+    if (todayExisting) {
+      todayCopy = await noteCardCopy(this.app, todayExisting);
+      if (seq !== this.renderSeq)
+        return;
+    }
+    const todayLine = (todayExisting ? (todayCopy == null ? void 0 : todayCopy.line) || this.copy().todayBlank : this.copy().todayEmpty) + "";
+    if (this.diaryRoom()) {
+      this.card(
+        todayGrid,
+        { kicker: t.today, title: todayName(), line: todayLine },
+        () => void this.openToday()
+      );
+    }
+    const inbox = this.inboxRoom();
+    if (inbox == null ? void 0 : inbox.folder) {
+      const notes = this.mdIn(inbox.folder).sort((a, b) => b.stat.mtime - a.stat.mtime);
+      const preview = notes.slice(0, 3).map((f) => f.basename).join(" \xB7 ");
+      this.card(
+        todayGrid,
+        {
+          kicker: t.inboxWaiting,
+          count: notes.length || void 0,
+          title: inbox.kicker || inbox.name,
+          line: preview || t.inboxEmpty
+        },
+        () => this.openRoom(inbox, title)
+      );
+    }
+    const left = this.leftOff();
+    if (left) {
+      const copy = await noteCardCopy(this.app, left.file);
+      if (seq !== this.renderSeq)
+        return;
+      const card = this.card(
+        todayGrid,
+        {
+          kicker: left.kicker,
+          title: copy.title,
+          line: copy.line,
+          note: true,
+          noteFile: left.file
+        },
+        () => void this.openNote(left.file)
+      );
+      const actions = card.createDiv({ cls: "desk-actions" });
+      const resume = actions.createEl("button", {
+        cls: "desk-chip",
+        text: t.resume,
+        attr: { type: "button" }
+      });
+      resume.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        void this.openNote(left.file);
+      });
+      if (this.knowledgeRoom()) {
+        const draw = actions.createEl("button", {
+          cls: "desk-chip",
+          text: t.draw,
+          attr: { type: "button" }
+        });
+        draw.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.drawOne();
+        });
+      }
+    }
     const rooms = this.homeRooms();
     if (rooms.length === 0) {
-      homeBody.createEl("p", {
-        cls: "an-tou-lede",
-        text: t.emptyRooms
-      });
-    }
-    const grid = homeBody.createDiv({ cls: "an-tou-grid" });
-    for (const room of rooms) {
-      const n = this.roomCount(room);
-      const count = room.quiet ? void 0 : n;
-      this.card(
-        grid,
-        {
+      homeBody.createEl("p", { cls: "an-tou-lede", text: t.emptyRooms });
+    } else {
+      homeBody.createEl("h2", { cls: "desk-section", text: t.rooms });
+      const grid = homeBody.createDiv({ cls: "an-tou-rooms" });
+      for (const room of rooms) {
+        const n = this.roomCount(room);
+        const count = room.quiet ? void 0 : n;
+        const el = this.card(grid, {
           kicker: room.kicker,
           count,
           title: room.name,
-          line: roomCaption(room, count !== void 0),
-          quiet: room.quiet
-        },
-        () => this.openRoom(room, title)
-      );
+          quiet: room.quiet,
+          mini: true,
+          live: true
+        });
+        this.bindHomeRoom(el, room, () => this.openRoom(room, title));
+      }
     }
-    homeBody.createEl("h2", { text: t.recent });
+    homeBody.createEl("h2", { cls: "desk-section", text: t.recent });
     const recentGrid = homeBody.createDiv({ cls: "an-tou-grid" });
     const recent = this.recentNotes();
     await this.paintNotes(
@@ -1272,9 +1697,7 @@ var DeskView = class extends import_obsidian.ItemView {
           title: copies[i].title,
           line: copies[i].line,
           note: true,
-          onCopy: () => {
-            void this.copyNoteLink(file);
-          }
+          noteFile: file
         },
         () => {
           void this.openNote(file);
@@ -1339,9 +1762,7 @@ var DeskView = class extends import_obsidian.ItemView {
             title: copy.title,
             line: copy.line,
             note: true,
-            onCopy: () => {
-              void this.copyNoteLink(file);
-            }
+            noteFile: file
           },
           () => {
             void this.openNote(file);
@@ -1445,9 +1866,7 @@ var DeskView = class extends import_obsidian.ItemView {
             title: copies[i].title,
             line: copies[i].line,
             note: true,
-            onCopy: () => {
-              void this.copyNoteLink(file);
-            }
+            noteFile: file
           },
           () => {
             void this.openNote(file);

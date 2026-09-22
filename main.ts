@@ -171,7 +171,23 @@ const COPY = {
 		untitled: "未命名",
 		copyLink: "复制这篇的链接",
 		copied: "链接已复制。贴回书桌搜索，或点它，就能打开这篇",
+		copyDesk: "书桌链接",
+		copyWiki: "库内 [[wikilink]]",
+		copiedWiki: "已复制库内链接。贴进别的笔记就能链过去。",
 		copyFailed: "没复制上。",
+		today: "今天",
+		todayEmpty: "还没写。点这里从空白页开始，文件名就是今天的日期。",
+		todayBlank: "还是空白。",
+		inboxWaiting: "未处理",
+		inboxEmpty: "收件箱是空的。",
+		resumeKicker: "上次停在",
+		resume: "继续上次",
+		draw: "抽一张",
+		drawEmpty: "这间没有笔记可抽。",
+		drawKicker: (name: string) => name + " · 抽到",
+		renamed: "显示名已改。文件夹没动。",
+		nested: (name: string) => "已收进「" + name + "」。笔记还在原来的文件夹。",
+		nestBlocked: "不能收进它自己里面。",
 		linkMissing: "没找到这篇笔记。",
 		capture: "记一条",
 		captureHint: (folder: string) => "会放进 " + folder,
@@ -297,7 +313,23 @@ const COPY = {
 		untitled: "Untitled",
 		copyLink: "Copy link to this note",
 		copied: "Link copied. Paste it in desk search, or open it, to get back.",
+		copyDesk: "Desk link",
+		copyWiki: "Vault [[wikilink]]",
+		copiedWiki: "Vault link copied. Paste it into another note.",
 		copyFailed: "Could not copy.",
+		today: "Today",
+		todayEmpty: "Nothing yet. Click to start a blank page named with today's date.",
+		todayBlank: "Still blank.",
+		inboxWaiting: "Waiting",
+		inboxEmpty: "Inbox is empty.",
+		resumeKicker: "Left off",
+		resume: "Continue",
+		draw: "Draw one",
+		drawEmpty: "Nothing in that room to draw.",
+		drawKicker: (name: string) => name + " · drawn",
+		renamed: "Display name saved. The folder stayed put.",
+		nested: (name: string) => "Tucked into \"" + name + "\". Notes stay in their folder.",
+		nestBlocked: "A card can't go inside itself.",
 		linkMissing: "That note is gone.",
 		capture: "Jot a note",
 		captureHint: (folder: string) => "Goes into " + folder,
@@ -607,6 +639,56 @@ function isInboxFolder(folder: string): boolean {
 	return /inbox|收件|收集/i.test(folder);
 }
 
+function isDiaryRoom(room: Room): boolean {
+	return /日记|日志|journal|daily|diary/i.test(
+		(room.folder ?? "") + " " + room.name + " " + (room.kicker ?? "")
+	);
+}
+
+function isKnowledgeRoom(room: Room): boolean {
+	return /知识|读书|library|wiki|zettel|卡片/i.test(
+		(room.folder ?? "") + " " + room.name + " " + (room.kicker ?? "")
+	);
+}
+
+function todayName(): string {
+	const d = new Date();
+	return `${d.getFullYear()}-${twoDigits(d.getMonth() + 1)}-${twoDigits(d.getDate())}`;
+}
+
+function deskDateLine(lang: UiLang): string {
+	const d = new Date();
+	if (lang === "en") {
+		return d.toLocaleDateString("en", {
+			weekday: "long",
+			year: "numeric",
+			month: "long",
+			day: "numeric",
+		});
+	}
+	return `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · 星期${"日一二三四五六"[d.getDay()]}`;
+}
+
+function blocksNest(rooms: Room[], childId: string, parentId: string): boolean {
+	if (childId === parentId) return true;
+	const blocked = new Set<string>();
+	const walk = (id: string) => {
+		if (blocked.has(id)) return;
+		blocked.add(id);
+		for (const room of rooms) {
+			if (room.parent === id && room.id !== id) walk(room.id);
+		}
+	};
+	walk(childId);
+	return blocked.has(parentId);
+}
+
+function wikiLink(app: App, file: TFile): string {
+	const same = app.vault.getMarkdownFiles().filter((f) => f.basename === file.basename);
+	const target = same.length === 1 ? file.basename : file.path.replace(/\.md$/i, "");
+	return "[[" + target + "]]";
+}
+
 function folderKey(path: string): string {
 	return path.toLowerCase().replace(/[\d\-_.\/\s]+/g, "");
 }
@@ -818,6 +900,9 @@ class DeskView extends ItemView {
 	dirty = false;
 	renderFiles: TFile[] | null = null;
 	searchIndex = new Map<string, NoteCopy>();
+	spotlight: { path: string; kicker: string } | null = null;
+	copyMenu: HTMLElement | null = null;
+	copyCloser: ((ev: PointerEvent) => void) | null = null;
 	searchEls: {
 		row: HTMLElement;
 		input: HTMLInputElement;
@@ -1066,6 +1151,52 @@ class DeskView extends ItemView {
 		new Notice(ok ? t.copied : t.copyFailed);
 	}
 
+	async copyWikiLink(file: TFile) {
+		const t = this.copy();
+		const ok = await copyText(wikiLink(this.app, file));
+		new Notice(ok ? t.copiedWiki : t.copyFailed);
+	}
+
+	closeCopyMenu() {
+		if (this.copyCloser) {
+			window.removeEventListener("pointerdown", this.copyCloser);
+			this.copyCloser = null;
+		}
+		this.copyMenu?.remove();
+		this.copyMenu = null;
+	}
+
+	showCopyMenu(anchor: HTMLElement, file: TFile) {
+		if (this.copyMenu) {
+			this.closeCopyMenu();
+			return;
+		}
+		const t = this.copy();
+		const menu = this.contentEl.createDiv({ cls: "desk-copy-menu" });
+		this.copyMenu = menu;
+		const host = this.contentEl.getBoundingClientRect();
+		const box = anchor.getBoundingClientRect();
+		menu.style.top = box.bottom - host.top + this.contentEl.scrollTop + 6 + "px";
+		menu.style.left = Math.max(8, box.right - host.left - 168) + "px";
+		const add = (label: string, run: () => void) => {
+			const b = menu.createEl("button", { text: label, attr: { type: "button" } });
+			b.addEventListener("click", (e) => {
+				e.preventDefault();
+				e.stopPropagation();
+				run();
+				this.closeCopyMenu();
+			});
+		};
+		add(t.copyDesk, () => void this.copyNoteLink(file));
+		add(t.copyWiki, () => void this.copyWikiLink(file));
+		const closer = (ev: PointerEvent) => {
+			if (menu.contains(ev.target as Node) || anchor.contains(ev.target as Node)) return;
+			this.closeCopyMenu();
+		};
+		this.copyCloser = closer;
+		window.setTimeout(() => window.addEventListener("pointerdown", closer), 0);
+	}
+
 	goToNote(file: TFile) {
 		const title = this.plugin.settings.title || DEFAULT_TITLE;
 		this.stack = [{ type: "home" }];
@@ -1121,7 +1252,9 @@ class DeskView extends ItemView {
 			quiet?: boolean;
 			note?: boolean;
 			span2?: boolean;
-			onCopy?: () => void;
+			mini?: boolean;
+			live?: boolean;
+			noteFile?: TFile;
 		},
 		onClick?: () => void
 	) {
@@ -1130,6 +1263,7 @@ class DeskView extends ItemView {
 				"desk-card" +
 				(spec.quiet ? " is-quiet" : "") +
 				(spec.note ? " is-note" : "") +
+				(spec.mini ? " is-mini" : "") +
 				(spec.span2 ? " span-2" : ""),
 			attr: onClick ? { role: "button", tabindex: "0" } : {},
 		});
@@ -1140,8 +1274,8 @@ class DeskView extends ItemView {
 		}
 		el.createEl("strong", { text: spec.title });
 		if (spec.line) el.createEl("span", { cls: "desk-line", text: spec.line });
-		else if (!spec.note) el.createEl("span", { cls: "desk-line", text: "\u00a0" });
-		if (spec.onCopy) {
+		else if (!spec.note && !spec.mini) el.createEl("span", { cls: "desk-line", text: "\u00a0" });
+		if (spec.noteFile) {
 			const cp = el.createEl("button", {
 				cls: "desk-copy",
 				attr: { type: "button", "aria-label": this.copy().copyLink },
@@ -1150,7 +1284,7 @@ class DeskView extends ItemView {
 			cp.addEventListener("click", (e) => {
 				e.preventDefault();
 				e.stopPropagation();
-				spec.onCopy?.();
+				this.showCopyMenu(cp, spec.noteFile as TFile);
 			});
 		}
 		if (onClick) {
@@ -1160,7 +1294,7 @@ class DeskView extends ItemView {
 				e.preventDefault();
 				onClick();
 			});
-		} else {
+		} else if (!spec.live) {
 			el.addClass("is-still");
 		}
 		return el;
@@ -1189,6 +1323,7 @@ class DeskView extends ItemView {
 	}
 
 	async render() {
+		this.closeCopyMenu();
 		const seq = ++this.renderSeq;
 		this.renderFiles = this.app.vault.getMarkdownFiles();
 		try {
@@ -1312,39 +1447,333 @@ class DeskView extends ItemView {
 		}, t.captureHint(folder)).open();
 	}
 
+	diaryRoom(): Room | undefined {
+		return this.plugin.settings.rooms.find(
+			(r) => !r.draft && !!r.folder && !this.isQuietLine(r) && isDiaryRoom(r)
+		);
+	}
+
+	inboxRoom(): Room | undefined {
+		return this.plugin.settings.rooms.find(
+			(r) =>
+				!r.draft &&
+				!!r.folder &&
+				!this.isQuietLine(r) &&
+				isInboxFolder((r.folder ?? "") + " " + r.name)
+		);
+	}
+
+	knowledgeRoom(): Room | undefined {
+		const rooms = this.plugin.settings.rooms.filter(
+			(r) =>
+				!r.draft &&
+				!!r.folder &&
+				!this.isQuietLine(r) &&
+				!isInboxFolder((r.folder ?? "") + " " + r.name) &&
+				!isDiaryRoom(r)
+		);
+		return (
+			rooms.find((r) => isKnowledgeRoom(r)) ??
+			rooms.slice().sort((a, b) => this.roomCount(b) - this.roomCount(a))[0]
+		);
+	}
+
+	todayPath(): string | undefined {
+		const folder = this.diaryRoom()?.folder;
+		return folder ? folder + "/" + todayName() + ".md" : undefined;
+	}
+
+	todayFile(): TFile | null {
+		const path = this.todayPath();
+		if (!path) return null;
+		const file = this.app.vault.getAbstractFileByPath(path);
+		return file instanceof TFile ? file : null;
+	}
+
+	async openToday() {
+		const t = this.copy();
+		const path = this.todayPath();
+		if (!path) {
+			new Notice(t.noCaptureFolder);
+			return;
+		}
+		const found = this.app.vault.getAbstractFileByPath(path);
+		let file: TFile;
+		if (found instanceof TFile) file = found;
+		else {
+			try {
+				file = await this.app.vault.create(path, "");
+			} catch {
+				new Notice(t.createFailed);
+				return;
+			}
+		}
+		await this.openNote(file);
+	}
+
+	leftOff(): { file: TFile; kicker: string } | null {
+		const t = this.copy();
+		if (this.spotlight) {
+			const file = this.app.vault.getAbstractFileByPath(this.spotlight.path);
+			if (file instanceof TFile) return { file, kicker: this.spotlight.kicker };
+			this.spotlight = null;
+		}
+		const today = this.todayFile()?.path;
+		const hit = this.recentNotes().find((e) => e.file.path !== today);
+		return hit ? { file: hit.file, kicker: t.resumeKicker } : null;
+	}
+
+	drawOne() {
+		const t = this.copy();
+		const room = this.knowledgeRoom();
+		const files = room?.folder ? this.mdIn(room.folder) : [];
+		if (!room || files.length === 0) {
+			new Notice(t.drawEmpty);
+			return;
+		}
+		const current = this.spotlight?.path;
+		const pool = files.filter((f) => f.path !== current);
+		const pile = pool.length ? pool : files;
+		const pick = pile[Math.floor(Math.random() * pile.length)];
+		if (!pick) return;
+		this.spotlight = {
+			path: pick.path,
+			kicker: t.drawKicker(room.kicker || room.name),
+		};
+		void this.render();
+	}
+
+	bindHomeRoom(el: HTMLElement, room: Room, open: () => void) {
+		const t = this.copy();
+		el.setAttribute("data-room-id", room.id);
+		el.setAttribute("role", "button");
+		el.tabIndex = 0;
+		el.addEventListener("keydown", (e) => {
+			if (e.key !== "Enter" && e.key !== " ") return;
+			if ((e.target as HTMLElement).closest("input")) return;
+			e.preventDefault();
+			open();
+		});
+		let timer = 0;
+		let clicks = 0;
+		let dragged = false;
+		let sx = 0;
+		let sy = 0;
+		let active = false;
+		const strong = () => el.querySelector("strong");
+		const clearDrop = () => {
+			this.contentEl.querySelectorAll(".desk-card.is-drop").forEach((n) => {
+				n.classList.remove("is-drop");
+			});
+		};
+		const startRename = () => {
+			const title = strong();
+			if (!title || el.querySelector("input.desk-rename")) return;
+			const input = document.createElement("input");
+			input.className = "desk-rename";
+			input.value = room.name;
+			title.replaceWith(input);
+			input.focus();
+			input.select();
+			let done = false;
+			const finish = (save: boolean) => {
+				if (done) return;
+				done = true;
+				const next = input.value.trim();
+				const label = document.createElement("strong");
+				label.textContent = save && next ? next : room.name;
+				input.replaceWith(label);
+				if (!save || !next || next === room.name) return;
+				room.name = next;
+				void this.plugin.saveSettings();
+				new Notice(t.renamed);
+			};
+			input.addEventListener("blur", () => finish(true));
+			input.addEventListener("keydown", (e) => {
+				e.stopPropagation();
+				if (e.key === "Enter") input.blur();
+				if (e.key === "Escape") {
+					e.preventDefault();
+					finish(false);
+				}
+			});
+		};
+		el.addEventListener("dblclick", (e) => {
+			if ((e.target as HTMLElement).closest("input, button")) return;
+			e.preventDefault();
+			e.stopPropagation();
+			window.clearTimeout(timer);
+			clicks = 0;
+			startRename();
+		});
+		el.addEventListener("click", (e) => {
+			if ((e.target as HTMLElement).closest("input, button")) return;
+			if (dragged) {
+				dragged = false;
+				return;
+			}
+			clicks++;
+			window.clearTimeout(timer);
+			timer = window.setTimeout(() => {
+				if (clicks === 1) open();
+				clicks = 0;
+			}, 260);
+		});
+		el.addEventListener("pointerdown", (e) => {
+			if (e.button !== 0) return;
+			if ((e.target as HTMLElement).closest("input, button")) return;
+			active = true;
+			dragged = false;
+			sx = e.clientX;
+			sy = e.clientY;
+			const move = (ev: PointerEvent) => {
+				if (!active) return;
+				const dx = ev.clientX - sx;
+				const dy = ev.clientY - sy;
+				if (!dragged && dx * dx + dy * dy < 64) return;
+				dragged = true;
+				clearDrop();
+				const hit = document
+					.elementFromPoint(ev.clientX, ev.clientY)
+					?.closest("[data-room-id]");
+				const id = hit?.getAttribute("data-room-id");
+				if (hit && id && id !== room.id && !blocksNest(this.plugin.settings.rooms, room.id, id)) {
+					hit.classList.add("is-drop");
+				}
+			};
+			const up = (ev: PointerEvent) => {
+				active = false;
+				window.removeEventListener("pointermove", move);
+				window.removeEventListener("pointerup", up);
+				const hit = document
+					.elementFromPoint(ev.clientX, ev.clientY)
+					?.closest("[data-room-id]");
+				const id = hit?.getAttribute("data-room-id");
+				clearDrop();
+				if (!dragged || !id || id === room.id) return;
+				const parent = this.plugin.settings.rooms.find((r) => r.id === id);
+				if (!parent) return;
+				if (blocksNest(this.plugin.settings.rooms, room.id, id)) {
+					new Notice(t.nestBlocked);
+					return;
+				}
+				room.parent = parent.id;
+				void this.plugin.saveSettings().then(() => {
+					new Notice(t.nested(parent.name));
+					void this.render();
+				});
+			};
+			window.addEventListener("pointermove", move);
+			window.addEventListener("pointerup", up);
+		});
+	}
+
 	async renderHome(inner: HTMLElement, seq: number) {
 		const t = this.copy();
 		const title = this.plugin.settings.title || DEFAULT_TITLE;
 		this.homeActions(inner);
+		inner.createEl("p", { cls: "desk-date", text: deskDateLine(this.plugin.settings.uiLang) });
 		inner.createEl("h1", { text: title });
 		const homeBody = this.mountSearch(inner);
 
-		const rooms = this.homeRooms();
-		if (rooms.length === 0) {
-			homeBody.createEl("p", {
-				cls: "an-tou-lede",
-				text: t.emptyRooms,
-			});
+		const todayGrid = homeBody.createDiv({ cls: "an-tou-today" });
+		const todayExisting = this.todayFile();
+		let todayCopy: NoteCopy | null = null;
+		if (todayExisting) {
+			todayCopy = await noteCardCopy(this.app, todayExisting);
+			if (seq !== this.renderSeq) return;
 		}
-
-		const grid = homeBody.createDiv({ cls: "an-tou-grid" });
-		for (const room of rooms) {
-			const n = this.roomCount(room);
-			const count = room.quiet ? undefined : n;
+		const todayLine =
+			(todayExisting ? todayCopy?.line || this.copy().todayBlank : this.copy().todayEmpty) + "";
+		if (this.diaryRoom()) {
 			this.card(
-				grid,
-				{
-					kicker: room.kicker,
-					count,
-					title: room.name,
-					line: roomCaption(room, count !== undefined),
-					quiet: room.quiet,
-				},
-				() => this.openRoom(room, title)
+				todayGrid,
+				{ kicker: t.today, title: todayName(), line: todayLine },
+				() => void this.openToday()
 			);
 		}
 
-		homeBody.createEl("h2", { text: t.recent });
+		const inbox = this.inboxRoom();
+		if (inbox?.folder) {
+			const notes = this.mdIn(inbox.folder).sort((a, b) => b.stat.mtime - a.stat.mtime);
+			const preview = notes
+				.slice(0, 3)
+				.map((f) => f.basename)
+				.join(" · ");
+			this.card(
+				todayGrid,
+				{
+					kicker: t.inboxWaiting,
+					count: notes.length || undefined,
+					title: inbox.kicker || inbox.name,
+					line: preview || t.inboxEmpty,
+				},
+				() => this.openRoom(inbox, title)
+			);
+		}
+
+		const left = this.leftOff();
+		if (left) {
+			const copy = await noteCardCopy(this.app, left.file);
+			if (seq !== this.renderSeq) return;
+			const card = this.card(
+				todayGrid,
+				{
+					kicker: left.kicker,
+					title: copy.title,
+					line: copy.line,
+					note: true,
+					noteFile: left.file,
+				},
+				() => void this.openNote(left.file)
+			);
+			const actions = card.createDiv({ cls: "desk-actions" });
+			const resume = actions.createEl("button", {
+				cls: "desk-chip",
+				text: t.resume,
+				attr: { type: "button" },
+			});
+			resume.addEventListener("click", (e) => {
+				e.preventDefault();
+				e.stopPropagation();
+				void this.openNote(left.file);
+			});
+			if (this.knowledgeRoom()) {
+				const draw = actions.createEl("button", {
+					cls: "desk-chip",
+					text: t.draw,
+					attr: { type: "button" },
+				});
+				draw.addEventListener("click", (e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					this.drawOne();
+				});
+			}
+		}
+
+		const rooms = this.homeRooms();
+		if (rooms.length === 0) {
+			homeBody.createEl("p", { cls: "an-tou-lede", text: t.emptyRooms });
+		} else {
+			homeBody.createEl("h2", { cls: "desk-section", text: t.rooms });
+			const grid = homeBody.createDiv({ cls: "an-tou-rooms" });
+			for (const room of rooms) {
+				const n = this.roomCount(room);
+				const count = room.quiet ? undefined : n;
+				const el = this.card(grid, {
+					kicker: room.kicker,
+					count,
+					title: room.name,
+					quiet: room.quiet,
+					mini: true,
+					live: true,
+				});
+				this.bindHomeRoom(el, room, () => this.openRoom(room, title));
+			}
+		}
+
+		homeBody.createEl("h2", { cls: "desk-section", text: t.recent });
 		const recentGrid = homeBody.createDiv({ cls: "an-tou-grid" });
 		const recent = this.recentNotes();
 		await this.paintNotes(
@@ -1459,9 +1888,7 @@ class DeskView extends ItemView {
 					title: copies[i].title,
 					line: copies[i].line,
 					note: true,
-					onCopy: () => {
-						void this.copyNoteLink(file);
-					},
+						noteFile: file,
 				},
 				() => {
 					void this.openNote(file);
@@ -1525,9 +1952,7 @@ class DeskView extends ItemView {
 						title: copy.title,
 						line: copy.line,
 						note: true,
-						onCopy: () => {
-							void this.copyNoteLink(file);
-						},
+						noteFile: file,
 					},
 					() => {
 						void this.openNote(file);
@@ -1624,9 +2049,7 @@ class DeskView extends ItemView {
 						title: copies[i].title,
 						line: copies[i].line,
 						note: true,
-						onCopy: () => {
-							void this.copyNoteLink(file);
-						},
+						noteFile: file,
 					},
 					() => {
 						void this.openNote(file);
