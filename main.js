@@ -44,7 +44,8 @@ var DEFAULT_SETTINGS = {
   rooms: [],
   uiLang: "zh",
   welcomed: false,
-  captureRoom: ""
+  captureRoom: "",
+  drawRoom: ""
 };
 var COPY = {
   zh: {
@@ -167,6 +168,9 @@ var COPY = {
     draw: "\u62BD\u4E00\u5F20",
     drawEmpty: "\u8FD9\u95F4\u6CA1\u6709\u7B14\u8BB0\u53EF\u62BD\u3002",
     drawKicker: (name) => name + " \xB7 \u62BD\u5230",
+    drawDest: "\u62BD\u4E00\u5F20\u4ECE\u54EA\u62BD",
+    drawDestDesc: "\u81EA\u52A8\u4F1A\u53BB\u627E\u77E5\u8BC6\u5E93\u8FD9\u7C7B\u5361\u7247\u3002\u6307\u5B9A\u4E00\u95F4\u4E4B\u540E\uFF0C\u53EA\u4ECE\u90A3\u4E00\u95F4\u7684\u6587\u4EF6\u5939\u91CC\u62BD\uFF0C\u5B50\u6587\u4EF6\u5939\u91CC\u7684\u7B14\u8BB0\u4E5F\u7B97\u3002",
+    drawAuto: "\u81EA\u52A8\uFF08\u77E5\u8BC6\u5E93\uFF09",
     renamed: "\u663E\u793A\u540D\u5DF2\u6539\u3002\u6587\u4EF6\u5939\u6CA1\u52A8\u3002",
     nested: (name) => "\u5DF2\u6536\u8FDB\u300C" + name + "\u300D\u3002\u7B14\u8BB0\u8FD8\u5728\u539F\u6765\u7684\u6587\u4EF6\u5939\u3002",
     nestBlocked: "\u4E0D\u80FD\u6536\u8FDB\u5B83\u81EA\u5DF1\u91CC\u9762\u3002",
@@ -309,6 +313,9 @@ var COPY = {
     draw: "Draw one",
     drawEmpty: "Nothing in that room to draw.",
     drawKicker: (name) => name + " \xB7 drawn",
+    drawDest: "Where Draw one picks from",
+    drawDestDesc: "Auto looks for a knowledge-style card. Pick a room to draw only from that folder, including notes in its subfolders.",
+    drawAuto: "Auto (knowledge)",
     renamed: "Display name saved. The folder stayed put.",
     nested: (name) => 'Tucked into "' + name + '". Notes stay in their folder.',
     nestBlocked: "A card can't go inside itself.",
@@ -1283,6 +1290,17 @@ var DeskView = class extends import_obsidian.ItemView {
     );
     return (_a = rooms.find((r) => isKnowledgeRoom(r))) != null ? _a : rooms.slice().sort((a, b) => this.roomCount(b) - this.roomCount(a))[0];
   }
+  drawSource() {
+    const chosen = this.plugin.settings.drawRoom;
+    if (chosen) {
+      const room = this.plugin.settings.rooms.find(
+        (r) => r.id === chosen && !r.draft && !!r.folder
+      );
+      if (room)
+        return room;
+    }
+    return this.knowledgeRoom();
+  }
   todayPath() {
     var _a;
     const folder = (_a = this.diaryRoom()) == null ? void 0 : _a.folder;
@@ -1332,7 +1350,7 @@ var DeskView = class extends import_obsidian.ItemView {
   drawOne() {
     var _a;
     const t = this.copy();
-    const room = this.knowledgeRoom();
+    const room = this.drawSource();
     const files = (room == null ? void 0 : room.folder) ? this.mdIn(room.folder) : [];
     if (!room || files.length === 0) {
       new import_obsidian.Notice(t.drawEmpty);
@@ -1552,7 +1570,7 @@ var DeskView = class extends import_obsidian.ItemView {
         e.stopPropagation();
         void this.openNote(left.file);
       });
-      if (this.knowledgeRoom()) {
+      if (this.drawSource()) {
         const draw = actions.createEl("button", {
           cls: "desk-chip",
           text: t.draw,
@@ -2097,6 +2115,19 @@ var AnTouSettingTab = class extends import_obsidian.PluginSettingTab {
       box.setValue(this.plugin.settings.captureRoom || "").onChange((v) => {
         this.plugin.settings.captureRoom = v;
         void this.plugin.saveSettings();
+      });
+    });
+    new import_obsidian.Setting(containerEl).setName(t.drawDest).setDesc(t.drawDestDesc).addDropdown((box) => {
+      box.addOption("", t.drawAuto);
+      for (const room of this.plugin.settings.rooms) {
+        if (room.draft || !room.folder)
+          continue;
+        box.addOption(room.id, room.name);
+      }
+      box.setValue(this.plugin.settings.drawRoom || "").onChange((v) => {
+        this.plugin.settings.drawRoom = v;
+        void this.plugin.saveSettings();
+        this.plugin.refreshDesks();
       });
     });
     new import_obsidian.Setting(containerEl).setName(t.skip).setDesc(t.skipDesc).addText(

@@ -47,6 +47,7 @@ interface AnTouSettings {
 	uiLang: UiLang;
 	welcomed: boolean;
 	captureRoom: string;
+	drawRoom: string;
 }
 
 const DEFAULT_SETTINGS: AnTouSettings = {
@@ -62,6 +63,7 @@ const DEFAULT_SETTINGS: AnTouSettings = {
 	uiLang: "zh",
 	welcomed: false,
 	captureRoom: "",
+	drawRoom: "",
 };
 
 const COPY = {
@@ -185,6 +187,9 @@ const COPY = {
 		draw: "抽一张",
 		drawEmpty: "这间没有笔记可抽。",
 		drawKicker: (name: string) => name + " · 抽到",
+		drawDest: "抽一张从哪抽",
+		drawDestDesc: "自动会去找知识库这类卡片。指定一间之后，只从那一间的文件夹里抽，子文件夹里的笔记也算。",
+		drawAuto: "自动（知识库）",
 		renamed: "显示名已改。文件夹没动。",
 		nested: (name: string) => "已收进「" + name + "」。笔记还在原来的文件夹。",
 		nestBlocked: "不能收进它自己里面。",
@@ -327,6 +332,9 @@ const COPY = {
 		draw: "Draw one",
 		drawEmpty: "Nothing in that room to draw.",
 		drawKicker: (name: string) => name + " · drawn",
+		drawDest: "Where Draw one picks from",
+		drawDestDesc: "Auto looks for a knowledge-style card. Pick a room to draw only from that folder, including notes in its subfolders.",
+		drawAuto: "Auto (knowledge)",
 		renamed: "Display name saved. The folder stayed put.",
 		nested: (name: string) => "Tucked into \"" + name + "\". Notes stay in their folder.",
 		nestBlocked: "A card can't go inside itself.",
@@ -1478,6 +1486,17 @@ class DeskView extends ItemView {
 		);
 	}
 
+	drawSource(): Room | undefined {
+		const chosen = this.plugin.settings.drawRoom;
+		if (chosen) {
+			const room = this.plugin.settings.rooms.find(
+				(r) => r.id === chosen && !r.draft && !!r.folder
+			);
+			if (room) return room;
+		}
+		return this.knowledgeRoom();
+	}
+
 	todayPath(): string | undefined {
 		const folder = this.diaryRoom()?.folder;
 		return folder ? folder + "/" + todayName() + ".md" : undefined;
@@ -1525,7 +1544,7 @@ class DeskView extends ItemView {
 
 	drawOne() {
 		const t = this.copy();
-		const room = this.knowledgeRoom();
+		const room = this.drawSource();
 		const files = room?.folder ? this.mdIn(room.folder) : [];
 		if (!room || files.length === 0) {
 			new Notice(t.drawEmpty);
@@ -1738,7 +1757,7 @@ class DeskView extends ItemView {
 				e.stopPropagation();
 				void this.openNote(left.file);
 			});
-			if (this.knowledgeRoom()) {
+			if (this.drawSource()) {
 				const draw = actions.createEl("button", {
 					cls: "desk-chip",
 					text: t.draw,
@@ -2327,6 +2346,22 @@ class AnTouSettingTab extends PluginSettingTab {
 				box.setValue(this.plugin.settings.captureRoom || "").onChange((v) => {
 					this.plugin.settings.captureRoom = v;
 					void this.plugin.saveSettings();
+				});
+			});
+
+		new Setting(containerEl)
+			.setName(t.drawDest)
+			.setDesc(t.drawDestDesc)
+			.addDropdown((box) => {
+				box.addOption("", t.drawAuto);
+				for (const room of this.plugin.settings.rooms) {
+					if (room.draft || !room.folder) continue;
+					box.addOption(room.id, room.name);
+				}
+				box.setValue(this.plugin.settings.drawRoom || "").onChange((v) => {
+					this.plugin.settings.drawRoom = v;
+					void this.plugin.saveSettings();
+					this.plugin.refreshDesks();
 				});
 			});
 
